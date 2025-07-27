@@ -1,31 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { SplashScreen } from '@/components/layout/SplashScreen';
 import { LoginForm } from '@/components/auth/LoginForm';
-import { STORAGE_KEYS } from '@/lib/constants';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function HomePage() {
-  const [showSplash, setShowSplash] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // 인증 상태 확인
-    const authToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-    if (authToken === 'authenticated') {
-      setIsAuthenticated(true);
-      // 이미 인증된 사용자는 바로 지도로 이동
-      router.push('/map');
+    if (!isLoading && isAuthenticated) {
+      router.replace('/splash');
     }
-    setIsLoading(false);
-  }, [router]);
-
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-  };
+  }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
     return (
@@ -35,14 +23,9 @@ export default function HomePage() {
     );
   }
 
-  if (showSplash && !isAuthenticated) {
-    return <SplashScreen onComplete={handleSplashComplete} />;
+  if (isAuthenticated) {
+    return null; // 리다이렉트 중
   }
 
-  if (!isAuthenticated) {
-    return <LoginForm />;
-  }
-
-  // 인증된 사용자는 이미 /map으로 리다이렉트됨
-  return null;
+  return <LoginForm />;
 }

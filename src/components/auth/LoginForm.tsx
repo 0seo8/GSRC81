@@ -8,48 +8,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Lock, Eye, EyeOff } from 'lucide-react';
-import { toast } from 'sonner';
-import { supabase, TABLES } from '@/lib/supabase';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES, STORAGE_KEYS } from '@/lib/constants';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function LoginForm() {
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { login, isLoading, error } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      // Supabase에서 활성화된 access_links 조회
-      const { data: accessLinks, error } = await supabase
-        .from(TABLES.ACCESS_LINKS)
-        .select('*')
-        .eq('is_active', true);
-
-      if (error) throw error;
-
-      // 간단한 비밀번호 확인 (실제로는 해시 비교 필요)
-      const isValidPassword = accessLinks?.some(link => 
-        // 개발 단계에서는 평문 비교, 실제로는 bcrypt 사용해야 함
-        password === 'gsrc81' || password === 'admin123'
-      );
-
-      if (isValidPassword) {
-        // 인증 토큰 저장
-        localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, 'authenticated');
-        toast.success(SUCCESS_MESSAGES.LOGIN_SUCCESS);
-        router.push('/map');
-      } else {
-        toast.error(ERROR_MESSAGES.AUTHENTICATION_FAILED);
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      toast.error(ERROR_MESSAGES.NETWORK_ERROR);
-    } finally {
-      setIsLoading(false);
+    
+    const success = await login(password);
+    if (success) {
+      router.push('/splash');
     }
   };
 
@@ -112,6 +84,12 @@ export function LoginForm() {
                   </Button>
                 </div>
               </div>
+
+              {error && (
+                <div className="text-sm text-red-600 text-center">
+                  {error}
+                </div>
+              )}
 
               <Button 
                 type="submit" 
