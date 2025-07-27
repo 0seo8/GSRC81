@@ -50,6 +50,7 @@ export default function MapPage() {
 
       if (error) throw error;
 
+      console.log('Map page - loaded courses:', data);
       setCourses(data || []);
     } catch (err) {
       console.error("Failed to load courses:", err);

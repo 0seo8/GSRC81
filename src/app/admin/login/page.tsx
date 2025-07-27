@@ -1,0 +1,23 @@
+"use client";
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { AdminLoginForm } from '@/components/admin/AdminLoginForm';
+import { useAdmin } from '@/contexts/AdminContext';
+
+export default function AdminLoginPage() {
+  const { isAdminAuthenticated } = useAdmin();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isAdminAuthenticated) {
+      router.replace('/admin');
+    }
+  }, [isAdminAuthenticated, router]);
+
+  if (isAdminAuthenticated) {
+    return null; // 리다이렉트 중
+  }
+
+  return <AdminLoginForm />;
+}
