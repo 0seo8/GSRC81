@@ -71,57 +71,73 @@ export function CourseMarker({
         const markerElement = document.createElement("div");
         markerElement.className = "course-marker";
         markerElement.style.cssText = `
-          width: 24px;
-          height: 24px;
+          width: 40px;
+          height: 40px;
           background-color: ${colors[course.difficulty]};
-          border: 2px solid white;
+          border: 4px solid white;
           border-radius: 50%;
           cursor: pointer;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          box-shadow: 0 6px 12px rgba(0,0,0,0.4);
           transition: transform 0.2s ease;
+          z-index: 999;
+          position: relative;
+          display: block !important;
+          visibility: visible !important;
         `;
+        
+        console.log("🎯 Creating marker element for:", course.title, "with color:", colors[course.difficulty]);
 
-        // 호버 효과
-        markerElement.addEventListener("mouseenter", () => {
-          markerElement.style.transform = "scale(1.2)";
-        });
+        // 호버 효과 제거 - 지도 이동 방지
+        // markerElement.addEventListener("mouseenter", () => {
+        //   markerElement.style.transform = "scale(1.2)";
+        // });
 
-        markerElement.addEventListener("mouseleave", () => {
-          markerElement.style.transform = "scale(1)";
-        });
+        // markerElement.addEventListener("mouseleave", () => {
+        //   markerElement.style.transform = "scale(1)";
+        // });
 
-        // 클릭 이벤트
-        markerElement.addEventListener("click", () => {
+        // 클릭 이벤트 (이벤트 전파 방지)
+        markerElement.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           if (onCourseClick) {
             onCourseClick(course);
           }
         });
 
         try {
-          // 마커 생성 및 추가
-          const marker = new mapboxgl.Marker(markerElement)
+          console.log("🎯 Adding marker to map at coordinates:", [course.start_longitude, course.start_latitude]);
+          
+          // 마커 생성 및 추가 (드래그 비활성화)
+          const marker = new mapboxgl.Marker({
+            element: markerElement,
+            draggable: false // 드래그 완전 비활성화
+          })
             .setLngLat([course.start_longitude, course.start_latitude])
             .addTo(map);
 
-          // 팝업 추가
-          const popup = new mapboxgl.Popup({
-            offset: 25,
-            closeButton: false,
-            closeOnClick: false,
-          }).setHTML(`
-            <div class="text-sm">
-              <div class="font-semibold text-gray-900">${course.title}</div>
-              <div class="text-gray-600">${course.distance_km}km</div>
-              <div class="text-xs text-gray-500 capitalize">${course.difficulty}</div>
-            </div>
-          `);
+          console.log("✅ Marker successfully added for:", course.title);
 
-          marker.setPopup(popup);
+          // 팝업 제거 - 호버 시 지도 이동 방지
+          // const popup = new mapboxgl.Popup({
+          //   offset: 25,
+          //   closeButton: false,  
+          //   closeOnClick: false,
+          // }).setHTML(`
+          //   <div class="text-sm">
+          //     <div class="font-semibold text-gray-900">${course.title}</div>
+          //     <div class="text-gray-600">${course.distance_km}km</div>
+          //     <div class="text-xs text-gray-500 capitalize">${course.difficulty}</div>
+          //   </div>
+          // `);
+          // marker.setPopup(popup);
 
           // 마커 배열에 저장
           markersRef.current.push(marker);
+          
+          console.log("📍 Total markers in array:", markersRef.current.length);
         } catch (error) {
-          console.error("CourseMarker - error adding marker:", error);
+          console.error("❌ CourseMarker - error adding marker:", error);
         }
       });
     };

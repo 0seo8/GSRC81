@@ -75,15 +75,9 @@ export default function MapPage() {
     (course: Course) => {
       console.log("👆 handleCourseClick called for:", course.title);
       setSelectedCourse(course);
-      if (map) {
-        map.flyTo({
-          center: [course.start_longitude, course.start_latitude],
-          zoom: 15,
-          duration: 1000,
-        });
-      }
+      // 지도 이동 기능 제거
     },
-    [map]
+    []
   );
 
   const handleLogout = () => {
@@ -150,8 +144,8 @@ export default function MapPage() {
           {/* 지도 */}
           <MapboxMap
             accessToken={mapboxToken}
-            center={[126.9227, 37.6176]} // 은평구 중심으로 조정
-            zoom={12}
+            center={[126.9185, 37.6361]} // 코스들이 있는 위치로 조정
+            zoom={14}
             onMapLoad={handleMapLoad}
             className="w-full h-full"
             style="mapbox://styles/mapbox/streets-v12" // 일반 지도로 변경
