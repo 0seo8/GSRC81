@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MapboxMap } from "@/components/map/MapboxMap";
 import { CourseMarker } from "@/components/map/CourseMarker";
@@ -19,6 +19,8 @@ interface Course {
   difficulty: "easy" | "medium" | "hard";
   avg_time_min: number;
   nearest_station: string;
+  is_active: boolean;
+  created_at: string;
 }
 
 export default function MapPage() {
@@ -50,7 +52,11 @@ export default function MapPage() {
 
       if (error) throw error;
 
-      console.log('Map page - loaded courses:', data);
+      console.log(
+        "📊 Map page - loadCourses called, got:",
+        data?.length,
+        "courses"
+      );
       setCourses(data || []);
     } catch (err) {
       console.error("Failed to load courses:", err);
@@ -64,7 +70,8 @@ export default function MapPage() {
     setMap(mapInstance);
   };
 
-  const handleCourseClick = (course: Course) => {
+  const handleCourseClick = useCallback((course: Course) => {
+    console.log("👆 handleCourseClick called for:", course.title);
     setSelectedCourse(course);
     if (map) {
       map.flyTo({
@@ -73,7 +80,7 @@ export default function MapPage() {
         duration: 1000,
       });
     }
-  };
+  }, [map]);
 
   const handleLogout = () => {
     logout();
@@ -102,7 +109,7 @@ export default function MapPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-100 flex flex-col">
+      <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
         {/* 헤더 */}
         <header className="bg-white shadow-sm z-10 relative">
           <div className="px-4 py-3 flex items-center justify-between">
@@ -135,14 +142,15 @@ export default function MapPage() {
         </header>
 
         {/* 메인 콘텐츠 */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative overflow-hidden">
           {/* 지도 */}
           <MapboxMap
             accessToken={mapboxToken}
-            center={[126.9227, 37.6176]} // 은평구 중심
-            zoom={13}
+            center={[126.9784, 37.5665]} // 서울 중심
+            zoom={10} // 서울 전체가 보이도록 줌 레벨 조정
             onMapLoad={handleMapLoad}
             className="w-full h-full"
+            style="mapbox://styles/mapbox/streets-v12" // 일반 지도로 변경
           />
 
           {/* 코스 마커 */}
@@ -156,7 +164,7 @@ export default function MapPage() {
 
           {/* 로딩 상태 */}
           {loading && (
-            <div className="absolute top-20 left-4 bg-white rounded-lg shadow-md p-3">
+            <div className="absolute top-20 left-4 bg-white rounded-lg shadow-md p-3 z-10">
               <div className="flex items-center space-x-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
                 <span className="text-sm text-gray-600">코스 로딩 중...</span>
@@ -166,7 +174,7 @@ export default function MapPage() {
 
           {/* 에러 메시지 */}
           {error && (
-            <div className="absolute top-20 left-4 bg-red-50 border border-red-200 rounded-lg p-3 max-w-sm">
+            <div className="absolute top-20 left-4 bg-red-50 border border-red-200 rounded-lg p-3 max-w-sm z-10">
               <p className="text-sm text-red-700">{error}</p>
               <Button
                 variant="ghost"

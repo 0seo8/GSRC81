@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { LoginForm } from '@/components/auth/LoginForm';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function HomePage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -11,9 +11,9 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.replace('/splash');
+      router.replace("/splash");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading]); // router 제거
 
   if (isLoading) {
     return (

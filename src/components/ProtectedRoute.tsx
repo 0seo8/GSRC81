@@ -17,7 +17,7 @@ export function ProtectedRoute({ children, redirectTo = '/' }: ProtectedRoutePro
     if (!isLoading && !isAuthenticated) {
       router.replace(redirectTo);
     }
-  }, [isAuthenticated, isLoading, router, redirectTo]);
+  }, [isAuthenticated, isLoading, redirectTo]); // router 제거
 
   if (isLoading) {
     return (

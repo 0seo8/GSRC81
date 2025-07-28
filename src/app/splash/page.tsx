@@ -39,7 +39,7 @@ export default function SplashPage() {
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading]); // router 제거
 
   if (isLoading) {
     return (

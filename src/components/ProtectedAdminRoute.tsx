@@ -17,7 +17,7 @@ export function ProtectedAdminRoute({ children, redirectTo = '/admin/login' }: P
     if (!isAdminAuthenticated) {
       router.replace(redirectTo);
     }
-  }, [isAdminAuthenticated, router, redirectTo]);
+  }, [isAdminAuthenticated, redirectTo]); // router 제거
 
   if (!isAdminAuthenticated) {
     return (

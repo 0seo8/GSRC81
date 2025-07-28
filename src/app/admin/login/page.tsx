@@ -13,7 +13,7 @@ export default function AdminLoginPage() {
     if (isAdminAuthenticated) {
       router.replace('/admin');
     }
-  }, [isAdminAuthenticated, router]);
+  }, [isAdminAuthenticated]); // router 제거
 
   if (isAdminAuthenticated) {
     return null; // 리다이렉트 중
