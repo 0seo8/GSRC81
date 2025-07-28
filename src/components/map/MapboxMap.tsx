@@ -44,8 +44,9 @@ export function MapboxMap({
       pitch: 0,
       bearing: 0,
       antialias: true,
-      maxZoom: 18,
-      minZoom: 8, // 더 넓은 지역을 볼 수 있도록 최소 줌 레벨 낮춤
+      maxZoom: 16, // 최대 줌 제한 (너무 확대되지 않게)
+      minZoom: 10, // 최소 줌 제한 (서울 전체가 보이는 정도)
+      preserveDrawingBuffer: true, // 캔버스 캡처를 위해 필요
     });
 
     // 지도 로드 완료 시

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MapboxMap } from "@/components/map/MapboxMap";
 import { CourseMarker } from "@/components/map/CourseMarker";
+import { MapCaptureHelper } from "@/components/map/MapCaptureHelper";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { MapPin, Menu, LogOut } from "lucide-react";
@@ -70,17 +71,20 @@ export default function MapPage() {
     setMap(mapInstance);
   };
 
-  const handleCourseClick = useCallback((course: Course) => {
-    console.log("👆 handleCourseClick called for:", course.title);
-    setSelectedCourse(course);
-    if (map) {
-      map.flyTo({
-        center: [course.start_longitude, course.start_latitude],
-        zoom: 15,
-        duration: 1000,
-      });
-    }
-  }, [map]);
+  const handleCourseClick = useCallback(
+    (course: Course) => {
+      console.log("👆 handleCourseClick called for:", course.title);
+      setSelectedCourse(course);
+      if (map) {
+        map.flyTo({
+          center: [course.start_longitude, course.start_latitude],
+          zoom: 15,
+          duration: 1000,
+        });
+      }
+    },
+    [map]
+  );
 
   const handleLogout = () => {
     logout();
@@ -146,8 +150,8 @@ export default function MapPage() {
           {/* 지도 */}
           <MapboxMap
             accessToken={mapboxToken}
-            center={[126.9784, 37.5665]} // 서울 중심
-            zoom={10} // 서울 전체가 보이도록 줌 레벨 조정
+            center={[126.9227, 37.6176]} // 은평구 중심으로 조정
+            zoom={12}
             onMapLoad={handleMapLoad}
             className="w-full h-full"
             style="mapbox://styles/mapbox/streets-v12" // 일반 지도로 변경
@@ -161,6 +165,9 @@ export default function MapPage() {
               onCourseClick={handleCourseClick}
             />
           )}
+
+          {/* 디자이너용 캡처 도구 */}
+          {map && <MapCaptureHelper map={map} />}
 
           {/* 로딩 상태 */}
           {loading && (
