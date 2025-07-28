@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, RotateCcw } from "lucide-react";
+import { Camera, Download, RotateCcw } from "lucide-react";
 
 interface MapCaptureHelperProps {
   map: mapboxgl.Map | null;
@@ -154,6 +154,16 @@ export function MapCaptureHelper({ map }: MapCaptureHelperProps) {
         </Button>
         
         <Button
+          onClick={downloadCapture}
+          variant="outline"
+          size="sm"
+          className="w-full"
+        >
+          <Download className="w-3 h-3 mr-1" />
+          이미지 다운로드
+        </Button>
+        
+        <Button
           onClick={resetToDefault}
           variant="outline"
           size="sm"
@@ -169,8 +179,8 @@ export function MapCaptureHelper({ map }: MapCaptureHelperProps) {
         <div className="font-medium mb-1">💡 디자이너 안내:</div>
         <div className="space-y-1 text-xs">
           <div>1. 줌 10~16 범위에서만 작동</div>
-          <div>2. 스크린샷 직접 촬영</div>
-          <div>3. 좌표 정보는 버튼으로 복사</div>
+          <div>2. "이미지 다운로드"로 스크린샷</div>
+          <div>3. "좌표 정보 복사"로 위치 데이터</div>
           <div>4. 모든 줌에서 동일하게 보이도록 제작</div>
         </div>
       </div>
