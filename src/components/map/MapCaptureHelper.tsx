@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, Download, RotateCcw } from "lucide-react";
+import { Camera, Download, RotateCcw, X } from "lucide-react";
 
 interface MapCaptureHelperProps {
   map: mapboxgl.Map | null;
+  onClose?: () => void;
 }
 
-export function MapCaptureHelper({ map }: MapCaptureHelperProps) {
+export function MapCaptureHelper({ map, onClose }: MapCaptureHelperProps) {
   const [currentZoom, setCurrentZoom] = useState<number>(0);
   const [currentCenter, setCurrentCenter] = useState<[number, number]>([0, 0]);
   const [captureInfo, setCaptureInfo] = useState<string>("");
@@ -28,12 +29,12 @@ export function MapCaptureHelper({ map }: MapCaptureHelperProps) {
     updateMapInfo();
 
     // 지도 이동/줌 시 정보 업데이트
-    map.on('moveend', updateMapInfo);
-    map.on('zoomend', updateMapInfo);
+    map.on("moveend", updateMapInfo);
+    map.on("zoomend", updateMapInfo);
 
     return () => {
-      map.off('moveend', updateMapInfo);
-      map.off('zoomend', updateMapInfo);
+      map.off("moveend", updateMapInfo);
+      map.off("zoomend", updateMapInfo);
     };
   }, [map]);
 
@@ -41,18 +42,18 @@ export function MapCaptureHelper({ map }: MapCaptureHelperProps) {
   const ZOOM_RANGE = {
     min: 10,
     max: 16,
-    default: 12
+    default: 12,
   };
 
   const resetToDefault = () => {
     if (!map) return;
-    
+
     map.flyTo({
-      center: [126.9227, 37.6176], 
+      center: [126.9227, 37.6176],
       zoom: ZOOM_RANGE.default,
-      duration: 1000
+      duration: 1000,
     });
-    
+
     setCaptureInfo("기본 설정으로 복원됨");
   };
 
@@ -61,58 +62,67 @@ export function MapCaptureHelper({ map }: MapCaptureHelperProps) {
     const info = {
       zoom: currentZoom,
       center: currentCenter,
-      bounds: bounds ? {
-        north: bounds.getNorth(),
-        south: bounds.getSouth(),
-        east: bounds.getEast(),
-        west: bounds.getWest()
-      } : null,
+      bounds: bounds
+        ? {
+            north: bounds.getNorth(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            west: bounds.getWest(),
+          }
+        : null,
       timestamp: new Date().toISOString(),
       containerSize: {
         width: map?.getContainer().clientWidth,
-        height: map?.getContainer().clientHeight
-      }
+        height: map?.getContainer().clientHeight,
+      },
     };
 
     // 콘솔에 출력
     console.log("=== 지도 캡처 정보 ===");
     console.log(JSON.stringify(info, null, 2));
-    
+
     // 클립보드에 복사
     navigator.clipboard.writeText(JSON.stringify(info, null, 2));
-    
-    setCaptureInfo(`캡처 완료! 줌: ${currentZoom.toFixed(2)}, 중심: [${currentCenter[0].toFixed(4)}, ${currentCenter[1].toFixed(4)}]`);
+
+    setCaptureInfo(
+      `캡처 완료! 줌: ${currentZoom.toFixed(
+        2
+      )}, 중심: [${currentCenter[0].toFixed(4)}, ${currentCenter[1].toFixed(
+        4
+      )}]`
+    );
   };
 
   const downloadCapture = () => {
     if (!map) return;
-    
+
     setCaptureInfo("이미지 생성 중...");
-    
+
     // 약간의 지연 후 캡처 (지도가 완전히 렌더링되도록)
     setTimeout(() => {
       try {
         const canvas = map.getCanvas();
-        
+
         // 직접 toDataURL 사용
-        const dataURL = canvas.toDataURL('image/png', 1.0);
-        
-        if (dataURL === 'data:,') {
+        const dataURL = canvas.toDataURL("image/png", 1.0);
+
+        if (dataURL === "data:,") {
           setCaptureInfo("빈 이미지가 생성되었습니다. 다시 시도해주세요.");
           return;
         }
-        
-        const link = document.createElement('a');
-        link.download = `gsrc81-map-zoom${currentZoom.toFixed(0)}-${Date.now()}.png`;
+
+        const link = document.createElement("a");
+        link.download = `gsrc81-map-zoom${currentZoom.toFixed(
+          0
+        )}-${Date.now()}.png`;
         link.href = dataURL;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         setCaptureInfo("이미지 다운로드 완료!");
-        
       } catch (error) {
-        console.error('이미지 캡처 오류:', error);
+        console.error("이미지 캡처 오류:", error);
         setCaptureInfo("캡처 실패! 브라우저 호환성 문제일 수 있습니다.");
       }
     }, 500); // 500ms 대기
@@ -120,12 +130,28 @@ export function MapCaptureHelper({ map }: MapCaptureHelperProps) {
 
   return (
     <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-xs z-20">
-      <h3 className="text-sm font-semibold text-gray-800 mb-3">디자이너 캡처 도구</h3>
-      
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-gray-800">
+          디자이너 캡처 도구
+        </h3>
+        {onClose && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 p-1"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+
       {/* 현재 지도 정보 */}
       <div className="mb-4 p-2 bg-gray-50 rounded text-xs">
         <div>줌: {currentZoom.toFixed(2)}</div>
-        <div>중심: [{currentCenter[0].toFixed(4)}, {currentCenter[1].toFixed(4)}]</div>
+        <div>
+          중심: [{currentCenter[0].toFixed(4)}, {currentCenter[1].toFixed(4)}]
+        </div>
         <div className="text-green-600 mt-1">{captureInfo}</div>
       </div>
 
@@ -152,7 +178,7 @@ export function MapCaptureHelper({ map }: MapCaptureHelperProps) {
           <Camera className="w-3 h-3 mr-1" />
           좌표 정보 복사
         </Button>
-        
+
         <Button
           onClick={downloadCapture}
           variant="outline"
@@ -162,7 +188,7 @@ export function MapCaptureHelper({ map }: MapCaptureHelperProps) {
           <Download className="w-3 h-3 mr-1" />
           이미지 다운로드
         </Button>
-        
+
         <Button
           onClick={resetToDefault}
           variant="outline"

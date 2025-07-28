@@ -5,9 +5,11 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MapboxMap } from "@/components/map/MapboxMap";
 import { CourseMarker } from "@/components/map/CourseMarker";
 import { MapCaptureHelper } from "@/components/map/MapCaptureHelper";
+import { CourseDetailDrawer } from "@/components/map/CourseDetailDrawer";
+import { CourseListDrawer } from "@/components/map/CourseListDrawer";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { MapPin, Menu, LogOut } from "lucide-react";
+import { MapPin, Menu, LogOut, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Course {
@@ -31,6 +33,7 @@ export default function MapPage() {
   const [selectedCourses, setSelectedCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCaptureHelper, setShowCaptureHelper] = useState(true);
   const { logout } = useAuth();
 
   // Mapbox 토큰 (환경변수에서 가져오기)
@@ -72,23 +75,17 @@ export default function MapPage() {
     setMap(mapInstance);
   };
 
-  const handleCourseClick = useCallback(
-    (course: Course) => {
-      console.log("👆 handleCourseClick called for:", course.title);
-      setSelectedCourse(course);
-      setSelectedCourses([]); // 개별 선택 시 리스트 초기화
-    },
-    []
-  );
+  const handleCourseClick = useCallback((course: Course) => {
+    console.log("👆 handleCourseClick called for:", course.title);
+    setSelectedCourse(course);
+    setSelectedCourses([]); // 개별 선택 시 리스트 초기화
+  }, []);
 
-  const handleClusterClick = useCallback(
-    (courses: Course[]) => {
-      console.log("👆 handleClusterClick called for:", courses.length, "courses");
-      setSelectedCourses(courses);
-      setSelectedCourse(null); // 클러스터 선택 시 개별 선택 초기화
-    },
-    []
-  );
+  const handleClusterClick = useCallback((courses: Course[]) => {
+    console.log("👆 handleClusterClick called for:", courses.length, "courses");
+    setSelectedCourses(courses);
+    setSelectedCourse(null); // 클러스터 선택 시 개별 선택 초기화
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -140,6 +137,15 @@ export default function MapPage() {
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={() => setShowCaptureHelper(!showCaptureHelper)}
+                className="text-gray-600 hover:text-blue-600"
+                title="디자이너 도구 토글"
+              >
+                <Camera className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleLogout}
                 className="text-gray-600 hover:text-red-600"
               >
@@ -172,7 +178,12 @@ export default function MapPage() {
           )}
 
           {/* 디자이너용 캡처 도구 */}
-          {map && <MapCaptureHelper map={map} />}
+          {map && showCaptureHelper && (
+            <MapCaptureHelper
+              map={map}
+              onClose={() => setShowCaptureHelper(false)}
+            />
+          )}
 
           {/* 로딩 상태 */}
           {loading && (
@@ -199,117 +210,19 @@ export default function MapPage() {
             </div>
           )}
 
-          {/* 코스 상세 정보 패널 */}
-          {selectedCourse && (
-            <div className="absolute bottom-4 left-4 right-4 bg-white rounded-lg shadow-xl p-4 max-w-sm mx-auto">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold text-gray-900">
-                    {selectedCourse.title}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {selectedCourse.description}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedCourse(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </Button>
-              </div>
+          {/* Drawer Components */}
+          <CourseDetailDrawer
+            course={selectedCourse}
+            isOpen={!!selectedCourse}
+            onClose={() => setSelectedCourse(null)}
+          />
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">거리</span>
-                  <p className="font-medium">{selectedCourse.distance_km}km</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">소요시간</span>
-                  <p className="font-medium">{selectedCourse.avg_time_min}분</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">난이도</span>
-                  <p className="font-medium capitalize">
-                    {selectedCourse.difficulty}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-gray-500">가까운 역</span>
-                  <p className="font-medium">
-                    {selectedCourse.nearest_station}
-                  </p>
-                </div>
-              </div>
-
-              <Button
-                className="w-full mt-4 bg-orange-500 hover:bg-orange-600"
-                onClick={() => {
-                  // TODO: 코스 상세 페이지로 이동
-                  console.log("Navigate to course detail:", selectedCourse.id);
-                }}
-              >
-                자세히 보기
-              </Button>
-            </div>
-          )}
-
-          {/* 클러스터 코스 리스트 패널 */}
-          {selectedCourses.length > 0 && (
-            <div className="absolute bottom-4 left-4 right-4 bg-white rounded-lg shadow-xl p-4 max-w-md mx-auto max-h-80 overflow-y-auto">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900">
-                  이 지역의 코스들 ({selectedCourses.length}개)
-                </h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedCourses([])}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </Button>
-              </div>
-
-              <div className="space-y-3">
-                {selectedCourses.map((course) => (
-                  <div
-                    key={course.id}
-                    className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => {
-                      setSelectedCourse(course);
-                      setSelectedCourses([]);
-                    }}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-gray-900 text-sm">
-                        {course.title}
-                      </h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        course.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
-                        course.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {course.difficulty}
-                      </span>
-                    </div>
-                    
-                    <p className="text-xs text-gray-600 mb-2">
-                      {course.description}
-                    </p>
-                    
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>{course.distance_km}km</span>
-                      <span>{course.avg_time_min}분</span>
-                      <span>{course.nearest_station}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <CourseListDrawer
+            courses={selectedCourses}
+            isOpen={selectedCourses.length > 0}
+            onClose={() => setSelectedCourses([])}
+            onCourseSelect={(course) => setSelectedCourse(course)}
+          />
 
           {/* 빈 상태 */}
           {!loading && courses.length === 0 && !error && (
