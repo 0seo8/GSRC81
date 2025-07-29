@@ -5,24 +5,14 @@ import { ProtectedAdminRoute } from '@/components/ProtectedAdminRoute';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { 
   Plus, 
   Edit, 
   Trash2, 
   MapPin, 
-  ArrowLeft 
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import Link from 'next/link';
 import { GPXUploadForm } from '@/components/admin/GPXUploadForm';
@@ -41,34 +31,12 @@ interface Course {
   created_at: string;
 }
 
-interface CourseForm {
-  title: string;
-  description: string;
-  start_latitude: string;
-  start_longitude: string;
-  distance_km: string;
-  avg_time_min: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  nearest_station: string;
-}
 
 export default function CoursesManagePage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isGPXDialogOpen, setIsGPXDialogOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState<CourseForm>({
-    title: '',
-    description: '',
-    start_latitude: '',
-    start_longitude: '',
-    distance_km: '',
-    avg_time_min: '',
-    difficulty: 'medium',
-    nearest_station: ''
-  });
+  const [isGPXFormExpanded, setIsGPXFormExpanded] = useState(false);
 
   useEffect(() => {
     loadCourses();
@@ -91,78 +59,6 @@ export default function CoursesManagePage() {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      start_latitude: '',
-      start_longitude: '',
-      distance_km: '',
-      avg_time_min: '',
-      difficulty: 'medium',
-      nearest_station: ''
-    });
-    setEditingCourse(null);
-  };
-
-  const handleEdit = (course: Course) => {
-    setFormData({
-      title: course.title,
-      description: course.description || '',
-      start_latitude: course.start_latitude.toString(),
-      start_longitude: course.start_longitude.toString(),
-      distance_km: course.distance_km.toString(),
-      avg_time_min: course.avg_time_min?.toString() || '',
-      difficulty: course.difficulty,
-      nearest_station: course.nearest_station || ''
-    });
-    setEditingCourse(course);
-    setIsDialogOpen(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const courseData = {
-        title: formData.title,
-        description: formData.description,
-        start_latitude: parseFloat(formData.start_latitude),
-        start_longitude: parseFloat(formData.start_longitude),
-        distance_km: parseFloat(formData.distance_km),
-        avg_time_min: formData.avg_time_min ? parseInt(formData.avg_time_min) : null,
-        difficulty: formData.difficulty,
-        nearest_station: formData.nearest_station,
-        is_active: true
-      };
-
-      if (editingCourse) {
-        // 수정
-        const { error } = await supabase
-          .from('courses')
-          .update(courseData)
-          .eq('id', editingCourse.id);
-
-        if (error) throw error;
-        alert('코스가 수정되었습니다.');
-      } else {
-        // 새로 생성
-        const { error } = await supabase
-          .from('courses')
-          .insert([courseData]);
-
-        if (error) throw error;
-        alert('새 코스가 등록되었습니다.');
-      }
-
-      setIsDialogOpen(false);
-      resetForm();
-      loadCourses();
-    } catch (error) {
-      console.error('Failed to save course:', error);
-      alert('코스 저장 중 오류가 발생했습니다.');
-    }
-  };
 
   const handleDelete = async (course: Course) => {
     if (!confirm(`"${course.title}" 코스를 삭제하시겠습니까?`)) return;
@@ -216,6 +112,10 @@ export default function CoursesManagePage() {
     }
   };
 
+  const toggleGPXForm = () => {
+    setIsGPXFormExpanded(!isGPXFormExpanded);
+  };
+
   const difficultyLabels = {
     easy: '쉬움',
     medium: '보통', 
@@ -234,176 +134,71 @@ export default function CoursesManagePage() {
         {/* 헤더 */}
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between py-4">
-              <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between py-3 sm:py-4 gap-3 sm:gap-0">
+              <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
                 <Link href="/admin">
-                  <Button variant="ghost" size="sm">
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    대시보드
+                  <Button variant="ghost" size="sm" className="flex-shrink-0">
+                    <ArrowLeft className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">대시보드</span>
                   </Button>
                 </Link>
-                <div>
-                  <h1 className="text-xl font-semibold text-gray-900">코스 관리</h1>
-                  <p className="text-sm text-gray-500">러닝 코스를 등록하고 관리합니다</p>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">코스 관리</h1>
+                  <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">러닝 코스를 등록하고 관리합니다</p>
                 </div>
               </div>
               
-              <div className="flex space-x-2">
-                <Dialog open={isGPXDialogOpen} onOpenChange={setIsGPXDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="w-4 h-4 mr-2" />
-                      GPX로 등록
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>GPX 파일로 코스 등록</DialogTitle>
-                      <DialogDescription>
-                        GPX 파일을 업로드하면 자동으로 코스 정보가 추출됩니다
-                      </DialogDescription>
-                    </DialogHeader>
-                    <GPXUploadForm 
-                      onSubmit={handleGPXSubmit}
-                      loading={submitting}
-                    />
-                  </DialogContent>
-                </Dialog>
-
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" onClick={resetForm}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      수동 등록
-                    </Button>
-                  </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {editingCourse ? '코스 수정' : '새 코스 등록'}
-                    </DialogTitle>
-                    <DialogDescription>
-                      러닝 코스 정보를 입력해주세요
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="title">코스명 *</Label>
-                        <Input
-                          id="title"
-                          value={formData.title}
-                          onChange={(e) => setFormData({...formData, title: e.target.value})}
-                          placeholder="예: 불광천 러닝코스"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="nearest_station">가까운 지하철역</Label>
-                        <Input
-                          id="nearest_station"
-                          value={formData.nearest_station}
-                          onChange={(e) => setFormData({...formData, nearest_station: e.target.value})}
-                          placeholder="예: 구파발역"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="description">코스 설명</Label>
-                      <Textarea
-                        id="description"
-                        value={formData.description}
-                        onChange={(e) => setFormData({...formData, description: e.target.value})}
-                        placeholder="코스에 대한 설명을 입력하세요"
-                        rows={3}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="start_latitude">시작점 위도 *</Label>
-                        <Input
-                          id="start_latitude"
-                          type="number"
-                          step="0.000001"
-                          value={formData.start_latitude}
-                          onChange={(e) => setFormData({...formData, start_latitude: e.target.value})}
-                          placeholder="37.618123"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="start_longitude">시작점 경도 *</Label>
-                        <Input
-                          id="start_longitude"
-                          type="number"
-                          step="0.000001"
-                          value={formData.start_longitude}
-                          onChange={(e) => setFormData({...formData, start_longitude: e.target.value})}
-                          placeholder="126.921456"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="distance_km">거리(km) *</Label>
-                        <Input
-                          id="distance_km"
-                          type="number"
-                          step="0.1"
-                          value={formData.distance_km}
-                          onChange={(e) => setFormData({...formData, distance_km: e.target.value})}
-                          placeholder="5.2"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="avg_time_min">평균 소요시간(분)</Label>
-                        <Input
-                          id="avg_time_min"
-                          type="number"
-                          value={formData.avg_time_min}
-                          onChange={(e) => setFormData({...formData, avg_time_min: e.target.value})}
-                          placeholder="30"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="difficulty">난이도 *</Label>
-                        <Select value={formData.difficulty} onValueChange={(value: 'easy' | 'medium' | 'hard') => setFormData({...formData, difficulty: value})}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="easy">쉬움</SelectItem>
-                            <SelectItem value="medium">보통</SelectItem>
-                            <SelectItem value="hard">어려움</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end space-x-2 pt-4">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        취소
-                      </Button>
-                      <Button type="submit">
-                        {editingCourse ? '수정' : '등록'}
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
-              </div>
             </div>
           </div>
         </header>
 
         {/* 메인 콘텐츠 */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* 모바일용 GPX 코스 등록 섹션 (아코디언) */}
+          <div className="mb-6 block md:hidden">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <button
+                onClick={toggleGPXForm}
+                className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center">
+                  <Plus className="w-4 h-4 mr-2 text-blue-600" />
+                  <span className="text-base font-semibold text-gray-900">새 코스 등록</span>
+                </div>
+                {isGPXFormExpanded ? (
+                  <ChevronUp className="w-5 h-5 text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                )}
+              </button>
+              
+              {isGPXFormExpanded && (
+                <div className="px-4 pb-4 border-t border-gray-100">
+                  <div className="pt-4">
+                    <GPXUploadForm 
+                      onSubmit={handleGPXSubmit}
+                      loading={submitting}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 데스크톱용 GPX 코스 등록 섹션 */}
+          <div className="mb-8 hidden md:block">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <Plus className="w-5 h-5 mr-2 text-blue-600" />
+                새 코스 등록
+              </h2>
+              <GPXUploadForm 
+                onSubmit={handleGPXSubmit}
+                loading={submitting}
+              />
+            </div>
+          </div>
+
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -452,7 +247,7 @@ export default function CoursesManagePage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleEdit(course)}
+                        onClick={() => alert('수정 기능은 현재 준비 중입니다.')}
                         className="flex-1"
                       >
                         <Edit className="w-4 h-4 mr-1" />

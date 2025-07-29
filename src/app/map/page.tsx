@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MapboxMap } from "@/components/map/MapboxMap";
 import { CourseMarker } from "@/components/map/CourseMarker";
@@ -9,7 +10,8 @@ import { CourseDetailDrawer } from "@/components/map/CourseDetailDrawer";
 import { CourseListDrawer } from "@/components/map/CourseListDrawer";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { MapPin, Menu, LogOut, Camera } from "lucide-react";
+import { useAdmin } from "@/contexts/AdminContext";
+import { MapPin, Menu, LogOut, Camera, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Course {
@@ -35,6 +37,8 @@ export default function MapPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCaptureHelper, setShowCaptureHelper] = useState(true);
   const { logout } = useAuth();
+  const { isAdminAuthenticated } = useAdmin();
+  const router = useRouter();
 
   // Mapbox 토큰 (환경변수에서 가져오기)
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
@@ -143,6 +147,17 @@ export default function MapPage() {
               >
                 <Camera className="w-4 h-4" />
               </Button>
+              {isAdminAuthenticated && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push('/admin')}
+                  className="text-gray-600 hover:text-green-600"
+                  title="관리자 페이지"
+                >
+                  <Shield className="w-4 h-4" />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"

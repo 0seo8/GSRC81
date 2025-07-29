@@ -90,33 +90,34 @@ export default function AdminDashboard() {
         {/* 헤더 */}
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-white" />
+            <div className="flex justify-between items-center py-3 sm:py-4">
+              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                <div>
-                  <h1 className="text-xl font-semibold text-gray-900">GSRC81 관리자</h1>
-                  <p className="text-sm text-gray-500">러닝코스 지도 관리 시스템</p>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">GSRC81 관리자</h1>
+                  <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">러닝코스 지도 관리 시스템</p>
                 </div>
               </div>
               
               <Button
                 variant="ghost"
                 onClick={handleLogout}
-                className="text-gray-600 hover:text-red-600"
+                className="text-gray-600 hover:text-red-600 flex-shrink-0 px-2 sm:px-4"
+                size="sm"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                로그아웃
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">로그아웃</span>
               </Button>
             </div>
           </div>
         </header>
 
         {/* 메인 콘텐츠 */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* 통계 카드 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+          {/* 데스크톱용 통계 카드 */}
+          <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center">
@@ -160,7 +161,52 @@ export default function AdminDashboard() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* 모바일용 메뉴 리스트 */}
+          <div className="block md:hidden space-y-4">
+            {/* 코스 관리 */}
+            <div 
+              className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50"
+              onClick={() => router.push('/admin/courses')}
+            >
+              <span className="text-base font-medium text-gray-900">코스 관리</span>
+              <span className="text-gray-400 text-lg">›</span>
+            </div>
+
+            {/* 댓글 관리 */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50">
+              <span className="text-base font-medium text-gray-900">댓글 관리</span>
+              <span className="text-gray-400 text-lg">›</span>
+            </div>
+
+            {/* 비밀번호 관리 */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50">
+              <span className="text-base font-medium text-gray-900">비밀번호 관리</span>
+              <span className="text-gray-400 text-lg">›</span>
+            </div>
+
+            {/* 시스템 설정 */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50">
+              <span className="text-base font-medium text-gray-900">시스템 설정</span>
+              <span className="text-gray-400 text-lg">›</span>
+            </div>
+
+            {/* 버전정보 */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between">
+              <span className="text-base font-medium text-gray-900">버전정보</span>
+              <span className="text-blue-500 text-base font-medium">1.0.0</span>
+            </div>
+
+            {/* 로그아웃 버튼 */}
+            <Button 
+              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 rounded-lg border-0"
+              variant="ghost"
+              onClick={handleLogout}
+            >
+              로그아웃
+            </Button>
+          </div>
+
+          <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* 빠른 작업 */}
             <Card>
               <CardHeader>

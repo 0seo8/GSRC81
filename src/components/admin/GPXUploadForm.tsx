@@ -165,22 +165,40 @@ export function GPXUploadForm({ onSubmit, loading = false }: GPXUploadFormProps)
       <div>
         <Label htmlFor="gpx-file">GPX 파일 업로드 *</Label>
         <div className="mt-2">
-          <label htmlFor="gpx-file" className="cursor-pointer">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+          <label htmlFor="gpx-file" className="cursor-pointer block">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-gray-400 transition-colors">
+              <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
               <p className="text-sm text-gray-600">
-                {file ? file.name : 'GPX 파일을 선택하거나 드래그하세요'}
+                {file ? file.name : (
+                  <>
+                    <span className="hidden sm:inline">GPX 파일을 선택하거나 드래그하세요</span>
+                    <span className="sm:hidden">GPX 파일 선택</span>
+                  </>
+                )}
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 .gpx 파일만 지원됩니다
               </p>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                className="mt-2 sm:hidden"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('gpx-file')?.click();
+                }}
+              >
+                파일 선택
+              </Button>
             </div>
             <input
               id="gpx-file"
               type="file"
-              accept=".gpx"
+              accept=".gpx,application/gpx+xml"
               onChange={handleFileChange}
               className="hidden"
+              capture="environment"
             />
           </label>
         </div>
