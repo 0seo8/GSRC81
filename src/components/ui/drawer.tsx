@@ -77,7 +77,7 @@ export function Drawer({ isOpen, onClose, children, className }: DrawerProps) {
       {/* Backdrop */}
       <div
         className={cn(
-          "fixed inset-0 bg-black transition-opacity duration-300 z-40",
+          "fixed inset-0 bg-black transition-opacity duration-300 z-[9998]",
           isOpen ? "bg-opacity-50" : "bg-opacity-0"
         )}
         onClick={onClose}
@@ -86,7 +86,7 @@ export function Drawer({ isOpen, onClose, children, className }: DrawerProps) {
       {/* Drawer */}
       <div
         className={cn(
-          "fixed bg-white shadow-2xl z-50 transform transition-all duration-300 ease-out",
+          "fixed bg-white shadow-2xl z-[9999] transform transition-all duration-300 ease-out",
           // 모바일: 하단에서 올라오는 전체 너비 Drawer
           "bottom-0 left-0 right-0 rounded-t-2xl md:hidden",
           // 데스크탑: 중앙에 고정된 모달 형태

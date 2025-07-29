@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MapboxMap } from "@/components/map/MapboxMap";
 import { CourseMarker } from "@/components/map/CourseMarker";
@@ -10,8 +9,7 @@ import { CourseDetailDrawer } from "@/components/map/CourseDetailDrawer";
 import { CourseListDrawer } from "@/components/map/CourseListDrawer";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAdmin } from "@/contexts/AdminContext";
-import { MapPin, Menu, LogOut, Camera, Shield } from "lucide-react";
+import { MapPin, LogOut, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Course {
@@ -26,6 +24,7 @@ interface Course {
   nearest_station: string;
   is_active: boolean;
   created_at: string;
+  comment_count?: number;
 }
 
 export default function MapPage() {
@@ -37,8 +36,6 @@ export default function MapPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCaptureHelper, setShowCaptureHelper] = useState(true);
   const { logout } = useAuth();
-  const { isAdminAuthenticated } = useAdmin();
-  const router = useRouter();
 
   // Mapbox 토큰 (환경변수에서 가져오기)
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
@@ -46,27 +43,37 @@ export default function MapPage() {
   // 코스 데이터 로드
   useEffect(() => {
     loadCourses();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadCourses = async () => {
     try {
       setLoading(true);
       setError(null);
 
+      // 코스와 댓글 수를 함께 조회
       const { data, error } = await supabase
         .from("courses")
-        .select("*")
+        .select(`
+          *,
+          course_comments(count)
+        `)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
+      // 댓글 수를 포함한 코스 데이터 변환
+      const coursesWithCommentCount = data?.map(course => ({
+        ...course,
+        comment_count: course.course_comments?.[0]?.count || 0
+      })) || [];
+
       console.log(
         "📊 Map page - loadCourses called, got:",
-        data?.length,
+        coursesWithCommentCount?.length,
         "courses"
       );
-      setCourses(data || []);
+      setCourses(coursesWithCommentCount);
     } catch (err) {
       console.error("Failed to load courses:", err);
       setError("코스 데이터를 불러올 수 없습니다.");
@@ -135,9 +142,6 @@ export default function MapPage() {
             </div>
 
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">
-                {courses.length}개 코스
-              </span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -147,17 +151,6 @@ export default function MapPage() {
               >
                 <Camera className="w-4 h-4" />
               </Button>
-              {isAdminAuthenticated && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.push('/admin')}
-                  className="text-gray-600 hover:text-green-600"
-                  title="관리자 페이지"
-                >
-                  <Shield className="w-4 h-4" />
-                </Button>
-              )}
               <Button
                 variant="ghost"
                 size="sm"

@@ -121,6 +121,13 @@ export function AdminLoginForm() {
               <p className="text-sm text-gray-500">
                 관리자만 접근 가능합니다
               </p>
+              <button
+                type="button"
+                onClick={() => window.location.href = '/'}
+                className="mt-2 text-xs text-orange-600 hover:text-orange-700 underline"
+              >
+                사용자 로그인
+              </button>
             </div>
           </CardContent>
         </Card>
