@@ -12,7 +12,7 @@ export interface Course {
   distance_km: number;
   avg_time_min?: number;
   altitude_gain?: number;
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: "easy" | "medium" | "hard";
   nearest_station?: string;
   cover_image_url?: string;
   landmarks?: string[];
@@ -20,6 +20,18 @@ export interface Course {
   created_by?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface CoursePoint {
+  id: string;
+  course_id: string;
+  seq: number;
+  latitude: number;
+  longitude: number;
+  elevation?: number;
+  timestamp?: string;
+  point_geometry?: GeoPoint;
+  created_at: string;
 }
 
 export interface CourseComment {
@@ -58,12 +70,12 @@ export interface AppSetting {
 
 // Geometric Types (PostGIS compatible)
 export interface GeoPoint {
-  type: 'Point';
+  type: "Point";
   coordinates: [number, number]; // [lng, lat]
 }
 
 export interface GeoLineString {
-  type: 'LineString';
+  type: "LineString";
   coordinates: [number, number][]; // [[lng, lat], ...]
 }
 
@@ -110,7 +122,7 @@ export interface CourseForm {
   title: string;
   description: string;
   gpx_file?: File;
-  difficulty: Course['difficulty'];
+  difficulty: Course["difficulty"];
   nearest_station?: string;
   cover_image?: File;
   landmarks?: string[];

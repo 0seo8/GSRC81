@@ -121,14 +121,12 @@ export function CourseDetailDrawer({
 
           <div className="bg-gray-50 rounded-lg p-4 md:p-6">
             <div className="flex items-center space-x-2 mb-2 md:mb-3">
-              <img 
-                src="/character-running-3.svg" 
-                alt="댓글" 
+              <img
+                src="/character-running-3.svg"
+                alt="댓글"
                 className="w-4 h-4 md:w-5 md:h-5 object-contain"
               />
-              <span className="text-sm md:text-base text-gray-600">
-                댓글
-              </span>
+              <span className="text-sm md:text-base text-gray-600">댓글</span>
             </div>
             <p className="text-lg md:text-xl font-semibold text-gray-900">
               {course.comment_count || 0}개

@@ -35,6 +35,7 @@ export default function MapPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCaptureHelper, setShowCaptureHelper] = useState(true);
+  const [preventMapClick, setPreventMapClick] = useState(false);
   const { logout } = useAuth();
 
   // Mapbox 토큰 (환경변수에서 가져오기)
@@ -84,18 +85,48 @@ export default function MapPage() {
 
   const handleMapLoad = (mapInstance: mapboxgl.Map) => {
     setMap(mapInstance);
+    
+    // 지도 클릭 시 drawer 닫기 (마커가 아닌 경우에만)
+    mapInstance.on('click', (e) => {
+      if (preventMapClick) {
+        console.log("🗺️ Map click prevented by marker");
+        return;
+      }
+      
+      console.log("🗺️ Map clicked - closing drawers");
+      setSelectedCourse(null);
+      setSelectedCourses([]);
+    });
   };
 
   const handleCourseClick = useCallback((course: Course) => {
-    console.log("👆 handleCourseClick called for:", course.title);
+    // 지도 클릭 방지 플래그 설정
+    setPreventMapClick(true);
+    
     setSelectedCourse(course);
     setSelectedCourses([]); // 개별 선택 시 리스트 초기화
+    
+    // 짧은 지연 후 플래그 해제
+    setTimeout(() => {
+      setPreventMapClick(false);
+    }, 100);
   }, []);
 
   const handleClusterClick = useCallback((courses: Course[]) => {
-    console.log("👆 handleClusterClick called for:", courses.length, "courses");
+    console.log("📱 handleClusterClick called:", courses.length, "courses");
+    
+    // 지도 클릭 방지 플래그 설정
+    setPreventMapClick(true);
+    
     setSelectedCourses(courses);
     setSelectedCourse(null); // 클러스터 선택 시 개별 선택 초기화
+    
+    // 짧은 지연 후 플래그 해제
+    setTimeout(() => {
+      setPreventMapClick(false);
+    }, 100);
+    
+    console.log("📱 State updated - selectedCourses should be:", courses.length);
   }, []);
 
   const handleLogout = () => {
@@ -229,7 +260,6 @@ export default function MapPage() {
             courses={selectedCourses}
             isOpen={selectedCourses.length > 0}
             onClose={() => setSelectedCourses([])}
-            onCourseSelect={(course) => setSelectedCourse(course)}
           />
 
           {/* 빈 상태 */}

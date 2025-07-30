@@ -226,6 +226,8 @@ export function CourseMarker({
         markerElement.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
+          e.stopImmediatePropagation();
+          
           
           if (isCluster) {
             // 클러스터 클릭 - 코스 리스트 표시

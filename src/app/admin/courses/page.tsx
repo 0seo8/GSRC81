@@ -102,7 +102,7 @@ export default function CoursesManagePage() {
       if (error) throw error;
 
       alert('GPX 파일로부터 코스가 성공적으로 등록되었습니다!');
-      setIsGPXDialogOpen(false);
+      setIsGPXFormExpanded(false);
       loadCourses();
     } catch (error) {
       console.error('Failed to save course from GPX:', error);
@@ -271,7 +271,7 @@ export default function CoursesManagePage() {
               <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 코스가 없습니다</h3>
               <p className="text-gray-600 mb-6">GPX 파일을 업로드하여 첫 번째 러닝 코스를 등록해보세요</p>
-              <Button onClick={() => setIsGPXDialogOpen(true)}>
+              <Button onClick={() => setIsGPXFormExpanded(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 GPX로 첫 코스 등록하기
               </Button>

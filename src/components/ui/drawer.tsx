@@ -14,6 +14,21 @@ export function Drawer({ isOpen, onClose, children, className }: DrawerProps) {
   const [isVisible, setIsVisible] = React.useState(false);
   const [dragStart, setDragStart] = React.useState(0);
   const [dragOffset, setDragOffset] = React.useState(0);
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  console.log("🎭 Drawer render:", { isOpen, isVisible, isMobile });
+
+  // 화면 크기 감지
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -86,25 +101,28 @@ export function Drawer({ isOpen, onClose, children, className }: DrawerProps) {
       {/* Drawer */}
       <div
         className={cn(
-          "fixed bg-white shadow-2xl z-[9999] transform transition-all duration-300 ease-out",
-          // 모바일: 하단에서 올라오는 전체 너비 Drawer
-          "bottom-0 left-0 right-0 rounded-t-2xl md:hidden",
-          // 데스크탑: 중앙에 고정된 모달 형태
-          "md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl md:max-w-2xl md:w-full md:max-h-[90vh]",
-          isOpen
-            ? "translate-y-0 md:translate-y-0"
-            : "translate-y-full md:translate-y-0 md:opacity-0 md:scale-95",
+          "fixed bg-white shadow-2xl z-[9999] transition-all duration-300 ease-out",
+          isMobile 
+            ? "bottom-0 left-0 right-0 rounded-t-2xl transform" 
+            : "inset-0 m-auto rounded-2xl max-w-2xl w-fit h-fit max-h-[90vh]",
           className
         )}
-        style={{
-          transform: isOpen
-            ? `translateY(${dragOffset}px) md:translate(-50%, -50%)`
-            : `translateY(100%) md:translate(-50%, -50%) scale(0.95)`,
-          opacity: isOpen ? 1 : 0,
-        }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        style={
+          isMobile
+            ? {
+                transform: isOpen
+                  ? `translateY(${dragOffset}px)`
+                  : `translateY(100%)`,
+              }
+            : {
+                opacity: isOpen ? 1 : 0,
+                visibility: isOpen ? 'visible' : 'hidden',
+                scale: isOpen ? '1' : '0.95',
+              }
+        }
+        onTouchStart={isMobile ? handleTouchStart : undefined}
+        onTouchMove={isMobile ? handleTouchMove : undefined}
+        onTouchEnd={isMobile ? handleTouchEnd : undefined}
       >
         {/* Handle - 모바일에서만 표시 */}
         <div className="flex justify-center pt-3 pb-2 md:hidden">
