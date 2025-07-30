@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, MessageSquare } from "lucide-react";
+import { Send, MessageSquare, ThumbsUp } from "lucide-react";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -16,6 +16,7 @@ interface CourseComment {
   author_nickname: string;
   message: string;
   created_at: string;
+  likes_count: number;
 }
 
 interface ChatBubbleListProps {
@@ -45,11 +46,51 @@ export function ChatBubbleList({ courseId, onCommentUpdate }: ChatBubbleListProp
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      setComments(data || []);
+      // likes_count가 null인 데이터를 0으로 처리
+      setComments((data || []).map(comment => ({
+        ...comment,
+        likes_count: comment.likes_count ?? 0
+      })));
     } catch (error) {
       console.error("Failed to load comments:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLike = async (commentId: string) => {
+    try {
+      // 먼저 UI를 즉시 업데이트 (낙관적 업데이트)
+      setComments(prev => 
+        prev.map(comment => 
+          comment.id === commentId 
+            ? { ...comment, likes_count: comment.likes_count + 1 }
+            : comment
+        )
+      );
+
+      // 현재 좋아요 수를 가져와서 1 증가
+      const currentComment = comments.find(c => c.id === commentId);
+      if (!currentComment) return;
+
+      const { error } = await supabase
+        .from("course_comments")
+        .update({ likes_count: currentComment.likes_count + 1 })
+        .eq("id", commentId);
+
+      if (error) {
+        // 실패하면 UI 롤백
+        setComments(prev => 
+          prev.map(comment => 
+            comment.id === commentId 
+              ? { ...comment, likes_count: comment.likes_count - 1 }
+              : comment
+          )
+        );
+        throw error;
+      }
+    } catch (error) {
+      console.error("Failed to like comment:", error);
     }
   };
 
@@ -193,17 +234,33 @@ export function ChatBubbleList({ courseId, onCommentUpdate }: ChatBubbleListProp
                     {comment.author_nickname}
                   </span>
                 </div>
-                <p className="text-sm leading-relaxed mb-2">{comment.message}</p>
-                <p
-                  className={`text-xs ${
-                    index % 2 === 0 ? "text-gray-500" : "text-orange-200"
-                  }`}
-                >
-                  {formatDistanceToNow(new Date(comment.created_at), {
-                    addSuffix: true,
-                    locale: ko,
-                  })}
-                </p>
+                <p className="text-sm leading-relaxed mb-3">{comment.message}</p>
+                
+                {/* 좋아요 버튼과 시간 */}
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => handleLike(comment.id)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all hover:scale-105 ${
+                      index % 2 === 0
+                        ? "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                        : "bg-orange-400 hover:bg-orange-300 text-white"
+                    }`}
+                  >
+                    <ThumbsUp className="w-3 h-3" />
+                    <span className="font-medium">{comment.likes_count || 0}</span>
+                  </button>
+                  
+                  <p
+                    className={`text-xs ${
+                      index % 2 === 0 ? "text-gray-500" : "text-orange-200"
+                    }`}
+                  >
+                    {formatDistanceToNow(new Date(comment.created_at), {
+                      addSuffix: true,
+                      locale: ko,
+                    })}
+                  </p>
+                </div>
               </div>
             </div>
           ))
