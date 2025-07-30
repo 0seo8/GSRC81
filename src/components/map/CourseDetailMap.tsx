@@ -92,6 +92,18 @@ export function CourseDetailMap({
     }
   }, [mapStyle]);
 
+  // 지도 크기 변경 시 resize 호출
+  useEffect(() => {
+    if (map.current) {
+      // 약간의 지연을 두고 resize 호출
+      const timer = setTimeout(() => {
+        map.current?.resize();
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [className]);
+
   const loadCourseRoute = async () => {
     if (!map.current) return;
 
@@ -242,7 +254,7 @@ export function CourseDetailMap({
       <div
         ref={mapContainer}
         className="w-full h-full rounded-lg overflow-hidden"
-        style={{ minHeight: "300px" }}
+        style={{ minHeight: "400px" }}
       />
 
       {loading && (
@@ -255,14 +267,14 @@ export function CourseDetailMap({
       )}
 
       {/* 지도 컨트롤 */}
-      <div className="absolute top-4 left-4 flex flex-col gap-2">
+      <div className="absolute top-2 left-2 flex flex-col gap-1">
         {/* 지도 스타일 토글 */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="bg-white rounded-md shadow-md overflow-hidden flex">
           <Button
             variant={mapStyle === "satellite" ? "default" : "ghost"}
             size="sm"
             onClick={() => setMapStyle("satellite")}
-            className="rounded-none border-0 text-xs"
+            className="rounded-none border-0 text-xs px-3 py-1 h-7 flex-1"
           >
             <Satellite className="w-3 h-3 mr-1" />
             위성
@@ -271,7 +283,7 @@ export function CourseDetailMap({
             variant={mapStyle === "streets" ? "default" : "ghost"}
             size="sm"
             onClick={() => setMapStyle("streets")}
-            className="rounded-none border-0 text-xs"
+            className="rounded-none border-0 text-xs px-3 py-1 h-7 flex-1"
           >
             <MapIcon className="w-3 h-3 mr-1" />
             일반
@@ -279,7 +291,7 @@ export function CourseDetailMap({
         </div>
 
         {/* 안내 텍스트 */}
-        <div className="bg-white bg-opacity-90 rounded-lg px-3 py-2 shadow-sm">
+        <div className="bg-white bg-opacity-90 rounded-md px-2 py-1 shadow-sm">
           <p className="text-xs text-gray-600">
             🏃‍♂️ 녹색: 시작점 | 🏁 빨간색: 도착점
           </p>

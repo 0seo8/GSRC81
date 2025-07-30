@@ -165,18 +165,18 @@ export default function CourseDetailPage() {
           <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-100 shadow-sm mb-4">
             {/* 헤더 섹션 */}
             <div className="mb-6">
-              <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-start justify-between gap-3 mb-3 ">
+                <p className="text-base md:text-lg text-gray-600">
+                  {course.description}
+                </p>
                 <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ${getDifficultyColor(
+                  className={`px-3 rounded-full text-sm font-medium whitespace-nowrap ${getDifficultyColor(
                     course.difficulty
                   )}`}
                 >
                   {getDifficultyText(course.difficulty)}
                 </span>
               </div>
-              <p className="text-sm md:text-base text-gray-600 leading-relaxed">
-                {course.description}
-              </p>
             </div>
 
             {/* 통계 섹션 */}
@@ -234,19 +234,11 @@ export default function CourseDetailPage() {
           {/* 코스 지도 */}
           <div className="mb-6">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-              <CourseDetailMap courseId={course.id} className="h-64 md:h-80" />
+              <CourseDetailMap
+                courseId={course.id}
+                className="h-[450px] md:h-[600px]"
+              />
             </div>
-          </div>
-
-          {/* 액션 버튼 */}
-          <div className="mb-6">
-            <Button
-              onClick={handleShowOnMap}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3"
-            >
-              <MapPin className="w-4 h-4 mr-2" />
-              지도에서 보기
-            </Button>
           </div>
         </div>
       </div>
