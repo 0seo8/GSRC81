@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, MessageSquare, ThumbsUp } from "lucide-react";
+import { Send, MessageSquare, ThumbsUp, User } from "lucide-react";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -24,7 +24,10 @@ interface ChatBubbleListProps {
   onCommentUpdate?: () => void;
 }
 
-export function ChatBubbleList({ courseId, onCommentUpdate }: ChatBubbleListProps) {
+export function ChatBubbleList({
+  courseId,
+  onCommentUpdate,
+}: ChatBubbleListProps) {
   const [comments, setComments] = useState<CourseComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [nickname, setNickname] = useState("");
@@ -47,10 +50,12 @@ export function ChatBubbleList({ courseId, onCommentUpdate }: ChatBubbleListProp
 
       if (error) throw error;
       // likes_count가 null인 데이터를 0으로 처리
-      setComments((data || []).map(comment => ({
-        ...comment,
-        likes_count: comment.likes_count ?? 0
-      })));
+      setComments(
+        (data || []).map((comment) => ({
+          ...comment,
+          likes_count: comment.likes_count ?? 0,
+        }))
+      );
     } catch (error) {
       console.error("Failed to load comments:", error);
     } finally {
@@ -61,16 +66,16 @@ export function ChatBubbleList({ courseId, onCommentUpdate }: ChatBubbleListProp
   const handleLike = async (commentId: string) => {
     try {
       // 먼저 UI를 즉시 업데이트 (낙관적 업데이트)
-      setComments(prev => 
-        prev.map(comment => 
-          comment.id === commentId 
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment.id === commentId
             ? { ...comment, likes_count: comment.likes_count + 1 }
             : comment
         )
       );
 
       // 현재 좋아요 수를 가져와서 1 증가
-      const currentComment = comments.find(c => c.id === commentId);
+      const currentComment = comments.find((c) => c.id === commentId);
       if (!currentComment) return;
 
       const { error } = await supabase
@@ -80,9 +85,9 @@ export function ChatBubbleList({ courseId, onCommentUpdate }: ChatBubbleListProp
 
       if (error) {
         // 실패하면 UI 롤백
-        setComments(prev => 
-          prev.map(comment => 
-            comment.id === commentId 
+        setComments((prev) =>
+          prev.map((comment) =>
+            comment.id === commentId
               ? { ...comment, likes_count: comment.likes_count - 1 }
               : comment
           )
@@ -146,9 +151,9 @@ export function ChatBubbleList({ courseId, onCommentUpdate }: ChatBubbleListProp
   const getRandomCharacter = () => {
     const characters = [
       "/character-running-1.svg",
-      "/character-running-2.svg", 
+      "/character-running-2.svg",
       "/character-running-3.svg",
-      "/character-running-4.svg"
+      "/character-running-4.svg",
     ];
     return characters[Math.floor(Math.random() * characters.length)];
   };
@@ -200,14 +205,14 @@ export function ChatBubbleList({ courseId, onCommentUpdate }: ChatBubbleListProp
               {/* 캐릭터 아바타 */}
               <div className="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden">
                 <Image
-                  src={getRandomCharacter()}
+                  src={getRandomCharacter() || "/placeholder.svg"}
                   alt="러닝 캐릭터"
                   width={32}
                   height={32}
                   className="w-8 h-8"
                 />
               </div>
-              
+
               {/* 말풍선 */}
               <div
                 className={`relative max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
@@ -234,8 +239,11 @@ export function ChatBubbleList({ courseId, onCommentUpdate }: ChatBubbleListProp
                     {comment.author_nickname}
                   </span>
                 </div>
-                <p className="text-sm leading-relaxed mb-3">{comment.message}</p>
-                
+
+                <p className="text-sm leading-relaxed mb-3">
+                  {comment.message}
+                </p>
+
                 {/* 좋아요 버튼과 시간 */}
                 <div className="flex items-center justify-between">
                   <button
@@ -247,9 +255,10 @@ export function ChatBubbleList({ courseId, onCommentUpdate }: ChatBubbleListProp
                     }`}
                   >
                     <ThumbsUp className="w-3 h-3" />
-                    <span className="font-medium">{comment.likes_count || 0}</span>
+                    <span className="font-medium">
+                      {comment.likes_count || 0}
+                    </span>
                   </button>
-                  
                   <p
                     className={`text-xs ${
                       index % 2 === 0 ? "text-gray-500" : "text-orange-200"
@@ -267,37 +276,59 @@ export function ChatBubbleList({ courseId, onCommentUpdate }: ChatBubbleListProp
         )}
       </div>
 
-      {/* 입력 폼 */}
-      <div className="p-4 border-t border-gray-100">
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="flex gap-2">
+      {/* 개선된 입력 폼 */}
+      <div className="p-4 border-t border-gray-100 bg-gray-50/50">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* 닉네임 입력 */}
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+              <User className="w-5 h-5 text-orange-600" />
+            </div>
             <Input
               type="text"
-              placeholder="닉네임"
+              placeholder="닉네임을 입력하세요"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              className="w-32 flex-shrink-0"
+              className="flex-1 bg-white border-gray-200 focus:border-orange-300 focus:ring-orange-200"
               maxLength={20}
             />
+          </div>
+
+          {/* 메시지 입력과 전송 버튼 */}
+          <div className="space-y-3">
             <Textarea
-              placeholder="메모를 입력하세요... (예: 코스반환점에 화장실 있어요!)"
+              placeholder="메모를 입력하세요... (예: 코스 반환점에 화장실 있어요!)"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="flex-1 min-h-[44px] max-h-24 resize-none"
+              className="w-full min-h-[80px] bg-white border-gray-200 focus:border-orange-300 focus:ring-orange-200 resize-none"
               maxLength={200}
             />
-            <Button
-              type="submit"
-              disabled={!nickname.trim() || !message.trim() || submitting}
-              className="bg-orange-500 hover:bg-orange-600 flex-shrink-0"
-              size="sm"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
+
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-500">
+                {message.length}/200자 • 따뜻한 응원과 유용한 정보를 남겨주세요
+              </p>
+
+              <Button
+                type="submit"
+                disabled={!nickname.trim() || !message.trim() || submitting}
+                className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 px-6 py-2 font-medium"
+                size="sm"
+              >
+                {submitting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>등록중...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Send className="w-4 h-4" />
+                    <span>메모 등록</span>
+                  </div>
+                )}
+              </Button>
+            </div>
           </div>
-          <p className="text-xs text-gray-500">
-            {message.length}/200자 • 따뜻한 응원과 유용한 정보를 남겨주세요
-          </p>
         </form>
       </div>
     </div>
