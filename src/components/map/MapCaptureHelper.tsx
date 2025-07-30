@@ -201,8 +201,8 @@ export function MapCaptureHelper({ map, onClose }: MapCaptureHelperProps) {
         <div className="font-medium mb-1">💡 디자이너 안내:</div>
         <div className="space-y-1 text-xs">
           <div>1. 줌 10~16 범위에서만 작동</div>
-          <div>2. "이미지 다운로드"로 스크린샷</div>
-          <div>3. "좌표 정보 복사"로 위치 데이터</div>
+          <div>2. &quot;이미지 다운로드&quot;로 스크린샷</div>
+          <div>3. &quot;좌표 정보 복사&quot;로 위치 데이터</div>
           <div>4. 모든 줌에서 동일하게 보이도록 제작</div>
         </div>
       </div>

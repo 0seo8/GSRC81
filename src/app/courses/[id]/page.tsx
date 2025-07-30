@@ -6,6 +6,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { CourseDetailMap } from "@/components/map/CourseDetailMap";
+import { ChatBubbleList } from "@/components/chat/chat-bubble-list";
 import {
   ArrowLeft,
   Clock,
@@ -34,12 +35,14 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [commentCount, setCommentCount] = useState(0);
 
   const courseId = params.id as string;
 
   useEffect(() => {
     if (courseId) {
       loadCourse();
+      loadCommentCount();
     }
   }, [courseId]);
 
@@ -63,6 +66,20 @@ export default function CourseDetailPage() {
       setError("코스를 찾을 수 없습니다.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCommentCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from("course_comments")
+        .select("*", { count: "exact", head: true })
+        .eq("course_id", courseId);
+
+      if (error) throw error;
+      setCommentCount(count || 0);
+    } catch (error) {
+      console.error("Failed to load comment count:", error);
     }
   };
 
@@ -225,7 +242,7 @@ export default function CourseDetailPage() {
                   </span>
                 </div>
                 <p className="text-lg md:text-xl font-bold text-gray-900">
-                  0개
+                  {commentCount}개
                 </p>
               </div>
             </div>
@@ -239,6 +256,14 @@ export default function CourseDetailPage() {
                 className="h-[450px] md:h-[600px]"
               />
             </div>
+          </div>
+
+          {/* 크루원 메모 (말풍선) */}
+          <div className="mb-6">
+            <ChatBubbleList 
+              courseId={course.id} 
+              onCommentUpdate={loadCommentCount}
+            />
           </div>
         </div>
       </div>
