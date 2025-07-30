@@ -172,14 +172,12 @@ export default function AdminDashboard() {
               <span className="text-gray-400 text-lg">›</span>
             </div>
 
-            {/* 댓글 관리 */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50">
-              <span className="text-base font-medium text-gray-900">댓글 관리</span>
-              <span className="text-gray-400 text-lg">›</span>
-            </div>
 
             {/* 비밀번호 관리 */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50">
+            <div 
+              className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50"
+              onClick={() => router.push('/admin/password')}
+            >
               <span className="text-base font-medium text-gray-900">비밀번호 관리</span>
               <span className="text-gray-400 text-lg">›</span>
             </div>
@@ -230,7 +228,11 @@ export default function AdminDashboard() {
                   <Edit className="w-4 h-4 mr-2" />
                   코스 관리
                 </Button>
-                <Button className="w-full justify-start" variant="outline">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => router.push('/admin/password')}
+                >
                   <Lock className="w-4 h-4 mr-2" />
                   앱 비밀번호 변경
                 </Button>

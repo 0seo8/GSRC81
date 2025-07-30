@@ -48,14 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       setIsLoading(true);
 
-      // bcrypt 비교를 위한 간단한 해시 체크 (실제로는 서버에서 해야 함)
-      // 여기서는 하드코딩된 비밀번호로 체크
-      if (password !== 'gsrc81') {
-        setError('비밀번호가 올바르지 않습니다.');
-        return false;
-      }
-
-      // Supabase에서 access_links 테이블 확인
+      // Supabase에서 access_links 테이블 확인 및 비밀번호 검증
       const { data, error } = await supabase
         .from('access_links')
         .select('*')
@@ -70,6 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!data || data.length === 0) {
         setError('유효한 접근 링크가 없습니다.');
+        return false;
+      }
+
+      // 데이터베이스에 저장된 비밀번호와 비교
+      if (password !== data[0].password_hash) {
+        setError('비밀번호가 올바르지 않습니다.');
         return false;
       }
 

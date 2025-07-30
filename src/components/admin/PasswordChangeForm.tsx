@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +18,6 @@ export function PasswordChangeForm({ onClose }: { onClose?: () => void }) {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | null>(null);
   
-  const { logout } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,8 +61,8 @@ export function PasswordChangeForm({ onClose }: { onClose?: () => void }) {
         setMessage('비밀번호가 변경되었습니다. 모든 사용자가 다시 로그인해야 합니다.');
       }, 2000);
 
-    } catch (error: any) {
-      setMessage(error.message || '비밀번호 변경 중 오류가 발생했습니다.');
+    } catch (error: unknown) {
+      setMessage((error as Error).message || '비밀번호 변경 중 오류가 발생했습니다.');
       setMessageType('error');
     } finally {
       setLoading(false);

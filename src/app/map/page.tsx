@@ -10,6 +10,7 @@ import { CourseDetailDrawer } from "@/components/map/CourseDetailDrawer";
 import { CourseListDrawer } from "@/components/map/CourseListDrawer";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import { MapPin } from "lucide-react";
 
 interface Course {
   id: string;

@@ -63,7 +63,7 @@ export interface Admin {
 export interface AppSetting {
   id: string;
   setting_key: string;
-  setting_value: any;
+  setting_value: unknown;
   description?: string;
   updated_at: string;
 }

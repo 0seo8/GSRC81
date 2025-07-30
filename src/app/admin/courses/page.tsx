@@ -78,22 +78,25 @@ export default function CoursesManagePage() {
     }
   };
 
-  const handleGPXSubmit = async (formData: FormData, gpxData: any) => {
+  const handleGPXSubmit = async (formData: FormData, gpxData: unknown) => {
     try {
       setSubmitting(true);
 
       // GPX 데이터에서 코스 정보 추출
+      const gpx = gpxData as Record<string, unknown>;
+      const startPoint = gpx.startPoint as Record<string, number>;
+      
       const courseData = {
         title: formData.get('title') as string,
         description: formData.get('description') as string,
-        start_latitude: gpxData.startPoint.lat,
-        start_longitude: gpxData.startPoint.lng,
-        distance_km: gpxData.distance,
-        avg_time_min: gpxData.duration,
+        start_latitude: startPoint.lat,
+        start_longitude: startPoint.lng,
+        distance_km: gpx.distance as number,
+        avg_time_min: gpx.duration as number,
         difficulty: formData.get('difficulty') as string,
         nearest_station: formData.get('nearest_station') as string,
-        gpx_coordinates: JSON.stringify(gpxData.coordinates), // GPX 좌표 저장
-        elevation_gain: gpxData.elevationGain || 0, // 고도 상승 저장
+        gpx_coordinates: JSON.stringify(gpx.coordinates), // GPX 좌표 저장
+        elevation_gain: (gpx.elevationGain as number) || 0, // 고도 상승 저장
         is_active: true
       };
 
