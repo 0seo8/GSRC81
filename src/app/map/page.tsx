@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AppHeader } from "@/components/common/AppHeader";
 import { MapboxMap } from "@/components/map/MapboxMap";
 import { CourseMarker } from "@/components/map/CourseMarker";
 import { MapCaptureHelper } from "@/components/map/MapCaptureHelper";
 import { CourseDetailDrawer } from "@/components/map/CourseDetailDrawer";
 import { CourseListDrawer } from "@/components/map/CourseListDrawer";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/contexts/AuthContext";
-import { MapPin, LogOut, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Course {
@@ -36,7 +35,6 @@ export default function MapPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCaptureHelper, setShowCaptureHelper] = useState(true);
   const [preventMapClick, setPreventMapClick] = useState(false);
-  const { logout } = useAuth();
 
   // Mapbox 토큰 (환경변수에서 가져오기)
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
@@ -145,41 +143,11 @@ export default function MapPage() {
     <ProtectedRoute>
       <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
         {/* 헤더 */}
-        <header className="bg-white shadow-sm z-10 relative">
-          <div className="px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-gray-900">
-                  GSRC81 Maps
-                </h1>
-                <p className="text-xs text-gray-500">구파발 러너 매퍼</p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowCaptureHelper(!showCaptureHelper)}
-                className="text-gray-600 hover:text-blue-600"
-                title="디자이너 도구 토글"
-              >
-                <Camera className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="text-gray-600 hover:text-red-600"
-              >
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </header>
+        <AppHeader
+          showCaptureButton={true}
+          showCaptureHelper={showCaptureHelper}
+          onToggleCapture={() => setShowCaptureHelper(!showCaptureHelper)}
+        />
 
         {/* 메인 콘텐츠 */}
         <div className="flex-1 relative overflow-hidden">

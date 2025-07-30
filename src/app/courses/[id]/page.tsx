@@ -1,19 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AppHeader } from "@/components/common/AppHeader";
 import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
 import { CourseDetailMap } from "@/components/map/CourseDetailMap";
 import { ChatBubbleList } from "@/components/chat/chat-bubble-list";
-import {
-  ArrowLeft,
-  Clock,
-  MapPin,
-  MessageSquare,
-  Mountain,
-} from "lucide-react";
+import { Clock, MapPin, MessageSquare, Mountain } from "lucide-react";
 
 interface Course {
   id: string;
@@ -31,7 +25,6 @@ interface Course {
 
 export default function CourseDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -109,17 +102,10 @@ export default function CourseDetailPage() {
     }
   };
 
-  const handleBackToMap = () => {
-    router.push("/map");
-  };
-
-  const handleShowOnMap = () => {
-    router.push(`/map?course=${courseId}`);
-  };
-
   if (loading) {
     return (
       <ProtectedRoute>
+        <AppHeader />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
@@ -133,6 +119,7 @@ export default function CourseDetailPage() {
   if (error || !course) {
     return (
       <ProtectedRoute>
+        <AppHeader />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -140,12 +127,6 @@ export default function CourseDetailPage() {
               코스를 찾을 수 없습니다
             </h2>
             <p className="text-gray-600 mb-4">{error}</p>
-            <Button
-              onClick={handleBackToMap}
-              className="bg-orange-500 hover:bg-orange-600"
-            >
-              지도로 돌아가기
-            </Button>
           </div>
         </div>
       </ProtectedRoute>
@@ -156,25 +137,7 @@ export default function CourseDetailPage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
         {/* 헤더 */}
-        <header className="bg-white shadow-sm sticky top-0 z-10">
-          <div className="px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBackToMap}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <div>
-                <h1 className="text-lg font-semibold text-gray-900">
-                  {course.title}
-                </h1>
-              </div>
-            </div>
-          </div>
-        </header>
+        <AppHeader />
 
         {/* 메인 콘텐츠 */}
         <div className="max-w-2xl mx-auto px-4 py-6">
