@@ -92,6 +92,8 @@ export default function CoursesManagePage() {
         avg_time_min: gpxData.duration,
         difficulty: formData.get('difficulty') as string,
         nearest_station: formData.get('nearest_station') as string,
+        gpx_coordinates: JSON.stringify(gpxData.coordinates), // GPX 좌표 저장
+        elevation_gain: gpxData.elevationGain || 0, // 고도 상승 저장
         is_active: true
       };
 

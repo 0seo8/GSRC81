@@ -6,7 +6,13 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { CourseDetailMap } from "@/components/map/CourseDetailMap";
-import { ArrowLeft, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  Clock,
+  MapPin,
+  MessageSquare,
+  Mountain,
+} from "lucide-react";
 
 interface Course {
   id: string;
@@ -146,9 +152,8 @@ export default function CourseDetailPage() {
               </Button>
               <div>
                 <h1 className="text-lg font-semibold text-gray-900">
-                  코스 상세
+                  {course.title}
                 </h1>
-                <p className="text-xs text-gray-500">GSRC81 Maps</p>
               </div>
             </div>
           </div>
@@ -156,94 +161,72 @@ export default function CourseDetailPage() {
 
         {/* 메인 콘텐츠 */}
         <div className="max-w-2xl mx-auto px-4 py-6">
-          {/* 코스 제목 및 난이도 */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="flex items-start justify-between mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {course.title}
-              </h2>
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(
-                  course.difficulty
-                )}`}
-              >
-                {getDifficultyText(course.difficulty)}
-              </span>
-            </div>
-            <p className="text-gray-600 leading-relaxed">
-              {course.description}
-            </p>
-          </div>
-
           {/* 코스 통계 */}
-          <div className="bg-white rounded-lg p-3 md:p-4 border shadow-sm mb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <span
-                className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getDifficultyColor(
-                  course.difficulty
-                )}`}
-              >
-                {getDifficultyText(course.difficulty)}
-              </span>
-              <p className="text-xs md:text-sm text-gray-500 flex-1">
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-100 shadow-sm mb-4">
+            {/* 헤더 섹션 */}
+            <div className="mb-6">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ${getDifficultyColor(
+                    course.difficulty
+                  )}`}
+                >
+                  {getDifficultyText(course.difficulty)}
+                </span>
+              </div>
+              <p className="text-sm md:text-base text-gray-600 leading-relaxed">
                 {course.description}
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <MapPin className="w-3 h-3 md:w-4 md:h-4 text-gray-500" />
-                  <span className="text-xs text-gray-500">거리</span>
+            {/* 통계 섹션 */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <div className="text-center p-3 md:p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <MapPin className="w-4 h-4 text-blue-600" />
+                  <span className="text-xs md:text-sm text-gray-600 font-medium">
+                    거리
+                  </span>
                 </div>
-                <p className="text-base md:text-lg font-bold">
+                <p className="text-lg md:text-xl font-bold text-gray-900">
                   {course.distance_km}km
                 </p>
               </div>
 
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <svg
-                    className="w-3 h-3 md:w-4 md:h-4 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-                    <polyline points="16 7 22 7 22 13"></polyline>
-                  </svg>
-                  <span className="text-xs text-gray-500">시간</span>
+              <div className="text-center p-3 md:p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-green-600" />
+                  <span className="text-xs md:text-sm text-gray-600 font-medium">
+                    시간
+                  </span>
                 </div>
-                <p className="text-base md:text-lg font-bold">
+                <p className="text-lg md:text-xl font-bold text-gray-900">
                   {course.avg_time_min}분
                 </p>
               </div>
 
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <svg
-                    className="w-3 h-3 md:w-4 md:h-4 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="m8 3 4 8 5-5 5 15H2L8 3z"></path>
-                  </svg>
-                  <span className="text-xs text-gray-500">고도</span>
+              <div className="text-center p-3 md:p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Mountain className="w-4 h-4 text-orange-600" />
+                  <span className="text-xs md:text-sm text-gray-600 font-medium">
+                    고도
+                  </span>
                 </div>
-                <p className="text-base md:text-lg font-bold">107m</p>
+                <p className="text-lg md:text-xl font-bold text-gray-900">
+                  107m
+                </p>
               </div>
 
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <img
-                    src="/character-running-3.svg"
-                    alt="댓글"
-                    className="w-3 h-3 md:w-4 md:h-4 object-contain"
-                  />
-                  <span className="text-xs text-gray-500">메모</span>
+              <div className="text-center p-3 md:p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <MessageSquare className="w-4 h-4 text-purple-600" />
+                  <span className="text-xs md:text-sm text-gray-600 font-medium">
+                    메모
+                  </span>
                 </div>
-                <p className="text-base md:text-lg font-bold">0개</p>
+                <p className="text-lg md:text-xl font-bold text-gray-900">
+                  0개
+                </p>
               </div>
             </div>
           </div>
