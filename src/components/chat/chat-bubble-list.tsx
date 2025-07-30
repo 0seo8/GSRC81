@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, MessageSquare, ThumbsUp, User } from "lucide-react";
+import { Send, MessageSquare, ThumbsUp, User, Plus, X } from "lucide-react";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -33,6 +33,7 @@ export function ChatBubbleList({
   const [nickname, setNickname] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showCommentForm, setShowCommentForm] = useState(false);
 
   useEffect(() => {
     loadComments();
@@ -138,6 +139,7 @@ export function ChatBubbleList({
       if (error) throw error;
 
       setMessage("");
+      setShowCommentForm(false); // 폼 닫기
       // 즉시 새로고침
       await loadComments();
       onCommentUpdate?.();
@@ -276,60 +278,90 @@ export function ChatBubbleList({
         )}
       </div>
 
-      {/* 개선된 입력 폼 */}
-      <div className="p-4 border-t border-gray-100 bg-gray-50/50">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 닉네임 입력 */}
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-              <User className="w-5 h-5 text-orange-600" />
-            </div>
-            <Input
-              type="text"
-              placeholder="닉네임을 입력하세요"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              className="flex-1 bg-white border-gray-200 focus:border-orange-300 focus:ring-orange-200"
-              maxLength={20}
-            />
-          </div>
-
-          {/* 메시지 입력과 전송 버튼 */}
-          <div className="space-y-3">
-            <Textarea
-              placeholder="메모를 입력하세요... (예: 코스 반환점에 화장실 있어요!)"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="w-full min-h-[80px] bg-white border-gray-200 focus:border-orange-300 focus:ring-orange-200 resize-none"
-              maxLength={200}
-            />
-
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-500">
-                {message.length}/200자 • 따뜻한 응원과 유용한 정보를 남겨주세요
-              </p>
-
+      {/* 메모 작성 토글 버튼 */}
+      <div className="p-4 border-t border-gray-100">
+        {!showCommentForm ? (
+          <Button
+            onClick={() => setShowCommentForm(true)}
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            메모 작성하기
+          </Button>
+        ) : (
+          <>
+            {/* 닫기 버튼 헤더 */}
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-medium text-gray-900">메모 작성</h4>
               <Button
-                type="submit"
-                disabled={!nickname.trim() || !message.trim() || submitting}
-                className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 px-6 py-2 font-medium"
+                variant="ghost"
                 size="sm"
+                onClick={() => {
+                  setShowCommentForm(false);
+                  setNickname("");
+                  setMessage("");
+                }}
+                className="text-gray-500 hover:text-gray-700"
               >
-                {submitting ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>등록중...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Send className="w-4 h-4" />
-                    <span>메모 등록</span>
-                  </div>
-                )}
+                <X className="w-4 h-4" />
               </Button>
             </div>
-          </div>
-        </form>
+
+            {/* 입력 폼 */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* 닉네임 입력 */}
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-orange-600" />
+                </div>
+                <Input
+                  type="text"
+                  placeholder="닉네임을 입력하세요"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  className="flex-1 bg-white border-gray-200 focus:border-orange-300 focus:ring-orange-200"
+                  maxLength={20}
+                />
+              </div>
+
+              {/* 메시지 입력과 전송 버튼 */}
+              <div className="space-y-3">
+                <Textarea
+                  placeholder="메모를 입력하세요... (예: 코스 반환점에 화장실 있어요!)"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="w-full min-h-[80px] bg-white border-gray-200 focus:border-orange-300 focus:ring-orange-200 resize-none"
+                  maxLength={200}
+                />
+
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">
+                    {message.length}/200자 • 따뜻한 응원과 유용한 정보를 남겨주세요
+                  </p>
+
+                  <Button
+                    type="submit"
+                    disabled={!nickname.trim() || !message.trim() || submitting}
+                    className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 px-6 py-2 font-medium"
+                    size="sm"
+                  >
+                    {submitting ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>등록중...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Send className="w-4 h-4" />
+                        <span>메모 등록</span>
+                      </div>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );
