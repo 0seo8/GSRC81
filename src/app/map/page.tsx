@@ -54,29 +54,26 @@ export default function MapPage() {
       // 코스와 댓글 수를 함께 조회
       const { data, error } = await supabase
         .from("courses")
-        .select(`
+        .select(
+          `
           *,
           course_comments(count)
-        `)
+        `
+        )
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
       // 댓글 수를 포함한 코스 데이터 변환
-      const coursesWithCommentCount = data?.map(course => ({
-        ...course,
-        comment_count: course.course_comments?.[0]?.count || 0
-      })) || [];
+      const coursesWithCommentCount =
+        data?.map((course) => ({
+          ...course,
+          comment_count: course.course_comments?.[0]?.count || 0,
+        })) || [];
 
-      console.log(
-        "📊 Map page - loadCourses called, got:",
-        coursesWithCommentCount?.length,
-        "courses"
-      );
       setCourses(coursesWithCommentCount);
     } catch (err) {
-      console.error("Failed to load courses:", err);
       setError("코스 데이터를 불러올 수 없습니다.");
     } finally {
       setLoading(false);
@@ -85,15 +82,9 @@ export default function MapPage() {
 
   const handleMapLoad = (mapInstance: mapboxgl.Map) => {
     setMap(mapInstance);
-    
+
     // 지도 클릭 시 drawer 닫기 (마커가 아닌 경우에만)
-    mapInstance.on('click', (e) => {
-      if (preventMapClick) {
-        console.log("🗺️ Map click prevented by marker");
-        return;
-      }
-      
-      console.log("🗺️ Map clicked - closing drawers");
+    mapInstance.on("click", (e) => {
       setSelectedCourse(null);
       setSelectedCourses([]);
     });
@@ -102,10 +93,10 @@ export default function MapPage() {
   const handleCourseClick = useCallback((course: Course) => {
     // 지도 클릭 방지 플래그 설정
     setPreventMapClick(true);
-    
+
     setSelectedCourse(course);
     setSelectedCourses([]); // 개별 선택 시 리스트 초기화
-    
+
     // 짧은 지연 후 플래그 해제
     setTimeout(() => {
       setPreventMapClick(false);
@@ -113,20 +104,16 @@ export default function MapPage() {
   }, []);
 
   const handleClusterClick = useCallback((courses: Course[]) => {
-    console.log("📱 handleClusterClick called:", courses.length, "courses");
-    
     // 지도 클릭 방지 플래그 설정
     setPreventMapClick(true);
-    
+
     setSelectedCourses(courses);
     setSelectedCourse(null); // 클러스터 선택 시 개별 선택 초기화
-    
+
     // 짧은 지연 후 플래그 해제
     setTimeout(() => {
       setPreventMapClick(false);
     }, 100);
-    
-    console.log("📱 State updated - selectedCourses should be:", courses.length);
   }, []);
 
   const handleLogout = () => {

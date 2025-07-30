@@ -68,7 +68,6 @@ export function CourseDetailMap({
     );
 
     map.current.on("load", () => {
-      console.log("Map loaded, loading course route...");
       loadCourseRoute();
     });
 
@@ -118,7 +117,6 @@ export function CourseDetailMap({
       if (error) throw error;
 
       if (!courseData) {
-        console.log("코스를 찾을 수 없습니다.");
         setLoading(false);
         return;
       }
@@ -135,7 +133,6 @@ export function CourseDetailMap({
             coord.lng,
             coord.lat,
           ]);
-          console.log(`Found ${coordinates.length} GPX coordinates`);
         } catch (parseError) {
           console.error("GPX 좌표 파싱 오류:", parseError);
           // 파싱 실패 시 시작점만 사용
@@ -146,7 +143,6 @@ export function CourseDetailMap({
       } else {
         // GPX 데이터가 없으면 시작점만 표시
         coordinates = [[courseData.start_longitude, courseData.start_latitude]];
-        console.log("GPX 좌표가 없어 시작점만 표시합니다.");
       }
 
       // 지도 중심을 경로에 맞춤 (참고 코드 스타일)
@@ -221,16 +217,21 @@ export function CourseDetailMap({
         )
         .addTo(map.current);
 
-      // 끝점 마커 (빨간색) - RealMapView 스타일 사용
+      // 끝점 마커 (빨간색) - 시작점과 다른 경우에만 표시
       const lastPoint = coordinates[coordinates.length - 1];
-      new mapboxgl.Marker({ color: "#ef4444" })
-        .setLngLat(lastPoint as [number, number])
-        .setPopup(
-          new mapboxgl.Popup().setHTML(
-            '<div class="font-semibold">🏁 도착점</div>'
+      const startPoint = coordinates[0];
+
+      // 시작점과 끝점이 다른 경우에만 끝점 마커 표시
+      if (lastPoint[0] !== startPoint[0] || lastPoint[1] !== startPoint[1]) {
+        new mapboxgl.Marker({ color: "#ef4444" })
+          .setLngLat(lastPoint as [number, number])
+          .setPopup(
+            new mapboxgl.Popup().setHTML(
+              '<div class="font-semibold">🏁 도착점</div>'
+            )
           )
-        )
-        .addTo(map.current);
+          .addTo(map.current);
+      }
 
       setLoading(false);
     } catch (error) {

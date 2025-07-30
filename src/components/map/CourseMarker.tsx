@@ -35,15 +35,22 @@ interface CourseMarkerProps {
 let effectCallCount = 0;
 
 // 두 지점 간 거리 계산 (Haversine formula)
-function getDistanceInMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+function getDistanceInMeters(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
   const R = 6371000; // 지구 반지름 (미터)
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
 
@@ -65,22 +72,25 @@ export function CourseMarker({
   const [currentZoom, setCurrentZoom] = useState(12);
 
   // 코스들을 클러스터링하는 함수
-  function clusterCourses(courses: Course[], maxDistance: number): CourseCluster[] {
+  function clusterCourses(
+    courses: Course[],
+    maxDistance: number
+  ): CourseCluster[] {
     if (maxDistance === 0) {
       // 클러스터링 없음 - 각 코스를 개별 클러스터로 처리
-      return courses.map(course => ({
+      return courses.map((course) => ({
         id: course.id,
         courses: [course],
         center_lat: course.start_latitude,
         center_lng: course.start_longitude,
-        count: 1
+        count: 1,
       }));
     }
 
     const clusters: CourseCluster[] = [];
     const used = new Set<string>();
 
-    courses.forEach(course => {
+    courses.forEach((course) => {
       if (used.has(course.id)) return;
 
       const cluster: CourseCluster = {
@@ -88,13 +98,13 @@ export function CourseMarker({
         courses: [course],
         center_lat: course.start_latitude,
         center_lng: course.start_longitude,
-        count: 1
+        count: 1,
       };
 
       used.add(course.id);
 
       // 다른 코스들과 거리 비교하여 클러스터에 추가
-      courses.forEach(otherCourse => {
+      courses.forEach((otherCourse) => {
         if (used.has(otherCourse.id)) return;
 
         const distance = getDistanceInMeters(
@@ -113,8 +123,12 @@ export function CourseMarker({
 
       // 클러스터 중심점 재계산 (평균 좌표)
       if (cluster.courses.length > 1) {
-        const avgLat = cluster.courses.reduce((sum, c) => sum + c.start_latitude, 0) / cluster.courses.length;
-        const avgLng = cluster.courses.reduce((sum, c) => sum + c.start_longitude, 0) / cluster.courses.length;
+        const avgLat =
+          cluster.courses.reduce((sum, c) => sum + c.start_latitude, 0) /
+          cluster.courses.length;
+        const avgLng =
+          cluster.courses.reduce((sum, c) => sum + c.start_longitude, 0) /
+          cluster.courses.length;
         cluster.center_lat = avgLat;
         cluster.center_lng = avgLng;
       }
@@ -125,7 +139,6 @@ export function CourseMarker({
     return clusters;
   }
 
-
   // 줌 레벨 추적
   useEffect(() => {
     if (!map) return;
@@ -133,27 +146,24 @@ export function CourseMarker({
     const updateZoom = () => {
       const zoom = map.getZoom();
       setCurrentZoom(zoom);
-      console.log("📊 Zoom level changed to:", zoom);
     };
 
     // 초기 줌 설정
     updateZoom();
 
     // 줌 변경 이벤트 리스너
-    map.on('zoomend', updateZoom);
+    map.on("zoomend", updateZoom);
 
     return () => {
-      map.off('zoomend', updateZoom);
+      map.off("zoomend", updateZoom);
     };
   }, [map]);
 
   // 마커 렌더링 및 클러스터링
   useEffect(() => {
     effectCallCount++;
-    console.log(`🔄 CourseMarker useEffect CALLED #${effectCallCount} - map:`, !!map, "courses count:", courses.length, "zoom:", currentZoom);
 
     if (!map || !courses.length) {
-      console.log("❌ CourseMarker - early return: map=", !!map, "courses.length=", courses.length);
       return;
     }
 
@@ -164,19 +174,19 @@ export function CourseMarker({
 
       // 현재 줌 레벨에 따른 클러스터링 거리 계산
       const clusterDistance = getClusterDistance(currentZoom);
-      console.log(`🎯 Clustering with distance: ${clusterDistance}m at zoom ${currentZoom}`);
 
       // 코스 클러스터링
       const clusters = clusterCourses(courses, clusterDistance);
-      console.log(`📊 Created ${clusters.length} clusters from ${courses.length} courses`);
 
       // 클러스터별 마커 생성
       clusters.forEach((cluster) => {
         const isCluster = cluster.count > 1;
-        
+
         // 마커 엘리먼트 생성
         const markerElement = document.createElement("div");
-        markerElement.className = isCluster ? "course-cluster-marker" : "course-marker";
+        markerElement.className = isCluster
+          ? "course-cluster-marker"
+          : "course-marker";
 
         if (isCluster) {
           // 클러스터 마커 스타일
@@ -206,7 +216,7 @@ export function CourseMarker({
             hard: "#ef4444", // 빨강
           };
           const course = cluster.courses[0];
-          
+
           markerElement.style.cssText = `
             width: 40px;
             height: 40px;
@@ -227,8 +237,7 @@ export function CourseMarker({
           e.preventDefault();
           e.stopPropagation();
           e.stopImmediatePropagation();
-          
-          
+
           if (isCluster) {
             // 클러스터 클릭 - 코스 리스트 표시
             if (onClusterClick) {
@@ -243,31 +252,23 @@ export function CourseMarker({
         });
 
         try {
-          console.log(`🎯 Adding ${isCluster ? 'cluster' : 'marker'} at:`, [cluster.center_lng, cluster.center_lat]);
-          
           // 마커 생성 및 추가
           const marker = new mapboxgl.Marker({
             element: markerElement,
-            draggable: false
+            draggable: false,
           })
             .setLngLat([cluster.center_lng, cluster.center_lat])
             .addTo(map);
 
           markersRef.current.push(marker);
-          
-          console.log(`✅ ${isCluster ? 'Cluster' : 'Marker'} added successfully`);
         } catch (error) {
           console.error("❌ Error adding marker:", error);
         }
       });
-
-      console.log("📍 Total markers in array:", markersRef.current.length);
     };
 
     // map이 완전히 로드되었는지 확인
     if (!map.isStyleLoaded()) {
-      console.log("CourseMarker - map style not loaded yet, waiting...");
-
       // 기존 핸들러 제거
       if (styleLoadHandlerRef.current) {
         map.off("styledata", styleLoadHandlerRef.current);
@@ -275,7 +276,6 @@ export function CourseMarker({
 
       // 새 핸들러 생성 및 저장
       styleLoadHandlerRef.current = () => {
-        console.log("CourseMarker - map style loaded, adding markers");
         addMarkersNow();
       };
 

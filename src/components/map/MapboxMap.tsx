@@ -33,7 +33,6 @@ export function MapboxMap({
     // 컨테이너 크기 확인
     const containerWidth = mapContainer.current.clientWidth;
     const containerHeight = mapContainer.current.clientHeight;
-    console.log("MapboxMap - initializing with size:", containerWidth, "x", containerHeight);
 
     // 지도 생성
     map.current = new mapboxgl.Map({
@@ -51,33 +50,18 @@ export function MapboxMap({
 
     // 지도 로드 완료 시
     map.current.on("load", () => {
-      console.log("MapboxMap - map loaded successfully");
-      console.log(
-        "MapboxMap - map container size:",
-        mapContainer.current?.clientWidth,
-        "x",
-        mapContainer.current?.clientHeight
-      );
-      
       // 지도 크기 재조정 (약간의 지연을 두고)
       setTimeout(() => {
         if (map.current) {
           map.current.resize();
-          console.log("MapboxMap - resized after load");
         }
       }, 100);
-      
+
       setIsLoaded(true);
       if (onMapLoad && map.current) {
-        console.log("MapboxMap - calling onMapLoad");
         onMapLoad(map.current);
       }
     });
-
-    // 지도 렌더링 완료 시 (필요시에만 로그)
-    // map.current.on('render', () => {
-    //   console.log('MapboxMap - map rendered');
-    // });
 
     // 오류 처리
     map.current.on("error", (e) => {
@@ -109,10 +93,10 @@ export function MapboxMap({
       }
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       if (map.current) {
         map.current.remove();
         map.current = null;
@@ -121,17 +105,20 @@ export function MapboxMap({
   }, []); // 필요한 의존성 추가
 
   return (
-    <div className={`relative ${className}`} style={{ width: '100%', height: '100%' }}>
+    <div
+      className={`relative ${className}`}
+      style={{ width: "100%", height: "100%" }}
+    >
       <div
         ref={mapContainer}
         style={{
-          position: 'absolute',
+          position: "absolute",
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          width: '100%',
-          height: '100%',
+          width: "100%",
+          height: "100%",
           background: "#f3f4f6", // 임시 배경색으로 컨테이너 확인
         }}
       />
@@ -150,31 +137,41 @@ export function MapboxMap({
       <div className="absolute top-4 left-4 bg-white rounded-lg shadow-md overflow-hidden">
         <div className="flex flex-col">
           <button
-            onClick={() => map.current?.setStyle("mapbox://styles/mapbox/streets-v12")}
+            onClick={() =>
+              map.current?.setStyle("mapbox://styles/mapbox/streets-v12")
+            }
             className="px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
           >
             일반
           </button>
           <button
-            onClick={() => map.current?.setStyle("mapbox://styles/mapbox/satellite-v9")}
+            onClick={() =>
+              map.current?.setStyle("mapbox://styles/mapbox/satellite-v9")
+            }
             className="px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
           >
             위성
           </button>
           <button
-            onClick={() => map.current?.setStyle("mapbox://styles/mapbox/outdoors-v12")}
+            onClick={() =>
+              map.current?.setStyle("mapbox://styles/mapbox/outdoors-v12")
+            }
             className="px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
           >
             아웃도어
           </button>
           <button
-            onClick={() => map.current?.setStyle("mapbox://styles/mapbox/light-v11")}
+            onClick={() =>
+              map.current?.setStyle("mapbox://styles/mapbox/light-v11")
+            }
             className="px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
           >
             라이트
           </button>
           <button
-            onClick={() => map.current?.setStyle("mapbox://styles/mapbox/dark-v11")}
+            onClick={() =>
+              map.current?.setStyle("mapbox://styles/mapbox/dark-v11")
+            }
             className="px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             다크

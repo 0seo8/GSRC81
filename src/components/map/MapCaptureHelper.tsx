@@ -77,10 +77,6 @@ export function MapCaptureHelper({ map, onClose }: MapCaptureHelperProps) {
       },
     };
 
-    // 콘솔에 출력
-    console.log("=== 지도 캡처 정보 ===");
-    console.log(JSON.stringify(info, null, 2));
-
     // 클립보드에 복사
     navigator.clipboard.writeText(JSON.stringify(info, null, 2));
 

@@ -32,8 +32,6 @@ export function CourseListDrawer({
   onClose,
 }: CourseListDrawerProps) {
   const router = useRouter();
-  
-  console.log("🗂️ CourseListDrawer render:", { isOpen, coursesCount: courses.length });
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
