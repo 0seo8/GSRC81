@@ -246,15 +246,16 @@ export default function CoursesManagePage() {
                     </div>
 
                     <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => alert('수정 기능은 현재 준비 중입니다.')}
-                        className="flex-1"
-                      >
-                        <Edit className="w-4 h-4 mr-1" />
-                        수정
-                      </Button>
+                      <Link href={`/admin/courses/${course.id}/manage`} className="flex-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                        >
+                          <Edit className="w-4 h-4 mr-1" />
+                          관리
+                        </Button>
+                      </Link>
                       <Button
                         size="sm"
                         variant="outline"
