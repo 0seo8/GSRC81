@@ -4,7 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { MapPin, Satellite, Map as MapIcon } from "lucide-react";
+import {
+  MapPin,
+  Satellite,
+  Map as MapIcon,
+  Route,
+  Mountain,
+  Timer,
+} from "lucide-react";
 
 interface Course {
   id: string;
@@ -25,11 +32,13 @@ interface Course {
 interface CourseDetailMapProps {
   courseId: string;
   className?: string;
+  showCompactHeader?: boolean;
 }
 
 export function CourseDetailMap({
   courseId,
   className = "",
+  showCompactHeader = false,
 }: CourseDetailMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -41,6 +50,32 @@ export function CourseDetailMap({
 
   // Mapbox 토큰
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case "easy":
+        return "bg-green-100 text-green-800";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800";
+      case "hard":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getDifficultyText = (difficulty: string) => {
+    switch (difficulty) {
+      case "easy":
+        return "쉬움";
+      case "medium":
+        return "보통";
+      case "hard":
+        return "어려움";
+      default:
+        return difficulty;
+    }
+  };
 
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
@@ -251,51 +286,92 @@ export function CourseDetailMap({
   }
 
   return (
-    <div className={`relative ${className}`}>
-      <div
-        ref={mapContainer}
-        className="w-full h-full rounded-lg overflow-hidden"
-        style={{ minHeight: "400px" }}
-      />
-
-      {loading && (
-        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500 mx-auto mb-2"></div>
-            <p className="text-sm text-gray-600">지도 로딩 중...</p>
+    <div className={`${className}`}>
+      {/* 간결한 코스 헤더 */}
+      {showCompactHeader && course && (
+        <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-green-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                {course.title}
+              </h3>
+              <div>{course.description}</div>
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-1">
+                  <Route className="w-4 h-4" />
+                  <span>{course.distance_km} km</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Mountain className="w-4 h-4" />
+                  <span>+{course.elevation_gain || 448}m</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Timer className="w-4 h-4" />
+                  <span>
+                    {Math.floor(course.avg_time_min / 60)}시간{" "}
+                    {course.avg_time_min % 60}분
+                  </span>
+                </div>
+                <div
+                  className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent hover:bg-primary/80 ${getDifficultyColor(
+                    course.difficulty
+                  )}`}
+                >
+                  {getDifficultyText(course.difficulty)}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* 지도 컨트롤 */}
-      <div className="absolute top-2 left-2 flex flex-col gap-1">
-        {/* 지도 스타일 토글 */}
-        <div className="bg-white rounded-md shadow-md overflow-hidden flex">
-          <Button
-            variant={mapStyle === "satellite" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setMapStyle("satellite")}
-            className="rounded-none border-0 text-xs px-3 py-1 h-7 flex-1"
-          >
-            <Satellite className="w-3 h-3 mr-1" />
-            위성
-          </Button>
-          <Button
-            variant={mapStyle === "streets" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setMapStyle("streets")}
-            className="rounded-none border-0 text-xs px-3 py-1 h-7 flex-1"
-          >
-            <MapIcon className="w-3 h-3 mr-1" />
-            일반
-          </Button>
-        </div>
+      {/* 지도 컨테이너 */}
+      <div className="relative">
+        <div
+          ref={mapContainer}
+          className="w-full h-full rounded-lg overflow-hidden"
+          style={{ minHeight: "400px" }}
+        />
 
-        {/* 안내 텍스트 */}
-        <div className="bg-white bg-opacity-90 rounded-md px-2 py-1 shadow-sm">
-          <p className="text-xs text-gray-600">
-            🏃‍♂️ 녹색: 시작점 | 🏁 빨간색: 도착점
-          </p>
+        {loading && (
+          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500 mx-auto mb-2"></div>
+              <p className="text-sm text-gray-600">지도 로딩 중...</p>
+            </div>
+          </div>
+        )}
+
+        {/* 지도 컨트롤 */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {/* 지도 스타일 토글 */}
+          <div className="bg-white rounded-md shadow-md overflow-hidden flex">
+            <Button
+              variant={mapStyle === "satellite" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setMapStyle("satellite")}
+              className="rounded-none border-0 text-xs px-3 py-1 h-7 flex-1"
+            >
+              <Satellite className="w-3 h-3 mr-1" />
+              위성
+            </Button>
+            <Button
+              variant={mapStyle === "streets" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setMapStyle("streets")}
+              className="rounded-none border-0 text-xs px-3 py-1 h-7 flex-1"
+            >
+              <MapIcon className="w-3 h-3 mr-1" />
+              일반
+            </Button>
+          </div>
+
+          {/* 안내 텍스트 */}
+          <div className="bg-white bg-opacity-90 rounded-md px-2 py-1 shadow-sm">
+            <p className="text-xs text-gray-600">
+              🏃‍♂️ 녹색: 시작점 | 🏁 빨간색: 도착점
+            </p>
+          </div>
         </div>
       </div>
     </div>

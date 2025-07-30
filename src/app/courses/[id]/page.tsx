@@ -179,80 +179,13 @@ export default function CourseDetailPage() {
         {/* 메인 콘텐츠 */}
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* 코스 통계 */}
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-100 shadow-sm mb-4">
-            {/* 헤더 섹션 */}
-            <div className="mb-6">
-              <div className="flex items-start justify-between gap-3 mb-3 ">
-                <p className="text-base md:text-lg text-gray-600">
-                  {course.description}
-                </p>
-                <span
-                  className={`px-3 rounded-full text-sm font-medium whitespace-nowrap ${getDifficultyColor(
-                    course.difficulty
-                  )}`}
-                >
-                  {getDifficultyText(course.difficulty)}
-                </span>
-              </div>
-            </div>
-
-            {/* 통계 섹션 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              <div className="text-center p-3 md:p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <MapPin className="w-4 h-4 text-blue-600" />
-                  <span className="text-xs md:text-sm text-gray-600 font-medium">
-                    거리
-                  </span>
-                </div>
-                <p className="text-lg md:text-xl font-bold text-gray-900">
-                  {course.distance_km}km
-                </p>
-              </div>
-
-              <div className="text-center p-3 md:p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Clock className="w-4 h-4 text-green-600" />
-                  <span className="text-xs md:text-sm text-gray-600 font-medium">
-                    시간
-                  </span>
-                </div>
-                <p className="text-lg md:text-xl font-bold text-gray-900">
-                  {course.avg_time_min}분
-                </p>
-              </div>
-
-              <div className="text-center p-3 md:p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Mountain className="w-4 h-4 text-orange-600" />
-                  <span className="text-xs md:text-sm text-gray-600 font-medium">
-                    고도
-                  </span>
-                </div>
-                <p className="text-lg md:text-xl font-bold text-gray-900">
-                  107m
-                </p>
-              </div>
-
-              <div className="text-center p-3 md:p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <MessageSquare className="w-4 h-4 text-purple-600" />
-                  <span className="text-xs md:text-sm text-gray-600 font-medium">
-                    메모
-                  </span>
-                </div>
-                <p className="text-lg md:text-xl font-bold text-gray-900">
-                  {commentCount}개
-                </p>
-              </div>
-            </div>
-          </div>
 
           {/* 코스 지도 */}
           <div className="mb-6">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <CourseDetailMap
                 courseId={course.id}
+                showCompactHeader={true}
                 className="h-[450px] md:h-[600px]"
               />
             </div>
@@ -260,8 +193,8 @@ export default function CourseDetailPage() {
 
           {/* 크루원 메모 (말풍선) */}
           <div className="mb-6">
-            <ChatBubbleList 
-              courseId={course.id} 
+            <ChatBubbleList
+              courseId={course.id}
               onCommentUpdate={loadCommentCount}
             />
           </div>
