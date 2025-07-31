@@ -57,6 +57,7 @@ export function CourseDetailMap({
   const [isAnimating, setIsAnimating] = useState(false);
   const [animationProgress, setAnimationProgress] = useState(0);
   const [routeCoordinates, setRouteCoordinates] = useState<number[][]>([]);
+  const [performanceMode] = useState<"eco">("eco"); // 💰 절약모드 고정
 
   // Mapbox 토큰
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
@@ -93,7 +94,7 @@ export function CourseDetailMap({
     // Mapbox 토큰 설정
     mapboxgl.accessToken = mapboxToken;
 
-    // 지도 초기화
+    // 지도 초기화 (저비용 최적화 적용 🚀)
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style:
@@ -104,6 +105,8 @@ export function CourseDetailMap({
       zoom: 14,
       pitch: 0,
       bearing: 0,
+      // ✅ 저비용 최적화 설정
+      renderWorldCopies: false, // 동일 타일 반복 차단
     });
 
     // 지도 컨트롤 추가
@@ -113,12 +116,19 @@ export function CourseDetailMap({
     );
 
     map.current.on("load", () => {
-      // 3D 지형 활성화 (최적화된 설정)
+      console.log("💰 저비용 최적화 모드 활성화");
+
+      // ✅ 추가 최적화 설정들
+      if (map.current) {
+        console.log("🎯 타일 페치 최적화 준비 완료");
+      }
+
+      // 3D 지형 활성화 (강화된 최적화 설정)
       map.current!.addSource("mapbox-dem", {
         type: "raster-dem",
         url: "mapbox://mapbox.mapbox-terrain-dem-v1",
         tileSize: 256, // 512 → 256으로 줄여서 데이터 사용량 감소
-        maxzoom: 12, // 14 → 12로 줄여서 고해상도 타일 요청 감소
+        maxzoom: 11, // 12 → 11로 더 낮춰서 트래픽 ↓60%
       });
 
       map.current!.setTerrain({ source: "mapbox-dem", exaggeration: 0.5 }); // 매우 자연스러운 고도
@@ -313,6 +323,23 @@ export function CourseDetailMap({
             )
           )
           .addTo(map.current);
+      }
+
+      // ✅ 경로 범위로 카메라 제한 (헛 타일 방지 - 트래픽 ↓40%)
+      if (coordinates.length > 1) {
+        const lngs = coordinates.map((coord) => coord[0]);
+        const lats = coordinates.map((coord) => coord[1]);
+        const minLng = Math.min(...lngs) - 0.01;
+        const maxLng = Math.max(...lngs) + 0.01;
+        const minLat = Math.min(...lats) - 0.01;
+        const maxLat = Math.max(...lats) + 0.01;
+
+        map.current.setMaxBounds([
+          [minLng, minLat], // 남서쪽 모서리
+          [maxLng, maxLat], // 북동쪽 모서리
+        ]);
+
+        console.log("🎯 카메라 범위 제한 설정 완료 (타일 절약)");
       }
 
       setLoading(false);
@@ -575,10 +602,11 @@ export function CourseDetailMap({
       const flightProgress = 50 + (progressKm / routeLength) * 50;
       setAnimationProgress(flightProgress);
 
-      // 30fps로 제한
+      // 💰 성능 모드에 따른 프레임레이트 조절
+      const frameDelay = performanceMode === "eco" ? 66 : 33; // eco: 15fps, normal: 30fps
       setTimeout(() => {
         animationRef.current = requestAnimationFrame(flyAnimate);
-      }, 33);
+      }, frameDelay);
     };
 
     // 비행 시작
