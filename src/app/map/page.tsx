@@ -115,10 +115,6 @@ export default function MapPage() {
     }, 100);
   }, []);
 
-  const handleLogout = () => {
-    logout();
-  };
-
   if (!mapboxToken) {
     return (
       <ProtectedRoute>
