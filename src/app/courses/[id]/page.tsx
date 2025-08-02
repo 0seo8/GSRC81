@@ -156,45 +156,74 @@ export default function CourseDetailPage() {
 
           {/* 코스 정보 */}
           <div className="w-full">
-            <div className="bg-white border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                {course.title}
-              </h2>
+            <div className="bg-white rounded-t-2xl shadow-sm p-6">
+              {/* 헤더 */}
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                  {course.title}
+                </h1>
+              </div>
 
               {/* 코스 통계 그리드 */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4 mb-6">
                 {/* 거리 */}
-                <div className="border border-gray-200 p-4 text-center">
+                <div className="text-left">
                   <div className="text-2xl font-bold text-gray-900 mb-1">
-                    {course.distance_km}km
+                    {course.distance_km}{" "}
+                    <span className="text-lg font-normal text-gray-700">+</span>
                   </div>
-                  <div className="text-sm text-gray-600">거리</div>
+                  <div className="text-sm text-gray-700 font-medium">
+                    +0.3k (12%)
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">거리 (km)</div>
                 </div>
 
                 {/* 소요시간 */}
-                <div className="border border-gray-200 p-4 text-center">
+                <div className="text-left">
                   <div className="text-2xl font-bold text-gray-900 mb-1">
-                    {course.avg_time_min}분
+                    {Math.round((course.avg_time_min / 60) * 10) / 10}
                   </div>
-                  <div className="text-sm text-gray-600">소요시간</div>
+                  <div className="text-sm text-gray-500">시간</div>
+                  <div className="text-xs text-gray-500 mt-1">예상 시간</div>
                 </div>
 
-                {/* 고도 (임시) */}
-                <div className="border border-gray-200 p-4 text-center">
-                  <div className="text-2xl font-bold text-gray-900 mb-1">-</div>
-                  <div className="text-sm text-gray-600">고도</div>
-                </div>
-
-                {/* 난이도 */}
-                <div className="border border-gray-200 p-4 text-center">
+                {/* 코스 면적/범위 */}
+                <div className="text-left">
                   <div className="text-2xl font-bold text-gray-900 mb-1">
+                    {Math.round(course.distance_km * 100)} m²{" "}
+                    <span className="text-lg font-normal text-gray-700">+</span>
+                  </div>
+                  <div className="text-sm text-gray-700 font-medium">
+                    +{Math.round(course.distance_km * 20)} m² (15%)
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">코스 범위</div>
+                </div>
+
+                {/* 난이도 점수 */}
+                <div className="text-left">
+                  <div className="text-2xl font-bold text-gray-900 mb-1">
+                    {course.difficulty === "easy"
+                      ? "8"
+                      : course.difficulty === "medium"
+                      ? "6"
+                      : "4"}{" "}
+                    점
+                  </div>
+                  <div className="text-sm text-gray-500">
                     {getDifficultyText(course.difficulty)}
                   </div>
-                  <div className="text-sm text-gray-600">난이도</div>
+                  <div className="text-xs text-gray-500 mt-1">난이도 점수</div>
                 </div>
               </div>
 
               {/* 코스 설명 */}
+              {course.description && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {course.description}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
