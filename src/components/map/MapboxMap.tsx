@@ -16,7 +16,7 @@ export function MapboxMap({
   accessToken,
   center = [126.9784, 37.5665], // 서울 중심
   zoom = 10, // 서울 전체가 보이도록 줌 레벨 조정
-  style = "mapbox://styles/mapbox/streets-v12", // 일반 지도를 기본으로
+  style = "mapbox://styles/mapbox/light-v11", // 라이트 지도를 기본으로
   className = "w-full h-full",
   onMapLoad,
 }: MapboxMapProps) {
@@ -25,14 +25,14 @@ export function MapboxMap({
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    console.log("MapboxMap - style:", style);
+  }, [style]);
+
+  useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
     // Mapbox 액세스 토큰 설정
     mapboxgl.accessToken = accessToken;
-
-    // 컨테이너 크기 확인
-    const containerWidth = mapContainer.current.clientWidth;
-    const containerHeight = mapContainer.current.clientHeight;
 
     // 지도 생성
     map.current = new mapboxgl.Map({
@@ -68,11 +68,11 @@ export function MapboxMap({
       console.error("MapboxMap - error:", e);
     });
 
-    // 컨트롤 추가
-    map.current.addControl(
-      new mapboxgl.NavigationControl({ showCompass: false }),
-      "top-right"
-    );
+    // // 컨트롤 추가
+    // map.current.addControl(
+    //   new mapboxgl.NavigationControl({ showCompass: false }),
+    //   "top-right"
+    // );
 
     // 위치 컨트롤 추가
     map.current.addControl(
@@ -127,13 +127,13 @@ export function MapboxMap({
       {!isLoaded && (
         <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-2"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-2"></div>
             <p className="text-sm text-gray-600">지도 로딩 중...</p>
           </div>
         </div>
       )}
 
-      {/* 지도 스타일 선택 버튼 */}
+      {/* 지도 스타일 선택 버튼
       <div className="absolute top-4 left-4 bg-white rounded-lg shadow-md overflow-hidden">
         <div className="flex flex-col">
           <button
@@ -177,7 +177,7 @@ export function MapboxMap({
             다크
           </button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

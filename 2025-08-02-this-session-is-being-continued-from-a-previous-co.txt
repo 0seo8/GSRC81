@@ -1,0 +1,395 @@
+╭─────────────────────────────────────────────────────────╮
+│ ✻ Welcome to Claude Code!                               │
+│                                                         │
+│   /help for help, /status for your current setup        │
+│                                                         │
+│   cwd: /Users/rohyeongseo/Downloads/GSRC81/gsrc81-maps  │
+╰─────────────────────────────────────────────────────────╯
+⏺ Compact summary (ctrl+r to expand)
+  ⎿  Read src/app/courses/[id]/page.tsx (163 lines)
+  ⎿  Read src/lib/gpx-loader.ts (223 lines)
+  ⎿  Read src/components/ui/skeleton.tsx (15 lines)
+  ⎿  Read src/components/ui/badge.tsx (36 lines)
+  ⎿  Todo list read (1 item)
+
+⏺ Bash(npm list react-map-gl)
+  ⎿  gsrc81-maps@0.1.0 /Users/rohyeongseo/Downloads/GSRC81/gsrc81-maps
+     └── react-map-gl@8.0.4
+
+⏺ Read(src/components/map/TrailMap.tsx)
+  ⎿  Read 1281 lines (ctrl+r to expand)
+
+⏺ Now let me check for any TypeScript errors in the current TrailMap component:
+  ⎿  [                                                                                 
+       {
+         "uri": "file:///Users/rohyeongseo/Downloads/GSRC81/.cursor/rules/map-box.mdc",
+     … +856 lines (ctrl+r to expand)
+
+⏺ Now I can see the TypeScript errors. The main issues are:
+
+  1. Type conflicts with react-map-gl version 8.x
+  2. Marker anchor prop doesn't exist in this version
+  3. Map ref type mismatch with getMap() method
+  4. Missing type annotations
+
+  Let me fix these issues by updating the TrailMap component to be compatible with the current
+   react-map-gl version:
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 addition and 2 removals         
+       1    import React, { useEffect, useState, useRef, useCallback } from 'react';
+       2 -  import Map, { Source, Layer, Marker } from 'react-map-gl';
+       2 +  import Map, { Source, Layer, Marker, type MapRef } from 'react-map-gl';
+       3    import { motion, AnimatePresence } from 'framer-motion';
+       4    import { Card, CardContent } from '@/components/ui/card';
+       5    import { Button } from '@/components/ui/button';
+     ...
+        9    import { loadGPXData, TrailData, calculateZoomLevel, POIPoint } from 
+            '@/lib/gpx-loader';
+       10    // import { usePerformanceTracking } from '@/lib/performance-monitor';
+       11    import 'mapbox-gl/dist/mapbox-gl.css';
+       12 -  import mapboxgl from 'mapbox-gl';
+       12    
+       13    interface TrailMapProps {
+       14      courseId: string;
+  ⎿  Found 9 new diagnostic issues in 1 file (ctrl-r to expand)
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 addition and 1 removal           
+       68      const [animationProgress, setAnimationProgress] = useState(0);
+       69      const [selectedPOI, setSelectedPOI] = useState<POIPoint | null>(null);
+       70      const [showPOIs, setShowPOIs] = useState(true);
+       71 -    const mapRef = useRef<mapboxgl.Map | null>(null);
+       71 +    const mapRef = useRef<MapRef | null>(null);
+       72      const animationRef = useRef<number | null>(null);
+       73      
+       74      // 실시간 트레킹 정보
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 2 additions and 4 removals
+       147      // 지도 줌 컨트롤
+       148      const zoomIn = useCallback(() => {
+       149        if (mapRef.current) {
+       150 -        const map = mapRef.current.getMap();
+       151 -        map.zoomIn();
+       150 +        mapRef.current.zoomIn();
+       151        }
+       152      }, []);
+       153    
+       154      const zoomOut = useCallback(() => {
+       155        if (mapRef.current) {
+       156 -        const map = mapRef.current.getMap();
+       157 -        map.zoomOut();
+       156 +        mapRef.current.zoomOut();
+       157        }
+       158      }, []);
+       159    
+  ⎿  Found 7 new diagnostic issues in 1 file (ctrl-r to expand)
+
+⏺ Now let me fix the mapRef.getMap() calls and other issues:
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Error: No changes to make: old_string and new_string are exactly the same.
+
+⏺ Let me check the actual line numbers for the map.getMap() calls:
+
+⏺ Search(pattern: "getMap\(\)", path: "src/components/map/TrailMap.tsx", output_mode:
+        "content")
+  ⎿  Found 6 lines (ctrl+r to expand)
+
+⏺ Now let me fix all the getMap() calls to use the correct MapRef API:
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Error: No changes to make: old_string and new_string are exactly the same.
+
+⏺ Let me replace the getMap() calls with the correct MapRef API calls. In react-map-gl v8, the
+   map methods are directly available on the ref:
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Error: String not found in file. Failed to apply edit.
+
+⏺ Now I can see that the file has been auto-formatted. Let me continue fixing the remaining
+  TypeScript errors. I need to update the Marker anchor props and fix the getMap() calls:
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 removal                                   
+       1188                        key={`poi-${index}`}
+       1189                        longitude={poi.lon}
+       1190                        latitude={poi.lat}
+       1191 -                      anchor="center"
+       1191                      >
+       1192                        <POIMarker poi={poi} onClick={() => setSelectedPOI(poi)} />
+       1193                      </Marker>
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 removal  
+       1198                    <Marker
+       1199                      longitude={hoveredPoint.lon}
+       1200                      latitude={hoveredPoint.lat}
+       1201 -                    anchor="bottom"
+       1201                    >
+       1202                      <motion.div
+       1203                        initial={{ scale: 0 }}
+
+⏺ Now let me fix the getMap() calls that are causing TypeScript errors. In react-map-gl v8,
+  these methods are directly available on the MapRef:
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Error: Found 6 matches of the string to replace, but replace_all is false. To replace all 
+     occurrences, set replace_all to true. To replace only one occurrence, please provide more 
+     context to uniquely identify the instance.
+     String:     const map = mapRef.current.getMap();
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Error: File has been modified since read, either by the user or by a linter. Read it again
+      before attempting to write it.
+
+⏺ Read(src/components/map/TrailMap.tsx)
+  ⎿  Read 50 lines (ctrl+r to expand)
+
+⏺ Let me check for the specific getMap() calls using grep first:
+
+⏺ Search(pattern: "\.getMap\(\)", path: "src/components/map/TrailMap.tsx", output_mode:
+        "content")
+  ⎿  Found 6 lines (ctrl+r to expand)
+
+⏺ Now let me fix all these getMap() calls. In react-map-gl v8, these methods are available
+  directly on the MapRef instance:
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Error: No changes to make: old_string and new_string are exactly the same.
+
+⏺ Let me use a simpler approach and fix them one by one:
+
+⏺ Read(src/components/map/TrailMap.tsx)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 removal
+       401        );
+       402    
+       403        const startTime = Date.now();
+       404 -      const map = mapRef.current.getMap();
+       404        const points = trailData.points;
+       405    
+       406        if (points.length < 2) return;
+  ⎿  Found 2 new diagnostic issues in 1 file (ctrl-r to expand)
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 addition and 1 removal
+       416        );
+       417    
+       418        // 시작 위치로 카메라 이동 (3D 뷰)
+       419 -      map.easeTo({
+       419 +      mapRef.current.easeTo({
+       420          center: [firstPoint.lon, firstPoint.lat],
+       421          zoom: 16.5,
+       422          pitch: 60, // 버드뷰 각도
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 addition and 1 removal         
+       550            );
+       551    
+       552            // 카메라를 현재 위치로 부드럽게 이동 (지형 적응적 설정 적용)
+       553 -          map.easeTo({
+       553 +          mapRef.current?.easeTo({
+       554              center: [cameraLon, cameraLat],
+       555              bearing: bearing - 10, // 진행 방향에서 약간 기울어진 각도
+       556              zoom: cameraSettings.zoom, // 지형에 따른 적응적 줌
+
+⏺ Let me continue fixing the remaining getMap() calls:
+
+⏺ Search(pattern: "\.getMap\(\)", path: "src/components/map/TrailMap.tsx", output_mode:
+        "content")
+  ⎿  Found 5 lines (ctrl+r to expand)
+
+⏺ Read(src/components/map/TrailMap.tsx)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 addition and 2 removals
+       561          } else if (easedProgress === 1 && points.length > 0) {
+       562            // 애니메이션이 끝났을 때 마지막 포인트 처리
+       563            const lastPoint = points[points.length - 1];
+       564 -          const map = mapRef.current.getMap();
+       565 -          map.jumpTo({
+       564 +          mapRef.current?.jumpTo({
+       565              center: [lastPoint.lon, lastPoint.lat],
+       566              zoom: 16,
+       567              pitch: 60,
+  ⎿  Found 2 new diagnostic issues in 1 file (ctrl-r to expand)
+
+⏺ Read(src/components/map/TrailMap.tsx)
+  ⎿  Read 10 lines (ctrl+r to expand)
+  ⎿  Found 2 new diagnostic issues in 1 file (ctrl-r to expand)
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 removal                 
+       597                setTimeout(() => {
+       598                  if (trailData && mapRef.current) {
+       599                    const bounds = trailData.stats.bounds;
+       600 -                  const map = mapRef.current.getMap();
+       600    
+       601                    // 시작점과 도착점이 모두 보이도록 bounds 계산
+       602                    const padding = 0.001; // 약간의 여백 추가
+  ⎿  Found 2 new diagnostic issues in 1 file (ctrl-r to expand)
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 addition and 1 removal                
+       608                    };
+       609    
+       610                    // fitBounds를 사용하여 시작점과 도착점이 모두 보이도록 설정
+       611 -                  map.fitBounds(
+       611 +                  mapRef.current.fitBounds(
+       612                      [
+       613                        [adjustedBounds.minLon, adjustedBounds.minLat],
+       614                        [adjustedBounds.maxLon, adjustedBounds.maxLat],
+
+⏺ Read(src/components/map/TrailMap.tsx)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 removal
+       732      const fitToTrail = useCallback(() => {
+       733        if (trailData && mapRef.current) {
+       734          const bounds = trailData.stats.bounds;
+       735 -        const map = mapRef.current.getMap();
+       735    
+       736          // 애니메이션이 진행 중이면 중단
+       737          if (animationRef.current) {
+  ⎿  Found 2 new diagnostic issues in 1 file (ctrl-r to expand)
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  (No changes)
+
+> 이어서 해줘
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 addition and 1 removal      
+       751          };
+       752    
+       753          // fitBounds를 사용하여 시작점과 도착점이 모두 보이도록 설정
+       754 -        map.fitBounds(
+       754 +        mapRef.current.fitBounds(
+       755            [
+       756              [adjustedBounds.minLon, adjustedBounds.minLat],
+       757              [adjustedBounds.maxLon, adjustedBounds.maxLat],
+
+⏺ Now let me fix the remaining getMap() calls:
+
+⏺ Search(pattern: "\.getMap\(\)", path: "src/components/map/TrailMap.tsx", output_mode:
+        "content")
+  ⎿  Found 2 lines (ctrl+r to expand)
+
+⏺ Read(src/components/map/TrailMap.tsx)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 addition and 1 removal                    
+       799      const onMapLoad = useCallback(() => {
+       800        if (!mapRef.current) return;
+       801    
+       802 -      const map = mapRef.current.getMap();
+       802 +      const map = mapRef.current;
+       803    
+       804        // 지도가 완전히 로드되면 애니메이션 한 번만 시작 (트레일 데이터가 있는 
+     경우)
+       805        // idle 이벤트 리스너를 한 번만 실행하도록 처리
+
+⏺ Read(src/components/map/TrailMap.tsx)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 addition and 1 removal
+       890      useEffect(() => {
+       891        if (!mapRef.current) return;
+       892    
+       893 -      const map = mapRef.current.getMap();
+       893 +      const map = mapRef.current;
+       894    
+       895        if (is3D) {
+       896          // 고저차를 더 명확하게 보이도록 지형 과장 효과 증가
+
+⏺ Now let me check and fix the any type issues in the gpx-loader.ts:
+
+⏺ Update(src/lib/gpx-loader.ts)
+  ⎿  Updated src/lib/gpx-loader.ts with 1 addition and 1 removal
+       36      name: string;
+       37      points: TrailPoint[];
+       38      stats: TrailStats;
+       39 -    geoJSON: any;
+       39 +    geoJSON: GeoJSON.FeatureCollection;
+       40      pois: POIPoint[];
+       41    }
+       42    
+
+⏺ Now let me fix the any types in the TrailMap.tsx:
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 addition and 1 removal                   
+       247    
+       248      // 지형 특성 분석 - 현재 위치 주변의 고도 변화를 분석
+       249      const analyzeTerrainCharacteristics = useCallback(
+       250 -      (points: any[], currentIndex: number, windowSize: number = 10) => {
+       250 +      (points: TrailPoint[], currentIndex: number, windowSize: number = 10) => {
+       251          if (!points || points.length === 0)
+       252            return { elevationVariance: 0, avgElevation: 0, isHighTerrain: false };
+       253    
+  ⎿  Found 1 new diagnostic issue in 1 file (ctrl-r to expand)
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 3 additions and 3 removals                
+       260    
+       261          // 평균 고도 계산
+       262          const avgElevation =
+       263 -          window.reduce((sum: number, p: any) => sum + (p.ele || 0), 0) /
+       263 +          window.reduce((sum: number, p: TrailPoint) => sum + (p.ele || 0), 0) /
+       264            window.length;
+       265    
+       266          // 고도 변화량 계산 (분산)
+       267          const elevationVariance =
+       268 -          window.reduce((sum: number, p: any) => {
+       268 +          window.reduce((sum: number, p: TrailPoint) => {
+       269              const diff = (p.ele || 0) - avgElevation;
+       270              return sum + diff * diff;
+       271            }, 0) / window.length;
+       272    
+       273          // 최고점과 최저점의 차이
+       274 -        const elevations = window.map((p: any) => p.ele || 0);
+       274 +        const elevations = window.map((p: TrailPoint) => p.ele || 0);
+       275          const minEle = Math.min(...elevations);
+       276          const maxEle = Math.max(...elevations);
+       277          const elevationRange = maxEle - minEle;
+
+⏺ Update(src/components/map/TrailMap.tsx)
+  ⎿  Updated src/components/map/TrailMap.tsx with 1 addition and 1 removal                    
+       293    
+       294      // 지형에 따른 카메라 설정 계산 - 가까이서 보도록 조정
+       295      const calculateCameraSettings = useCallback(
+       296 -      (terrainData: any, currentElevation: number) => {
+       296 +      (terrainData: { elevationVariance: number; avgElevation: number; 
+     elevationRange: number; isHighTerrain: boolean; terrainRoughness: number },
+     currentElevation: number) => {
+           + elevationRange: number; isHighTerrain: boolean; terrainRoughness: number }, 
+           + currentElevation: number) => {
+       297          const baseZoom = 16.5; // 기본 줌을 더 가깝게
+       298          const basePitch = 65; // 기본 각도
+       299          const baseDistance = 80; // 기본적으로 훨씬 더 가까이에서 시작
+
+⏺ Now fix the GeoJSON type issue:
+
+⏺ Update(src/lib/gpx-loader.ts)
+  ⎿  Updated src/lib/gpx-loader.ts with 1 addition and 1 removal
+       171        };
+       172    
+       173        // GeoJSON 생성
+       174 -      const geoJSON = {
+       174 +      const geoJSON: GeoJSON.FeatureCollection = {
+       175          type: 'FeatureCollection',
+       176          features: [{
+       177            type: 'Feature',
+  ⎿  Found 1 new diagnostic issue in 1 file (ctrl-r to expand)
+  ⎿  Claude usage limit reached. Your limit will reset at 7pm (Asia/Seoul).
+
+      • /upgrade to increase your usage limit.
+

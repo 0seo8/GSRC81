@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin } from 'lucide-react';
-import { ANIMATION_CONFIG, STORAGE_KEYS } from '@/lib/constants';
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MapPin } from "lucide-react";
+import { ANIMATION_CONFIG, STORAGE_KEYS } from "@/lib/constants";
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -15,7 +15,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   useEffect(() => {
     // 스플래시 화면이 이미 표시되었는지 확인
     const hasShownSplash = localStorage.getItem(STORAGE_KEYS.SPLASH_SHOWN);
-    
+
     if (hasShownSplash) {
       // 이미 표시했다면 즉시 완료
       onComplete();
@@ -25,7 +25,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
 
     // 첫 방문이면 애니메이션 실행
     const timer = setTimeout(() => {
-      localStorage.setItem(STORAGE_KEYS.SPLASH_SHOWN, 'true');
+      localStorage.setItem(STORAGE_KEYS.SPLASH_SHOWN, "true");
       setIsVisible(false);
       setTimeout(onComplete, ANIMATION_CONFIG.FADE_DURATION);
     }, ANIMATION_CONFIG.SPLASH_DURATION);
@@ -51,12 +51,12 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
                 type: "spring",
                 stiffness: 260,
                 damping: 20,
-                delay: 0.1
+                delay: 0.1,
               }}
               className="mb-8"
             >
               <div className="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center shadow-lg">
-                <MapPin className="w-12 h-12 text-orange-500" />
+                <MapPin className="w-12 h-12 text-gray-700" />
               </div>
             </motion.div>
 
@@ -103,12 +103,12 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
                     className="w-2 h-2 bg-white rounded-full"
                     animate={{
                       scale: [1, 1.5, 1],
-                      opacity: [0.5, 1, 0.5]
+                      opacity: [0.5, 1, 0.5],
                     }}
                     transition={{
                       duration: 1,
                       repeat: Infinity,
-                      delay: i * 0.2
+                      delay: i * 0.2,
                     }}
                   />
                 ))}

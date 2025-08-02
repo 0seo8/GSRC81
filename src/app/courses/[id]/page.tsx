@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { AppHeader } from "@/components/common/AppHeader";
+
 import { supabase } from "@/lib/supabase";
-import { CourseDetailMap } from "@/components/map/CourseDetailMap";
+
 import { ChatBubbleList } from "@/components/chat/chat-bubble-list";
-import { Clock, MapPin, MessageSquare, Mountain } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 interface Course {
   id: string;
@@ -22,6 +23,18 @@ interface Course {
   is_active: boolean;
   created_at: string;
 }
+
+const TrailMap = dynamic(() => import("@/components/map/TrailMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[450px] md:h-[600px] bg-gray-100 rounded-lg flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
+        <p className="text-gray-600">지도를 불러오는 중...</p>
+      </div>
+    </div>
+  ),
+});
 
 export default function CourseDetailPage() {
   const params = useParams();
@@ -79,11 +92,11 @@ export default function CourseDetailPage() {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "easy":
-        return "bg-green-100 text-green-800";
+        return "bg-gray-100 text-gray-800";
       case "medium":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-gray-200 text-gray-800";
       case "hard":
-        return "bg-red-100 text-red-800";
+        return "bg-gray-300 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -105,7 +118,6 @@ export default function CourseDetailPage() {
   if (loading) {
     return (
       <ProtectedRoute>
-        <AppHeader />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
@@ -119,7 +131,6 @@ export default function CourseDetailPage() {
   if (error || !course) {
     return (
       <ProtectedRoute>
-        <AppHeader />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -136,9 +147,6 @@ export default function CourseDetailPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
-        {/* 헤더 */}
-        <AppHeader />
-
         {/* 메인 콘텐츠 */}
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* 코스 통계 */}
@@ -146,9 +154,8 @@ export default function CourseDetailPage() {
           {/* 코스 지도 */}
           <div className="mb-6">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-              <CourseDetailMap
+              <TrailMap
                 courseId={course.id}
-                showCompactHeader={true}
                 className="h-[450px] md:h-[600px]"
               />
             </div>

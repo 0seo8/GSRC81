@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Drawer } from "@/components/ui/drawer";
-import { X, MapPin, Clock, TrendingUp } from "lucide-react";
+import { X, Clock, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Course {
@@ -36,11 +36,11 @@ export function CourseListDrawer({
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "easy":
-        return "bg-green-100 text-green-800";
+        return "bg-gray-100 text-gray-800";
       case "medium":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-gray-200 text-gray-800";
       case "hard":
-        return "bg-red-100 text-red-800";
+        return "bg-gray-300 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -119,13 +119,13 @@ export function CourseListDrawer({
 
               <div className="grid grid-cols-3 gap-3 md:gap-4 text-xs md:text-sm">
                 <div className="flex items-center space-x-1 md:space-x-2">
-                  <TrendingUp className="w-3 h-3 md:w-4 md:h-4 text-orange-500 flex-shrink-0" />
+                  <TrendingUp className="w-3 h-3 md:w-4 md:h-4 text-gray-600 flex-shrink-0" />
                   <span className="text-gray-600 truncate">
                     {course.distance_km}km
                   </span>
                 </div>
                 <div className="flex items-center space-x-1 md:space-x-2">
-                  <Clock className="w-3 h-3 md:w-4 md:h-4 text-blue-500 flex-shrink-0" />
+                  <Clock className="w-3 h-3 md:w-4 md:h-4 text-gray-600 flex-shrink-0" />
                   <span className="text-gray-600 truncate">
                     {course.avg_time_min}분
                   </span>

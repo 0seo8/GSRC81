@@ -215,7 +215,6 @@ export default function CourseManagePage() {
     { value: "hard", label: "어려움" },
   ];
 
-
   if (loading) {
     return (
       <ProtectedAdminRoute>
@@ -253,24 +252,6 @@ export default function CourseManagePage() {
   return (
     <ProtectedAdminRoute>
       <div className="min-h-screen bg-gray-50">
-        {/* 헤더 */}
-        <header className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center py-4">
-              <Link href="/admin/courses">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
-              </Link>
-              <div className="">
-                <h1 className="text-xl font-semibold text-gray-900">
-                  {course.title}
-                </h1>
-              </div>
-            </div>
-          </div>
-        </header>
-
         {/* 메인 콘텐츠 */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Tabs
@@ -312,7 +293,7 @@ export default function CourseManagePage() {
                           className={errors.title ? "border-red-300" : ""}
                         />
                         {errors.title && (
-                          <p className="text-red-500 text-xs mt-1">
+                          <p className="text-gray-600 text-xs mt-1">
                             {errors.title}
                           </p>
                         )}
@@ -380,7 +361,7 @@ export default function CourseManagePage() {
                             }
                           />
                           {errors.distance_km && (
-                            <p className="text-red-500 text-xs mt-1">
+                            <p className="text-gray-600 text-xs mt-1">
                               {errors.distance_km}
                             </p>
                           )}
@@ -406,7 +387,7 @@ export default function CourseManagePage() {
                             }
                           />
                           {errors.avg_time_min && (
-                            <p className="text-red-500 text-xs mt-1">
+                            <p className="text-gray-600 text-xs mt-1">
                               {errors.avg_time_min}
                             </p>
                           )}
@@ -511,7 +492,7 @@ export default function CourseManagePage() {
                         </div>
                       </div>
                       {errors.coordinates && (
-                        <p className="text-red-500 text-xs">
+                        <p className="text-gray-600 text-xs">
                           {errors.coordinates}
                         </p>
                       )}
@@ -550,7 +531,7 @@ export default function CourseManagePage() {
                       <Button
                         type="submit"
                         disabled={saving}
-                        className="bg-blue-600 hover:bg-blue-700"
+                        className="bg-gray-700 hover:bg-gray-800"
                       >
                         {saving ? (
                           <>
@@ -607,7 +588,7 @@ export default function CourseManagePage() {
                                   comment.author_nickname
                                 )
                               }
-                              className="text-red-600 hover:text-red-700 hover:border-red-300 ml-4"
+                              className="text-gray-600 hover:text-gray-700 hover:border-gray-300 ml-4"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>

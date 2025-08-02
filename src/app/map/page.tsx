@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { AppHeader } from "@/components/common/AppHeader";
+
 import { MapboxMap } from "@/components/map/MapboxMap";
 import { CourseMarker } from "@/components/map/CourseMarker";
-import { MapCaptureHelper } from "@/components/map/MapCaptureHelper";
 import { CourseDetailDrawer } from "@/components/map/CourseDetailDrawer";
 import { CourseListDrawer } from "@/components/map/CourseListDrawer";
 import { supabase } from "@/lib/supabase";
@@ -34,7 +33,6 @@ export default function MapPage() {
   const [selectedCourses, setSelectedCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCaptureHelper, setShowCaptureHelper] = useState(true);
   const [preventMapClick, setPreventMapClick] = useState(false);
 
   // Mapbox 토큰 (환경변수에서 가져오기)
@@ -139,13 +137,6 @@ export default function MapPage() {
   return (
     <ProtectedRoute>
       <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
-        {/* 헤더 */}
-        <AppHeader
-          showCaptureButton={true}
-          showCaptureHelper={showCaptureHelper}
-          onToggleCapture={() => setShowCaptureHelper(!showCaptureHelper)}
-        />
-
         {/* 메인 콘텐츠 */}
         <div className="flex-1 relative overflow-hidden">
           {/* 지도 */}
@@ -155,7 +146,7 @@ export default function MapPage() {
             zoom={14}
             onMapLoad={handleMapLoad}
             className="w-full h-full"
-            style="mapbox://styles/mapbox/streets-v12" // 일반 지도로 변경
+            style="mapbox://styles/mapbox/light-v11" // 라이트 지도로 변경
           />
 
           {/* 코스 마커 */}
@@ -168,19 +159,11 @@ export default function MapPage() {
             />
           )}
 
-          {/* 디자이너용 캡처 도구 */}
-          {map && showCaptureHelper && (
-            <MapCaptureHelper
-              map={map}
-              onClose={() => setShowCaptureHelper(false)}
-            />
-          )}
-
           {/* 로딩 상태 */}
           {loading && (
             <div className="absolute top-20 left-4 bg-white rounded-lg shadow-md p-3 z-10">
               <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
                 <span className="text-sm text-gray-600">코스 로딩 중...</span>
               </div>
             </div>
@@ -188,13 +171,13 @@ export default function MapPage() {
 
           {/* 에러 메시지 */}
           {error && (
-            <div className="absolute top-20 left-4 bg-red-50 border border-red-200 rounded-lg p-3 max-w-sm z-10">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="absolute top-20 left-4 bg-gray-50 border border-gray-200 rounded-lg p-3 max-w-sm z-10">
+              <p className="text-sm text-gray-700">{error}</p>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={loadCourses}
-                className="mt-2 text-red-600 hover:text-red-700"
+                className="mt-2 text-gray-600 hover:text-gray-700"
               >
                 다시 시도
               </Button>

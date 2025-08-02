@@ -148,18 +148,18 @@ export function MapCaptureHelper({ map, onClose }: MapCaptureHelperProps) {
         <div>
           중심: [{currentCenter[0].toFixed(4)}, {currentCenter[1].toFixed(4)}]
         </div>
-        <div className="text-green-600 mt-1">{captureInfo}</div>
+        <div className="text-gray-600 mt-1">{captureInfo}</div>
       </div>
 
       {/* 줌 범위 안내 */}
-      <div className="mb-4 p-3 bg-blue-50 rounded text-xs">
-        <div className="font-medium text-blue-800 mb-2">🔒 고정 줌 범위</div>
-        <div className="text-blue-700">
+      <div className="mb-4 p-3 bg-gray-50 rounded text-xs">
+        <div className="font-medium text-gray-800 mb-2">🔒 고정 줌 범위</div>
+        <div className="text-gray-700">
           <div>최소: {ZOOM_RANGE.min} (서울 전체)</div>
           <div>기본: {ZOOM_RANGE.default} (은평구 중심)</div>
           <div>최대: {ZOOM_RANGE.max} (상세 지역)</div>
         </div>
-        <div className="mt-2 text-blue-600 font-medium">
+        <div className="mt-2 text-gray-600 font-medium">
           → 이 범위에서만 사용자가 줌 가능
         </div>
       </div>
@@ -169,7 +169,7 @@ export function MapCaptureHelper({ map, onClose }: MapCaptureHelperProps) {
         <Button
           onClick={captureMapInfo}
           size="sm"
-          className="w-full bg-orange-500 hover:bg-orange-600"
+          className="w-full bg-gray-600 hover:bg-gray-700"
         >
           <Camera className="w-3 h-3 mr-1" />
           좌표 정보 복사
@@ -197,7 +197,7 @@ export function MapCaptureHelper({ map, onClose }: MapCaptureHelperProps) {
       </div>
 
       {/* 사용법 */}
-      <div className="mt-4 p-2 bg-green-50 rounded text-xs text-green-700">
+      <div className="mt-4 p-2 bg-gray-50 rounded text-xs text-gray-700">
         <div className="font-medium mb-1">💡 디자이너 안내:</div>
         <div className="space-y-1 text-xs">
           <div>1. 줌 10~16 범위에서만 작동</div>

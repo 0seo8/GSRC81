@@ -1,28 +1,34 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Lock, User, Eye, EyeOff } from 'lucide-react';
-import { useAdmin } from '@/contexts/AdminContext';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Shield, Lock, User, Eye, EyeOff } from "lucide-react";
+import { useAdmin } from "@/contexts/AdminContext";
 
 export function AdminLoginForm() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { adminLogin, isLoading, error } = useAdmin();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const success = await adminLogin(username, password);
     if (success) {
-      router.push('/admin');
+      router.push("/admin");
     }
   };
 
@@ -39,12 +45,17 @@ export function AdminLoginForm() {
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 260, damping: 20 }}
-              className="mx-auto w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-4"
+              transition={{
+                delay: 0.2,
+                type: "spring",
+                stiffness: 260,
+                damping: 20,
+              }}
+              className="mx-auto w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mb-4"
             >
               <Shield className="w-8 h-8 text-white" />
             </motion.div>
-            
+
             <CardTitle className="text-2xl font-bold text-gray-900">
               관리자 로그인
             </CardTitle>
@@ -103,28 +114,24 @@ export function AdminLoginForm() {
               </div>
 
               {error && (
-                <div className="text-sm text-red-600 text-center">
-                  {error}
-                </div>
+                <div className="text-sm text-gray-700 text-center">{error}</div>
               )}
 
-              <Button 
-                type="submit" 
-                className="w-full bg-blue-500 hover:bg-blue-600"
+              <Button
+                type="submit"
+                className="w-full bg-gray-700 hover:bg-gray-800"
                 disabled={isLoading}
               >
-                {isLoading ? '로그인 중...' : '관리자 로그인'}
+                {isLoading ? "로그인 중..." : "관리자 로그인"}
               </Button>
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-500">
-                관리자만 접근 가능합니다
-              </p>
+              <p className="text-sm text-gray-500">관리자만 접근 가능합니다</p>
               <button
                 type="button"
-                onClick={() => window.location.href = '/'}
-                className="mt-2 text-xs text-orange-600 hover:text-orange-700 underline"
+                onClick={() => (window.location.href = "/")}
+                className="mt-2 text-xs text-gray-600 hover:text-gray-700 underline"
               >
                 사용자 로그인
               </button>
@@ -133,15 +140,17 @@ export function AdminLoginForm() {
         </Card>
 
         {/* Development hint */}
-        {process.env.NODE_ENV === 'development' && (
+        {process.env.NODE_ENV === "development" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
-            className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-center"
+            className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md text-center"
           >
-            <p className="text-sm text-blue-600">
-              개발 모드: 사용자명 <code className="bg-blue-100 px-1 rounded">admin</code>, 비밀번호 <code className="bg-blue-100 px-1 rounded">admin123</code>
+            <p className="text-sm text-gray-600">
+              개발 모드: 사용자명{" "}
+              <code className="bg-gray-100 px-1 rounded">admin</code>, 비밀번호{" "}
+              <code className="bg-gray-100 px-1 rounded">admin123</code>
             </p>
           </motion.div>
         )}

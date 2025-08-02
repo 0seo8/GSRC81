@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 
 interface Course {
@@ -54,11 +54,10 @@ function getDistanceInMeters(
   return R * c;
 }
 
-// 줌 레벨에 따른 클러스터링 거리 기준
+// 클러스터링 완전히 비활성화
 function getClusterDistance(zoom: number): number {
-  if (zoom <= 12) return 200; // 200m
-  if (zoom <= 15) return 100; // 100m
-  return 0; // 클러스터링 없음
+  // 클러스터링 없음 - 모든 점을 개별적으로 표시
+  return 0;
 }
 
 export function CourseMarker({
@@ -69,7 +68,7 @@ export function CourseMarker({
 }: CourseMarkerProps) {
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const styleLoadHandlerRef = useRef<(() => void) | null>(null);
-  const [currentZoom, setCurrentZoom] = useState(12);
+  // 줌 레벨 고정 (클러스터링이 일정하므로 불필요)
 
   // 코스들을 클러스터링하는 함수
   function clusterCourses(
@@ -139,25 +138,7 @@ export function CourseMarker({
     return clusters;
   }
 
-  // 줌 레벨 추적
-  useEffect(() => {
-    if (!map) return;
-
-    const updateZoom = () => {
-      const zoom = map.getZoom();
-      setCurrentZoom(zoom);
-    };
-
-    // 초기 줌 설정
-    updateZoom();
-
-    // 줌 변경 이벤트 리스너
-    map.on("zoomend", updateZoom);
-
-    return () => {
-      map.off("zoomend", updateZoom);
-    };
-  }, [map]);
+  // Mapbox 마커는 자동으로 지도와 동기화됨
 
   // 마커 렌더링 및 클러스터링
   useEffect(() => {
@@ -172,8 +153,8 @@ export function CourseMarker({
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
 
-      // 현재 줌 레벨에 따른 클러스터링 거리 계산
-      const clusterDistance = getClusterDistance(currentZoom);
+      // 고정된 클러스터링 거리 사용
+      const clusterDistance = getClusterDistance(0); // 줌 레벨 무관
 
       // 코스 클러스터링
       const clusters = clusterCourses(courses, clusterDistance);
@@ -193,7 +174,7 @@ export function CourseMarker({
           markerElement.style.cssText = `
             width: 50px;
             height: 50px;
-            background-color: #ff6b35;
+            background-color: #1f2937;
             border: 4px solid white;
             border-radius: 50%;
             cursor: pointer;
@@ -204,16 +185,16 @@ export function CourseMarker({
             font-weight: bold;
             font-size: 18px;
             color: white;
-            z-index: 999;
-            position: relative;
+            position: absolute;
+            transform: translate(-50%, -50%);
           `;
           markerElement.textContent = cluster.count.toString();
         } else {
           // 개별 마커 스타일
           const colors = {
-            easy: "#10b981", // 초록
-            medium: "#f59e0b", // 노랑
-            hard: "#ef4444", // 빨강
+            easy: "#6b7280", // 그레이
+            medium: "#4b5563", // 다크 그레이
+            hard: "#374151", // 더 다크 그레이
           };
           const course = cluster.courses[0];
 
@@ -225,8 +206,8 @@ export function CourseMarker({
             border-radius: 50%;
             cursor: pointer;
             box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-            z-index: 999;
-            position: relative;
+            position: absolute;
+            transform: translate(-50%, -50%);
             display: block !important;
             visibility: visible !important;
           `;
@@ -252,10 +233,11 @@ export function CourseMarker({
         });
 
         try {
-          // 마커 생성 및 추가
+          // 마커 생성 및 추가 (anchor를 center로 설정)
           const marker = new mapboxgl.Marker({
             element: markerElement,
             draggable: false,
+            anchor: "center",
           })
             .setLngLat([cluster.center_lng, cluster.center_lat])
             .addTo(map);
@@ -297,7 +279,7 @@ export function CourseMarker({
         styleLoadHandlerRef.current = null;
       }
     };
-  }, [map, courses, currentZoom, onCourseClick, onClusterClick]);
+  }, [map, courses, onCourseClick, onClusterClick]);
 
   return null;
 }

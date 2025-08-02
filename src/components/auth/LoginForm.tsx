@@ -1,27 +1,33 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Lock, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { MapPin, Lock, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function LoginForm() {
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { login, isLoading, error } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const success = await login(password);
     if (success) {
-      router.push('/splash');
+      router.push("/splash");
     }
   };
 
@@ -38,12 +44,17 @@ export function LoginForm() {
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 260, damping: 20 }}
-              className="mx-auto w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mb-4"
+              transition={{
+                delay: 0.2,
+                type: "spring",
+                stiffness: 260,
+                damping: 20,
+              }}
+              className="mx-auto w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mb-4"
             >
               <MapPin className="w-8 h-8 text-white" />
             </motion.div>
-            
+
             <CardTitle className="text-2xl font-bold text-gray-900">
               GSRC81 Maps
             </CardTitle>
@@ -86,17 +97,15 @@ export function LoginForm() {
               </div>
 
               {error && (
-                <div className="text-sm text-red-600 text-center">
-                  {error}
-                </div>
+                <div className="text-sm text-gray-700 text-center">{error}</div>
               )}
 
-              <Button 
-                type="submit" 
-                className="w-full bg-orange-500 hover:bg-orange-600"
+              <Button
+                type="submit"
+                className="w-full bg-gray-700 hover:bg-gray-800"
                 disabled={isLoading}
               >
-                {isLoading ? '로그인 중...' : '접속하기'}
+                {isLoading ? "로그인 중..." : "접속하기"}
               </Button>
             </form>
 
@@ -106,8 +115,8 @@ export function LoginForm() {
               </p>
               <button
                 type="button"
-                onClick={() => window.location.href = '/admin/login'}
-                className="mt-2 text-xs text-blue-600 hover:text-blue-700 underline"
+                onClick={() => (window.location.href = "/admin/login")}
+                className="mt-2 text-xs text-gray-600 hover:text-gray-700 underline"
               >
                 관리자 로그인
               </button>
@@ -116,15 +125,17 @@ export function LoginForm() {
         </Card>
 
         {/* Development hint */}
-        {process.env.NODE_ENV === 'development' && (
+        {process.env.NODE_ENV === "development" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
-            className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-center"
+            className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md text-center"
           >
-            <p className="text-sm text-blue-600">
-              개발 모드: <code className="bg-blue-100 px-1 rounded">gsrc81</code> 또는 <code className="bg-blue-100 px-1 rounded">admin123</code>
+            <p className="text-sm text-gray-600">
+              개발 모드:{" "}
+              <code className="bg-gray-100 px-1 rounded">gsrc81</code> 또는{" "}
+              <code className="bg-gray-100 px-1 rounded">admin123</code>
             </p>
           </motion.div>
         )}

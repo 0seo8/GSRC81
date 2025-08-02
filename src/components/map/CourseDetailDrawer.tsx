@@ -38,11 +38,11 @@ export function CourseDetailDrawer({
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "easy":
-        return "bg-green-100 text-green-800";
+        return "bg-gray-100 text-gray-800";
       case "medium":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-gray-200 text-gray-800";
       case "hard":
-        return "bg-red-100 text-red-800";
+        return "bg-gray-300 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -99,7 +99,7 @@ export function CourseDetailDrawer({
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-gray-50 rounded-lg p-4 md:p-6">
             <div className="flex items-center space-x-2 mb-2 md:mb-3">
-              <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-orange-500" />
+              <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
               <span className="text-sm md:text-base text-gray-600">거리</span>
             </div>
             <p className="text-lg md:text-xl font-semibold text-gray-900">
@@ -109,7 +109,7 @@ export function CourseDetailDrawer({
 
           <div className="bg-gray-50 rounded-lg p-4 md:p-6">
             <div className="flex items-center space-x-2 mb-2 md:mb-3">
-              <Clock className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />
+              <Clock className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
               <span className="text-sm md:text-base text-gray-600">
                 소요시간
               </span>
@@ -137,7 +137,7 @@ export function CourseDetailDrawer({
         {/* Action Buttons */}
         <div className="pt-4">
           <Button
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3"
+            className="w-full bg-gray-700 hover:bg-gray-800 text-white font-medium py-3"
             onClick={() => {
               router.push(`/courses/${course.id}`);
               onClose();
