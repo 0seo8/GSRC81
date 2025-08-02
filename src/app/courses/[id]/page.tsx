@@ -150,7 +150,7 @@ export default function CourseDetailPage() {
         {/* 메인 콘텐츠 */}
         <div className="max-w-2xl mx-auto">
           {/* 코스 지도 */}
-          <div className="relative mb-8 overflow-hidden">
+          <div className="relative overflow-hidden">
             <TrailMap courseId={course.id} className="h-[70vh] md:h-[80vh]" />
           </div>
 
