@@ -37,7 +37,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className="fixed inset-0 bg-gradient-to-br from-orange-500 via-orange-400 to-amber-400 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-gradient-to-br from-gray-600 via-gray-500 to-gray-400 flex items-center justify-center z-50"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: ANIMATION_CONFIG.FADE_DURATION / 1000 }}
@@ -56,7 +56,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               className="mb-8"
             >
               <div className="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center shadow-lg">
-                <MapPin className="w-12 h-12 text-gray-700" />
+                <MapPin className="w-12 h-12 text-gray-800" />
               </div>
             </motion.div>
 

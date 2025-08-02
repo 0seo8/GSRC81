@@ -54,7 +54,7 @@ export default function SplashPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-400 via-orange-500 to-amber-500 flex items-center justify-center overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-600 via-gray-500 to-gray-400 flex items-center justify-center overflow-hidden">
       <motion.div
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{

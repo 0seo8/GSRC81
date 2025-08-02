@@ -43,7 +43,7 @@ const POI_CONFIG = {
   start: { icon: Flag, color: "bg-green-500", textColor: "text-green-100" },
   end: { icon: Flag, color: "bg-red-500", textColor: "text-red-100" },
   viewpoint: { icon: Eye, color: "bg-blue-500", textColor: "text-blue-100" },
-  rest: { icon: Coffee, color: "bg-orange-500", textColor: "text-orange-100" },
+  rest: { icon: Coffee, color: "bg-gray-500", textColor: "text-gray-100" },
   landmark: {
     icon: Trees,
     color: "bg-purple-500",

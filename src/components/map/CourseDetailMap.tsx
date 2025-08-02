@@ -1003,7 +1003,7 @@ export function CourseDetailMap({
               <div className="mt-3 pt-3 border-t border-white/20">
                 <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
                   <motion.div
-                    className="h-full bg-gradient-to-r from-orange-400 to-orange-600"
+                    className="h-full bg-gradient-to-r from-gray-400 to-gray-600"
                     initial={{ width: 0 }}
                     animate={{ width: `${animationProgress}%` }}
                     transition={{ duration: 0.3 }}
