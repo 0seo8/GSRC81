@@ -27,7 +27,7 @@ interface Course {
 const TrailMap = dynamic(() => import("@/components/map/TrailMap"), {
   ssr: false,
   loading: () => (
-    <div className="h-[450px] md:h-[600px] bg-gray-100 rounded-lg flex items-center justify-center">
+    <div className="h-[70vh] md:h-[80vh] bg-gray-100 rounded-lg flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
         <p className="text-gray-600">지도를 불러오는 중...</p>
@@ -148,18 +148,10 @@ export default function CourseDetailPage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
         {/* 메인 콘텐츠 */}
-        <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="max-w-2xl mx-auto ">
           {/* 코스 통계 */}
-
           {/* 코스 지도 */}
-          <div className="mb-6">
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-              <TrailMap
-                courseId={course.id}
-                className="h-[450px] md:h-[600px]"
-              />
-            </div>
-          </div>
+          <TrailMap courseId={course.id} className="h-[70vh] md:h-[80vh]" />
 
           {/* 크루원 메모 (말풍선) */}
           <div className="mb-6">

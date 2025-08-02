@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import Map, { Source, Layer, Marker } from "react-map-gl/mapbox";
+import Map, { Source, Layer, Marker, MapRef } from "react-map-gl/mapbox";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -128,8 +128,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
   const [animationProgress, setAnimationProgress] = useState(0);
   const [selectedPOI, setSelectedPOI] = useState<POIPoint | null>(null);
   const [showPOIs, setShowPOIs] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<MapRef>(null);
   const animationRef = useRef<number | null>(null);
 
   // 실시간 트레킹 정보
@@ -209,13 +208,13 @@ const TrailMap: React.FC<TrailMapProps> = ({
   // 지도 줌 컨트롤
   const zoomIn = useCallback(() => {
     if (mapRef.current) {
-      mapRef.current.zoomIn();
+      mapRef.current.getMap().zoomIn();
     }
   }, []);
 
   const zoomOut = useCallback(() => {
     if (mapRef.current) {
-      mapRef.current.zoomOut();
+      mapRef.current.getMap().zoomOut();
     }
   }, []);
 
@@ -251,14 +250,26 @@ const TrailMap: React.FC<TrailMapProps> = ({
   const analyzeTerrainCharacteristics = useCallback(
     (points: TrailPoint[], currentIndex: number, windowSize: number = 10) => {
       if (!points || points.length === 0)
-        return { elevationVariance: 0, avgElevation: 0, elevationRange: 0, isHighTerrain: false, terrainRoughness: 0 };
+        return {
+          elevationVariance: 0,
+          avgElevation: 0,
+          elevationRange: 0,
+          isHighTerrain: false,
+          terrainRoughness: 0,
+        };
 
       const start = Math.max(0, currentIndex - windowSize);
       const end = Math.min(points.length, currentIndex + windowSize);
       const window = points.slice(start, end);
 
       if (window.length === 0)
-        return { elevationVariance: 0, avgElevation: 0, elevationRange: 0, isHighTerrain: false, terrainRoughness: 0 };
+        return {
+          elevationVariance: 0,
+          avgElevation: 0,
+          elevationRange: 0,
+          isHighTerrain: false,
+          terrainRoughness: 0,
+        };
 
       // 평균 고도 계산
       const avgElevation =
@@ -293,7 +304,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
     []
   );
 
-  // 지형에 따른 카메라 설정 계산 - 가까이서 보도록 조정
+  // 지형에 따른 카메라 설정 계산 - 비행하는 느낌을 위해 조정
   const calculateCameraSettings = useCallback(
     (
       terrainData: {
@@ -305,33 +316,33 @@ const TrailMap: React.FC<TrailMapProps> = ({
       },
       currentElevation: number
     ) => {
-      const baseZoom = 16.5; // 기본 줌을 더 가깝게
-      const basePitch = 65; // 기본 각도
-      const baseDistance = 80; // 기본적으로 훨씬 더 가까이에서 시작
+      const baseZoom = 15.5; // 더 넓은 시야로 비행감 증대
+      const basePitch = 55; // 낮은 각도로 더 비행기 시점
+      const baseDistance = 120; // 더 먼 거리에서 비행감 연출
 
       let zoomAdjustment = 0;
       let pitchAdjustment = 0;
       let distanceOffset = baseDistance;
-      let elevationOffset = 50; // 기본 고도 오프셋
+      let elevationOffset = 80; // 더 높은 고도에서 비행
 
       if (terrainData.isHighTerrain) {
-        // 산악 지형: 조금 더 뒤에서, 높은 각도로
-        zoomAdjustment = -0.5; // 약간 줌 아웃
-        pitchAdjustment = 5; // 더 위에서 내려다보기
-        distanceOffset = 120; // 카메라를 조금 더 뒤로
-        elevationOffset = 100; // 더 높은 고도 오프셋
+        // 산악 지형: 높이 날아가기
+        zoomAdjustment = -0.3;
+        pitchAdjustment = 10; // 더 위에서 내려다보기
+        distanceOffset = 200; // 더 멀리서
+        elevationOffset = 150; // 훨씬 높은 고도
       } else if (terrainData.elevationRange < 30) {
-        // 평지: 더 가깝게, 낮은 각도로
-        zoomAdjustment = 0.3; // 약간 줌 인
-        pitchAdjustment = -5; // 약간 더 평평한 각도
-        distanceOffset = 50; // 더 가까운 거리
-        elevationOffset = 30; // 낮은 고도 오프셋
+        // 평지: 낮게 비행
+        zoomAdjustment = 0.2;
+        pitchAdjustment = -5; // 더 수평으로
+        distanceOffset = 100; // 적당한 거리
+        elevationOffset = 60; // 낮은 고도
       } else {
-        // 일반 지형: 중간 설정
+        // 일반 지형: 중간 비행
         zoomAdjustment = 0;
         pitchAdjustment = 0;
-        distanceOffset = 80; // 적당한 거리
-        elevationOffset = 60; // 중간 고도 오프셋
+        distanceOffset = 120;
+        elevationOffset = 80;
       }
 
       // 지형 험준도에 따른 추가 조정
@@ -339,14 +350,14 @@ const TrailMap: React.FC<TrailMapProps> = ({
         terrainData.terrainRoughness / 100,
         1
       );
-      zoomAdjustment -= roughnessAdjustment * 0.2; // 조정량 감소
-      distanceOffset += roughnessAdjustment * 30; // 거리 증가량 감소
-      elevationOffset += roughnessAdjustment * 20; // 고도 오프셋 증가
+      zoomAdjustment -= roughnessAdjustment * 0.15;
+      distanceOffset += roughnessAdjustment * 50; // 험한 지형에서는 더 멀리
+      elevationOffset += roughnessAdjustment * 30; // 더 높이
 
       return {
-        zoom: Math.max(15.5, Math.min(17.5, baseZoom + zoomAdjustment)), // 더 가까운 줌 범위
-        pitch: Math.max(55, Math.min(70, basePitch + pitchAdjustment)), // 각도 범위 조정
-        distanceOffset: Math.max(50, Math.min(150, distanceOffset)), // 50-150m 범위로 제한
+        zoom: Math.max(14.5, Math.min(16.5, baseZoom + zoomAdjustment)), // 더 넓은 줌 범위
+        pitch: Math.max(45, Math.min(65, basePitch + pitchAdjustment)), // 비행기 각도 범위
+        distanceOffset: Math.max(80, Math.min(250, distanceOffset)), // 80-250m 범위로 확장
         elevationOffset, // 카메라가 지형보다 높이 위치할 오프셋
         cameraElevation: currentElevation + elevationOffset, // 실제 카메라 고도
       };
@@ -426,12 +437,12 @@ const TrailMap: React.FC<TrailMapProps> = ({
       lookAheadPoint.lon
     );
 
-    // 시작 위치로 카메라 이동 (3D 뷰)
-    mapRef.current.easeTo({
+    // 시작 위치로 카메라 이동 (비행 시작 각도)
+    mapRef.current.getMap().easeTo({
       center: [firstPoint.lon, firstPoint.lat],
-      zoom: 16.5,
-      pitch: 60, // 버드뷰 각도
-      bearing: initialBearing - 10,
+      zoom: 15.0, // 더 넓은 시야로 시작
+      pitch: 50, // 비행기 시점으로 시작
+      bearing: initialBearing - 15, // 약간 더 기울어진 각도
       duration: 2000, // 2초 동안 부드럽게 이동
       essential: true,
     });
@@ -539,9 +550,9 @@ const TrailMap: React.FC<TrailMapProps> = ({
           currentElevation
         );
 
-        // 진행 방향 계산 (다음 몇 개 포인트를 보고 방향 결정)
+        // 진행 방향 계산 (더 먼 포인트를 보고 부드러운 방향 결정)
         let bearing = 0;
-        const lookAhead = Math.min(8, points.length - currentIndex - 1);
+        const lookAhead = Math.min(15, points.length - currentIndex - 1); // 더 먼 미래 지점을 봄
         if (lookAhead > 0) {
           const futurePoint = points[currentIndex + lookAhead];
           bearing = calculateBearing(
@@ -561,18 +572,19 @@ const TrailMap: React.FC<TrailMapProps> = ({
         );
 
         // 카메라를 현재 위치로 부드럽게 이동 (지형 적응적 설정 적용)
-        mapRef.current?.easeTo({
+        mapRef.current?.getMap().easeTo({
           center: [cameraLon, cameraLat],
-          bearing: bearing - 10, // 진행 방향에서 약간 기울어진 각도
+          bearing: bearing - 5, // 진행 방향에 더 가깝게 정렬
           zoom: cameraSettings.zoom, // 지형에 따른 적응적 줌
           pitch: cameraSettings.pitch, // 지형에 따른 적응적 각도
-          duration: 1000, // 훨씬 더 느린 카메라 이동 (300 -> 1000ms)
+          duration: 200, // 더 빠른 카메라 이동으로 부드러운 비행감
           essential: true,
+          easing: (t) => 1 - Math.pow(1 - t, 3), // easeOutCubic으로 더 자연스러운 비행
         });
       } else if (easedProgress === 1 && points.length > 0) {
         // 애니메이션이 끝났을 때 마지막 포인트 처리
         const lastPoint = points[points.length - 1];
-        mapRef.current?.jumpTo({
+        mapRef.current?.getMap().jumpTo({
           center: [lastPoint.lon, lastPoint.lat],
           zoom: 16,
           pitch: 60,
@@ -619,7 +631,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
                 };
 
                 // fitBounds를 사용하여 시작점과 도착점이 모두 보이도록 설정
-                mapRef.current.fitBounds(
+                mapRef.current.getMap().fitBounds(
                   [
                     [adjustedBounds.minLon, adjustedBounds.minLat],
                     [adjustedBounds.maxLon, adjustedBounds.maxLat],
@@ -689,7 +701,8 @@ const TrailMap: React.FC<TrailMapProps> = ({
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const originalCoordinates = (trailData.geoJSON.features[0].geometry as any).coordinates;
+    const originalCoordinates = (trailData.geoJSON.features[0].geometry as any)
+      .coordinates;
     const points = trailData.points;
 
     // currentAnimationPoint.index까지의 좌표들
@@ -762,7 +775,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
       };
 
       // fitBounds를 사용하여 시작점과 도착점이 모두 보이도록 설정
-      mapRef.current.fitBounds(
+      mapRef.current.getMap().fitBounds(
         [
           [adjustedBounds.minLon, adjustedBounds.minLat],
           [adjustedBounds.maxLon, adjustedBounds.maxLat],
@@ -810,7 +823,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
   const onMapLoad = useCallback(() => {
     if (!mapRef.current) return;
 
-    const map = mapRef.current;
+    const map = mapRef.current.getMap();
 
     // 지도가 완전히 로드되면 애니메이션 한 번만 시작 (트레일 데이터가 있는 경우)
     // idle 이벤트 리스너를 한 번만 실행하도록 처리
@@ -901,7 +914,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
   useEffect(() => {
     if (!mapRef.current) return;
 
-    const map = mapRef.current;
+    const map = mapRef.current.getMap();
 
     if (is3D) {
       // 고저차를 더 명확하게 보이도록 지형 과장 효과 증가
@@ -1109,14 +1122,10 @@ const TrailMap: React.FC<TrailMapProps> = ({
           <div className="relative h-[500px] overflow-hidden">
             <Map
               ref={mapRef}
-              longitude={viewState.longitude}
-              latitude={viewState.latitude}
-              zoom={viewState.zoom}
-              pitch={viewState.pitch}
-              bearing={viewState.bearing}
+              {...viewState}
+              onMove={(evt) => setViewState(evt.viewState)}
               mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
-              width="100%"
-              height="100%"
+              style={{ width: "100%", height: "100%" }}
               mapStyle={
                 is3D
                   ? "mapbox://styles/mapbox/satellite-v9"

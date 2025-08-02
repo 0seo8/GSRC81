@@ -43,8 +43,8 @@ export function MapboxMap({
       pitch: 0,
       bearing: 0,
       antialias: true,
-      maxZoom: 16, // 최대 줌 제한 (너무 확대되지 않게)
-      minZoom: 10, // 최소 줌 제한 (서울 전체가 보이는 정도)
+      maxZoom: 18, // 최대 줌 제한 (상세 보기 가능)
+      minZoom: 8, // 최소 줌 제한 (더 넓은 지역 보기 가능)
       preserveDrawingBuffer: true, // 캔버스 캡처를 위해 필요
     });
 
@@ -67,12 +67,6 @@ export function MapboxMap({
     map.current.on("error", (e) => {
       console.error("MapboxMap - error:", e);
     });
-
-    // // 컨트롤 추가
-    // map.current.addControl(
-    //   new mapboxgl.NavigationControl({ showCompass: false }),
-    //   "top-right"
-    // );
 
     // 위치 컨트롤 추가
     map.current.addControl(
@@ -102,7 +96,8 @@ export function MapboxMap({
         map.current = null;
       }
     };
-  }, []); // 필요한 의존성 추가
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken]); // 지도는 한 번만 생성하면 됨
 
   return (
     <div

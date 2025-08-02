@@ -67,10 +67,10 @@ export function CourseDetailDrawer({
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 leading-tight">
               {course.title}
             </h2>
-            <p className="text-gray-600 text-sm md:text-base leading-relaxed">
+            <p className="text-gray-600 text-base md:text-lg leading-relaxed font-medium">
               {course.description}
             </p>
           </div>
@@ -78,66 +78,62 @@ export function CourseDetailDrawer({
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-1 md:p-2"
+            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full"
           >
-            <X className="w-5 h-5 md:w-6 md:h-6" />
+            <X className="w-5 h-5" />
           </Button>
         </div>
 
         {/* Difficulty Badge */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-start">
           <span
-            className={`px-3 py-1 md:px-4 md:py-2 rounded-full text-sm md:text-base font-medium ${getDifficultyColor(
+            className={`px-4 py-2 rounded-full text-sm font-semibold ${getDifficultyColor(
               course.difficulty
-            )}`}
+            )} border`}
           >
             {getDifficultyText(course.difficulty)}
           </span>
         </div>
 
         {/* Course Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-gray-50 rounded-lg p-4 md:p-6">
-            <div className="flex items-center space-x-2 mb-2 md:mb-3">
-              <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
-              <span className="text-sm md:text-base text-gray-600">거리</span>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-gray-100 border border-gray-200 rounded-xl p-4 md:p-5">
+            <div className="flex items-center space-x-2 mb-2">
+              <TrendingUp className="w-4 h-4 text-gray-500" />
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">거리</span>
             </div>
-            <p className="text-lg md:text-xl font-semibold text-gray-900">
+            <p className="text-xl font-bold text-gray-800">
               {course.distance_km}km
             </p>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4 md:p-6">
-            <div className="flex items-center space-x-2 mb-2 md:mb-3">
-              <Clock className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
-              <span className="text-sm md:text-base text-gray-600">
-                소요시간
+          <div className="bg-gray-100 border border-gray-200 rounded-xl p-4 md:p-5">
+            <div className="flex items-center space-x-2 mb-2">
+              <Clock className="w-4 h-4 text-gray-500" />
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                시간
               </span>
             </div>
-            <p className="text-lg md:text-xl font-semibold text-gray-900">
+            <p className="text-xl font-bold text-gray-800">
               {course.avg_time_min}분
             </p>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4 md:p-6">
-            <div className="flex items-center space-x-2 mb-2 md:mb-3">
-              <img
-                src="/character-running-3.svg"
-                alt="댓글"
-                className="w-4 h-4 md:w-5 md:h-5 object-contain"
-              />
-              <span className="text-sm md:text-base text-gray-600">댓글</span>
+          <div className="bg-gray-100 border border-gray-200 rounded-xl p-4 md:p-5">
+            <div className="flex items-center space-x-2 mb-2">
+              <MessageCircle className="w-4 h-4 text-gray-500" />
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">댓글</span>
             </div>
-            <p className="text-lg md:text-xl font-semibold text-gray-900">
+            <p className="text-xl font-bold text-gray-800">
               {course.comment_count || 0}개
             </p>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="pt-4">
+        <div className="pt-6">
           <Button
-            className="w-full bg-gray-700 hover:bg-gray-800 text-white font-medium py-3"
+            className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-4 rounded-xl shadow-sm transition-all duration-200"
             onClick={() => {
               router.push(`/courses/${course.id}`);
               onClose();

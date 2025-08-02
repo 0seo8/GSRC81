@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import { Textarea } from "@/components/ui/textarea";
-import { Send, MessageSquare, User, Plus, X } from "lucide-react";
+import { Send, MessageSquare, Plus, X } from "lucide-react";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -29,7 +29,6 @@ export function ChatBubbleList({
 }: ChatBubbleListProps) {
   const [comments, setComments] = useState<CourseComment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [nickname, setNickname] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showCommentForm, setShowCommentForm] = useState(false);
@@ -83,13 +82,13 @@ export function ChatBubbleList({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nickname.trim() || !message.trim()) return;
+    if (!message.trim()) return;
 
     setSubmitting(true);
     try {
       const { error } = await supabase.from("course_comments").insert({
         course_id: courseId,
-        author_nickname: nickname.trim(),
+        author_nickname: "익명",
         message: message.trim(),
       });
 
@@ -230,7 +229,6 @@ export function ChatBubbleList({
                 size="sm"
                 onClick={() => {
                   setShowCommentForm(false);
-                  setNickname("");
                   setMessage("");
                 }}
                 className="text-gray-500 hover:text-gray-700"
@@ -259,7 +257,7 @@ export function ChatBubbleList({
 
                   <Button
                     type="submit"
-                    disabled={!nickname.trim() || !message.trim() || submitting}
+                    disabled={!message.trim() || submitting}
                     className="bg-gray-700 hover:bg-gray-800 disabled:bg-gray-300 px-6 py-2 font-medium"
                     size="sm"
                   >

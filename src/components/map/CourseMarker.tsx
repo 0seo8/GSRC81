@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 
 interface Course {
@@ -54,10 +54,13 @@ function getDistanceInMeters(
   return R * c;
 }
 
-// 클러스터링 완전히 비활성화
+// 줌 레벨에 따른 클러스터링 거리 계산
 function getClusterDistance(zoom: number): number {
-  // 클러스터링 없음 - 모든 점을 개별적으로 표시
-  return 0;
+  if (zoom >= 15) return 0; // 줌 15+ : 클러스터링 없음 (임계값 낮춤)
+  if (zoom >= 13) return 150; // 줌 13-14 : 150m (더 세밀하게)
+  if (zoom >= 11) return 300; // 줌 11-12 : 300m
+  if (zoom >= 8) return 800; // 줌 8-10 : 800m
+  return 1500; // 줄 8 미만 : 1500m
 }
 
 export function CourseMarker({
@@ -68,7 +71,33 @@ export function CourseMarker({
 }: CourseMarkerProps) {
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const styleLoadHandlerRef = useRef<(() => void) | null>(null);
-  // 줌 레벨 고정 (클러스터링이 일정하므로 불필요)
+  const [zoomLevel, setZoomLevel] = useState<number>(10);
+
+  // 줌 레벨 변경 감지
+  useEffect(() => {
+    if (!map) return;
+
+    // 초기 줌 레벨 설정
+    const initialZoom = map.getZoom();
+    setZoomLevel(initialZoom);
+
+    // 줌 이벤트 리스너 (debounce 적용)
+    let timeoutId: NodeJS.Timeout;
+    const handleZoom = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        const newZoom = map.getZoom();
+        setZoomLevel(newZoom);
+      }, 50); // 50ms debounce (더 빠른 반응)
+    };
+
+    map.on("zoom", handleZoom);
+
+    return () => {
+      clearTimeout(timeoutId);
+      map.off("zoom", handleZoom);
+    };
+  }, [map]);
 
   // 코스들을 클러스터링하는 함수
   function clusterCourses(
@@ -153,8 +182,8 @@ export function CourseMarker({
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
 
-      // 고정된 클러스터링 거리 사용
-      const clusterDistance = getClusterDistance(0); // 줌 레벨 무관
+      // 현재 줌 레벨에 따른 클러스터링 거리 사용
+      const clusterDistance = getClusterDistance(zoomLevel);
 
       // 코스 클러스터링
       const clusters = clusterCourses(courses, clusterDistance);
@@ -170,24 +199,32 @@ export function CourseMarker({
           : "course-marker";
 
         if (isCluster) {
+          // 클러스터 크기와 색상을 개수에 따라 조정
+          const count = cluster.count;
+          const size = count >= 10 ? 60 : count >= 5 ? 55 : 50;
+          const bgColor =
+            count >= 10 ? "#dc2626" : count >= 5 ? "#ea580c" : "#1f2937";
+          const fontSize = count >= 10 ? 20 : count >= 5 ? 19 : 18;
+
           // 클러스터 마커 스타일
           markerElement.style.cssText = `
-            width: 50px;
-            height: 50px;
-            background-color: #1f2937;
+            width: ${size}px;
+            height: ${size}px;
+            background-color: ${bgColor};
             border: 4px solid white;
             border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 18px;
+            font-size: ${fontSize}px;
             color: white;
             position: absolute;
             transform: translate(-50%, -50%);
           `;
+
           markerElement.textContent = cluster.count.toString();
         } else {
           // 개별 마커 스타일
@@ -232,6 +269,23 @@ export function CourseMarker({
           }
         });
 
+        // 좌표 유효성 검사
+        if (
+          !cluster.center_lat ||
+          !cluster.center_lng ||
+          cluster.center_lat < -90 ||
+          cluster.center_lat > 90 ||
+          cluster.center_lng < -180 ||
+          cluster.center_lng > 180
+        ) {
+          return;
+        }
+
+        // 마커 엘리먼트 검증
+        if (!markerElement || !markerElement.style) {
+          return;
+        }
+
         try {
           // 마커 생성 및 추가 (anchor를 center로 설정)
           const marker = new mapboxgl.Marker({
@@ -244,7 +298,7 @@ export function CourseMarker({
 
           markersRef.current.push(marker);
         } catch (error) {
-          console.error("❌ Error adding marker:", error);
+          console.error("Error adding marker:", error);
         }
       });
     };
@@ -279,7 +333,7 @@ export function CourseMarker({
         styleLoadHandlerRef.current = null;
       }
     };
-  }, [map, courses, onCourseClick, onClusterClick]);
+  }, [map, courses, onCourseClick, onClusterClick, zoomLevel]);
 
   return null;
 }

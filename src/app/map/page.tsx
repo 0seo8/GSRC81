@@ -5,11 +5,10 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 import { MapboxMap } from "@/components/map/MapboxMap";
 import { CourseMarker } from "@/components/map/CourseMarker";
-import { CourseDetailDrawer } from "@/components/map/CourseDetailDrawer";
-import { CourseListDrawer } from "@/components/map/CourseListDrawer";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Course {
   id: string;
@@ -27,13 +26,13 @@ interface Course {
 }
 
 export default function MapPage() {
+  const router = useRouter();
   const [map, setMap] = useState<mapboxgl.Map | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedCourses, setSelectedCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [preventMapClick, setPreventMapClick] = useState(false);
 
   // Mapbox 토큰 (환경변수에서 가져오기)
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
@@ -70,47 +69,87 @@ export default function MapPage() {
         })) || [];
 
       setCourses(coursesWithCommentCount);
-    } catch (err) {
+    } catch (error) {
       setError("코스 데이터를 불러올 수 없습니다.");
+      console.error("Failed to load courses:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleMapLoad = (mapInstance: mapboxgl.Map) => {
+  const handleMapLoad = useCallback((mapInstance: mapboxgl.Map) => {
     setMap(mapInstance);
 
     // 지도 클릭 시 drawer 닫기 (마커가 아닌 경우에만)
-    mapInstance.on("click", (e) => {
+    mapInstance.on("click", () => {
       setSelectedCourse(null);
       setSelectedCourses([]);
     });
-  };
+  }, []);
+
+  // 코스들의 좌표 범위에 맞춰 지도 범위 설정
+  const fitMapToCourses = useCallback(() => {
+    if (!map || courses.length === 0) return;
+
+    // 모든 코스의 좌표를 수집
+    const coordinates: [number, number][] = courses.map((course) => [
+      course.start_longitude,
+      course.start_latitude,
+    ]);
+
+    if (coordinates.length === 0) return;
+
+    // 좌표들의 경계 계산
+    const lngs = coordinates.map((coord) => coord[0]);
+    const lats = coordinates.map((coord) => coord[1]);
+
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+
+    // 여백을 위한 패딩 추가 (약 10% 여유공간)
+    const lngPadding = (maxLng - minLng) * 0.1;
+    const latPadding = (maxLat - minLat) * 0.1;
+
+    // bounds 설정
+    const bounds: [[number, number], [number, number]] = [
+      [minLng - lngPadding, minLat - latPadding], // southwest
+      [maxLng + lngPadding, maxLat + latPadding], // northeast
+    ];
+
+    // 단일 지점인 경우 적절한 줌 레벨로 설정
+    if (coordinates.length === 1) {
+      map.flyTo({
+        center: coordinates[0],
+        zoom: 14,
+        duration: 1000,
+      });
+    } else {
+      // 여러 지점인 경우 bounds에 맞춰 설정
+      map.fitBounds(bounds, {
+        padding: { top: 50, bottom: 50, left: 50, right: 50 },
+        maxZoom: 15,
+        duration: 1000,
+      });
+    }
+  }, [map, courses]);
+
+  // 코스 데이터가 로드되고 지도가 준비되면 범위 조정
+  useEffect(() => {
+    if (map && courses.length > 0 && !loading) {
+      fitMapToCourses();
+    }
+  }, [map, courses, loading, fitMapToCourses]);
 
   const handleCourseClick = useCallback((course: Course) => {
-    // 지도 클릭 방지 플래그 설정
-    setPreventMapClick(true);
-
     setSelectedCourse(course);
     setSelectedCourses([]); // 개별 선택 시 리스트 초기화
-
-    // 짧은 지연 후 플래그 해제
-    setTimeout(() => {
-      setPreventMapClick(false);
-    }, 100);
   }, []);
 
   const handleClusterClick = useCallback((courses: Course[]) => {
-    // 지도 클릭 방지 플래그 설정
-    setPreventMapClick(true);
-
     setSelectedCourses(courses);
     setSelectedCourse(null); // 클러스터 선택 시 개별 선택 초기화
-
-    // 짧은 지연 후 플래그 해제
-    setTimeout(() => {
-      setPreventMapClick(false);
-    }, 100);
   }, []);
 
   if (!mapboxToken) {
@@ -142,8 +181,8 @@ export default function MapPage() {
           {/* 지도 */}
           <MapboxMap
             accessToken={mapboxToken}
-            center={[126.9185, 37.6361]} // 코스들이 있는 위치로 조정
-            zoom={14}
+            center={[127.5, 36.5]} // 한국 중앙 좌표
+            zoom={8} // 더 넓은 범위로 시작
             onMapLoad={handleMapLoad}
             className="w-full h-full"
             style="mapbox://styles/mapbox/light-v11" // 라이트 지도로 변경
@@ -184,18 +223,151 @@ export default function MapPage() {
             </div>
           )}
 
-          {/* Drawer Components */}
-          <CourseDetailDrawer
-            course={selectedCourse}
-            isOpen={!!selectedCourse}
-            onClose={() => setSelectedCourse(null)}
-          />
+          {/* Course Cards Stack */}
+          {selectedCourses.length > 0 && (
+            <div className="absolute bottom-4 left-4 right-4 z-20">
+              {/* Stacked Cards */}
+              <div className="relative h-80">
+                {selectedCourses.map((course, index) => {
+                  const cardColors = [
+                    "bg-stone-500", // 갈색
+                    "bg-emerald-500", // 초록
+                    "bg-yellow-400", // 노랑
+                    "bg-red-500", // 빨강
+                    "bg-gray-400", // 회색
+                    "bg-orange-500", // 주황
+                  ];
+                  const cardColor = cardColors[index % cardColors.length];
 
-          <CourseListDrawer
-            courses={selectedCourses}
-            isOpen={selectedCourses.length > 0}
-            onClose={() => setSelectedCourses([])}
-          />
+                  // 스택 효과: 위에서 아래로 쌓임, 아래 카드는 상단만 보임
+                  const zIndex = selectedCourses.length - index;
+                  const offsetY = index * 50; // 50px씩 아래로 (각 카드 상단이 보이도록)
+                  const offsetX = 0; // X축 offset 없음 (중앙 정렬)
+                  const scale = 1; // 크기는 동일하게
+
+                  return (
+                    <div
+                      key={course.id}
+                      className={`absolute inset-x-0 ${cardColor} rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:scale-105 shadow-xl`}
+                      style={{
+                        zIndex: zIndex,
+                        top: offsetY,
+                        left: offsetX,
+                        right: offsetX,
+                        transform: `scale(${scale})`,
+                        animationDelay: `${index * 150}ms`,
+                      }}
+                      onClick={() => {
+                        router.push(`/courses/${course.id}`);
+                        setSelectedCourses([]);
+                      }}
+                    >
+                      {/* Profile Circle */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="w-12 h-12 bg-white bg-opacity-30 rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-lg">
+                            {course.title.charAt(0)}
+                          </span>
+                        </div>
+                        <div className="text-white opacity-70">
+                          <span className="text-lg font-bold">
+                            {course.avg_time_min}분
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Course Info */}
+                      <div className="text-white">
+                        <h3 className="font-bold text-xl leading-tight mb-1">
+                          {course.title}
+                        </h3>
+                        <p className="text-white opacity-80 text-sm mb-2 line-clamp-1">
+                          {course.description}
+                        </p>
+                        <div className="text-white opacity-70 text-xs">
+                          {course.distance_km}km •{" "}
+                          {course.difficulty === "easy"
+                            ? "쉬움"
+                            : course.difficulty === "medium"
+                            ? "보통"
+                            : "어려움"}
+                        </div>
+                      </div>
+
+                      {/* Star */}
+                      <div className="absolute top-4 right-4">
+                        <div className="w-6 h-6 text-white opacity-70">★</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Close Button */}
+              <div className="flex justify-center mt-6">
+                <Button
+                  onClick={() => setSelectedCourses([])}
+                  className="bg-black bg-opacity-50 hover:bg-opacity-70 text-white px-8 py-3 rounded-full backdrop-blur-sm"
+                >
+                  닫기
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Single Course Card */}
+          {selectedCourse && (
+            <div className="absolute bottom-4 left-4 right-4 z-20">
+              <div className="bg-gray-200 rounded-2xl p-6 shadow-lg animate-in slide-in-from-bottom-4">
+                <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                  {selectedCourse.title}
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  {selectedCourse.description}
+                </p>
+
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  <div className="bg-gray-100 rounded-xl p-4 text-center">
+                    <p className="text-xl font-bold text-gray-800">
+                      {selectedCourse.distance_km}km
+                    </p>
+                    <p className="text-xs text-gray-500">거리</p>
+                  </div>
+                  <div className="bg-gray-100 rounded-xl p-4 text-center">
+                    <p className="text-xl font-bold text-gray-800">
+                      {selectedCourse.avg_time_min}분
+                    </p>
+                    <p className="text-xs text-gray-500">시간</p>
+                  </div>
+                  <div className="bg-gray-100 rounded-xl p-4 text-center">
+                    <p className="text-xl font-bold text-gray-800">
+                      {selectedCourse.comment_count || 0}개
+                    </p>
+                    <p className="text-xs text-gray-500">댓글</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => {
+                      router.push(`/courses/${selectedCourse.id}`);
+                      setSelectedCourse(null);
+                    }}
+                    className="flex-1 bg-gray-800 hover:bg-gray-900 text-white py-3"
+                  >
+                    자세히 보기
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedCourse(null)}
+                    className="px-6 py-3"
+                  >
+                    닫기
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 빈 상태 */}
           {!loading && courses.length === 0 && !error && (
