@@ -148,13 +148,58 @@ export default function CourseDetailPage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
         {/* 메인 콘텐츠 */}
-        <div className="max-w-2xl mx-auto ">
-          {/* 코스 통계 */}
+        <div className="max-w-2xl mx-auto">
           {/* 코스 지도 */}
-          <TrailMap courseId={course.id} className="h-[70vh] md:h-[80vh]" />
+          <div className="relative mb-8 overflow-hidden">
+            <TrailMap courseId={course.id} className="h-[70vh] md:h-[80vh]" />
+          </div>
 
-          {/* 크루원 메모 (말풍선) */}
-          <div className="mb-6">
+          {/* 코스 정보 */}
+          <div className="w-full">
+            <div className="bg-white border border-gray-200 p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                {course.title}
+              </h2>
+
+              {/* 코스 통계 그리드 */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {/* 거리 */}
+                <div className="border border-gray-200 p-4 text-center">
+                  <div className="text-2xl font-bold text-gray-900 mb-1">
+                    {course.distance_km}km
+                  </div>
+                  <div className="text-sm text-gray-600">거리</div>
+                </div>
+
+                {/* 소요시간 */}
+                <div className="border border-gray-200 p-4 text-center">
+                  <div className="text-2xl font-bold text-gray-900 mb-1">
+                    {course.avg_time_min}분
+                  </div>
+                  <div className="text-sm text-gray-600">소요시간</div>
+                </div>
+
+                {/* 고도 (임시) */}
+                <div className="border border-gray-200 p-4 text-center">
+                  <div className="text-2xl font-bold text-gray-900 mb-1">-</div>
+                  <div className="text-sm text-gray-600">고도</div>
+                </div>
+
+                {/* 난이도 */}
+                <div className="border border-gray-200 p-4 text-center">
+                  <div className="text-2xl font-bold text-gray-900 mb-1">
+                    {getDifficultyText(course.difficulty)}
+                  </div>
+                  <div className="text-sm text-gray-600">난이도</div>
+                </div>
+              </div>
+
+              {/* 코스 설명 */}
+            </div>
+          </div>
+
+          {/* 크루원 메모 */}
+          <div>
             <ChatBubbleList
               courseId={course.id}
               onCommentUpdate={loadCommentCount}

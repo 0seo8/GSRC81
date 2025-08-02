@@ -3,20 +3,10 @@ import Map, { Source, Layer, Marker, MapRef } from "react-map-gl/mapbox";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Mountain,
-  Route,
-  Timer,
-  Activity,
-  ToggleLeft,
-  ToggleRight,
-  MapPin,
-  ZoomIn,
-  ZoomOut,
   Compass,
-  Play,
   Eye,
   Coffee,
   Trees,
@@ -25,9 +15,6 @@ import {
   AlertTriangle,
   Flag,
   Navigation,
-  Download,
-  Clock,
-  TrendingUp,
   Trophy,
 } from "lucide-react";
 import {
@@ -419,10 +406,11 @@ const TrailMap: React.FC<TrailMapProps> = ({
     console.log(
       `Trail distance: ${totalDistanceKm.toFixed(2)}km, Animation duration: ${(
         duration / 1000
-      ).toFixed(1)}s`
+      ).toFixed(1)}s, Points: ${trailData.points.length}`
     );
 
     const startTime = Date.now();
+    const map = mapRef.current.getMap();
     const points = trailData.points;
 
     if (points.length < 2) return;
@@ -438,7 +426,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
     );
 
     // 시작 위치로 카메라 이동 (비행 시작 각도)
-    mapRef.current.getMap().easeTo({
+    map.easeTo({
       center: [firstPoint.lon, firstPoint.lat],
       zoom: 15.0, // 더 넓은 시야로 시작
       pitch: 50, // 비행기 시점으로 시작
@@ -550,9 +538,9 @@ const TrailMap: React.FC<TrailMapProps> = ({
           currentElevation
         );
 
-        // 진행 방향 계산 (더 먼 포인트를 보고 부드러운 방향 결정)
+        // 진행 방향 계산 (더 먼 미래 지점을 보고 부드러운 방향 결정)
         let bearing = 0;
-        const lookAhead = Math.min(15, points.length - currentIndex - 1); // 더 먼 미래 지점을 봄
+        const lookAhead = Math.min(50, points.length - currentIndex - 1); // 더 먼 지점을 봐서 부드럽게
         if (lookAhead > 0) {
           const futurePoint = points[currentIndex + lookAhead];
           bearing = calculateBearing(
@@ -571,15 +559,14 @@ const TrailMap: React.FC<TrailMapProps> = ({
           cameraSettings.distanceOffset
         );
 
-        // 카메라를 현재 위치로 부드럽게 이동 (지형 적응적 설정 적용)
-        mapRef.current?.getMap().easeTo({
+        // 카메라를 즉시 이동 (노선과 완전 동기화)
+        map.easeTo({
           center: [cameraLon, cameraLat],
-          bearing: bearing - 5, // 진행 방향에 더 가깝게 정렬
+          bearing: bearing - 10, // 진행 방향에서 약간 기울어진 각도
           zoom: cameraSettings.zoom, // 지형에 따른 적응적 줌
           pitch: cameraSettings.pitch, // 지형에 따른 적응적 각도
-          duration: 200, // 더 빠른 카메라 이동으로 부드러운 비행감
+          duration: 0, // 즉시 이동
           essential: true,
-          easing: (t) => 1 - Math.pow(1 - t, 3), // easeOutCubic으로 더 자연스러운 비행
         });
       } else if (easedProgress === 1 && points.length > 0) {
         // 애니메이션이 끝났을 때 마지막 포인트 처리
@@ -957,7 +944,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
   if (loading) {
     return (
       <Card className={`${className}`}>
-        <CardContent className="p-6">
+        <CardContent className="">
           <div className="space-y-4">
             <Skeleton className="h-6 w-32" />
             <Skeleton className="h-64 w-full" />
@@ -974,7 +961,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
   if (error || !trailData) {
     return (
       <Card className={`${className}`}>
-        <CardContent className="p-6">
+        <CardContent className="">
           <div className="text-center">
             <Mountain className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-600 mb-2">
@@ -1018,7 +1005,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
       <Card>
         <CardContent className="p-0">
           {/* 헤더 */}
-          <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-green-50">
+          {/* <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-green-50">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-1">
@@ -1116,7 +1103,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
                 </Button>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* 지도 */}
           <div className="relative h-[500px] overflow-hidden">
@@ -1126,16 +1113,12 @@ const TrailMap: React.FC<TrailMapProps> = ({
               onMove={(evt) => setViewState(evt.viewState)}
               mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
               style={{ width: "100%", height: "100%" }}
-              mapStyle={
-                is3D
-                  ? "mapbox://styles/mapbox/satellite-v9"
-                  : "mapbox://styles/mapbox/light-v11"
-              }
+              mapStyle="mapbox://styles/mapbox/light-v11"
               onLoad={onMapLoad}
             >
               {/* 커스텀 한글 네비게이션 컨트롤 */}
               <div className="absolute top-4 right-4 flex flex-col gap-1 z-10">
-                <Button
+                {/* <Button
                   variant="outline"
                   size="sm"
                   onClick={zoomIn}
@@ -1152,7 +1135,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
                   title="축소"
                 >
                   <ZoomOut className="w-4 h-4" />
-                </Button>
+                </Button> */}
                 <Button
                   variant="outline"
                   size="sm"
@@ -1222,76 +1205,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
             )}
 
             {/* 실시간 트레킹 정보 오버레이 */}
-            {isAnimating && trailData && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="absolute bottom-4 left-4 bg-black/80 text-white rounded-lg p-4 backdrop-blur-sm shadow-lg z-10"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[#F39800]" />
-                    <span className="text-sm">
-                      이동 거리:{" "}
-                      <span className="font-bold">
-                        {currentDistance.toFixed(2)}km
-                      </span>{" "}
-                      / {trailData.stats.totalDistance.toFixed(2)}km
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-blue-400" />
-                    <span className="text-sm">
-                      소요 시간:{" "}
-                      <span className="font-bold">
-                        {formatElapsedTime(elapsedTime)}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Timer className="w-4 h-4 text-yellow-400" />
-                    <span className="text-sm">
-                      남은 시간:{" "}
-                      <span className="font-bold">
-                        {formatElapsedTime(
-                          trailData.stats.estimatedTime * 3600 - elapsedTime
-                        )}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-green-400" />
-                    <span className="text-sm">
-                      현재 고도:{" "}
-                      <span className="font-bold">
-                        {currentElevation.toFixed(0)}m
-                      </span>
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm">
-                      진행률:{" "}
-                      <span className="font-bold">
-                        {(animationProgress * 100).toFixed(1)}%
-                      </span>
-                    </span>
-                  </div>
-                  {/* 진행 바 */}
-                  <div className="mt-3 pt-3 border-t border-white/20">
-                    <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
-                      <motion.div
-                        className="h-full bg-gradient-to-r from-[#F39800] to-[#E08700]"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${animationProgress * 100}%` }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
+            {isAnimating && trailData && <></>}
 
             {/* 완주 축하 이펙트 */}
             <AnimatePresence>

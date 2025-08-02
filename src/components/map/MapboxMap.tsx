@@ -57,6 +57,86 @@ export function MapboxMap({
         }
       }, 100);
 
+      // 한국어 라벨 설정 - 더 확실한 방법으로 시도
+      if (map.current) {
+        const mapInstance = map.current;
+
+        const setKoreanLabels = () => {
+          console.log("Setting Korean labels...");
+
+          // 현재 지도 스타일의 모든 레이어 확인
+          const style = mapInstance.getStyle();
+          if (!style || !style.layers) return;
+
+          console.log("Total layers found:", style.layers.length);
+
+          style.layers.forEach((layer: any) => {
+            if (layer.layout && layer.layout["text-field"]) {
+              try {
+                const currentTextField = layer.layout["text-field"];
+                console.log(
+                  `Layer ${layer.id} has text-field:`,
+                  currentTextField
+                );
+
+                // 더 넓은 범위로 체크 - 문자열이거나 배열 형태의 텍스트 필드
+                let shouldUpdate = false;
+
+                if (typeof currentTextField === "string") {
+                  // 문자열 형태의 텍스트 필드
+                  if (
+                    currentTextField.includes("{name}") ||
+                    currentTextField.includes("name")
+                  ) {
+                    shouldUpdate = true;
+                  }
+                } else if (Array.isArray(currentTextField)) {
+                  // 배열 형태의 텍스트 필드에서 name 관련 필드 찾기
+                  const textFieldStr = JSON.stringify(currentTextField);
+                  if (
+                    textFieldStr.includes("name") &&
+                    !textFieldStr.includes("name:ko") &&
+                    !textFieldStr.includes("name_ko")
+                  ) {
+                    shouldUpdate = true;
+                  }
+                }
+
+                if (shouldUpdate) {
+                  mapInstance.setLayoutProperty(layer.id, "text-field", [
+                    "coalesce",
+                    ["get", "name:ko"],
+                    ["get", "name_ko"],
+                    ["get", "name_kr"],
+                    ["get", "name"],
+                  ]);
+                  console.log(`✅ Set Korean labels for layer: ${layer.id}`);
+                }
+              } catch (error) {
+                console.log(
+                  `❌ Could not set Korean labels for layer: ${layer.id}`,
+                  error
+                );
+              }
+            }
+          });
+        };
+
+        // 지도 로드 완료 후 여러 번 시도
+        setTimeout(() => {
+          setKoreanLabels();
+        }, 1000);
+
+        setTimeout(() => {
+          setKoreanLabels();
+        }, 3000);
+
+        // 스타일 변경 시에도 다시 적용
+        mapInstance.on("styledata", () => {
+          setTimeout(setKoreanLabels, 500);
+        });
+      }
+
       setIsLoaded(true);
       if (onMapLoad && map.current) {
         onMapLoad(map.current);

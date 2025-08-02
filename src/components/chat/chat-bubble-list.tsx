@@ -2,12 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-
-import { Textarea } from "@/components/ui/textarea";
 import { Send, MessageSquare, Plus, X } from "lucide-react";
 import Image from "next/image";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow, differenceInDays } from "date-fns";
 import { ko } from "date-fns/locale";
 
 interface CourseComment {
@@ -116,14 +113,29 @@ export function ChatBubbleList({
     return characters[Math.floor(Math.random() * characters.length)];
   };
 
+  const formatCommentDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffDays = differenceInDays(now, date);
+
+    if (diffDays <= 3) {
+      return formatDistanceToNow(date, {
+        addSuffix: true,
+        locale: ko,
+      });
+    } else {
+      return format(date, "yyyy년 MM월 dd일", { locale: ko });
+    }
+  };
+
   if (loading) {
     return (
-      <div className="bg-white rounded-lg p-6 shadow-sm">
+      <div className="bg-white border border-gray-200 p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-4 bg-gray-200 w-1/4"></div>
           <div className="space-y-2">
-            <div className="h-12 bg-gray-200 rounded"></div>
-            <div className="h-12 bg-gray-200 rounded"></div>
+            <div className="h-12 bg-gray-200"></div>
+            <div className="h-12 bg-gray-200"></div>
           </div>
         </div>
       </div>
@@ -131,79 +143,44 @@ export function ChatBubbleList({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm">
-      {/* 헤더 */}
-
+    <div className="w-full bg-white border border-gray-200">
       {/* 메시지 리스트 */}
-      <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
+      <div className="max-h-96 overflow-y-auto">
         {comments.length === 0 ? (
-          <div className="text-center py-8">
+          <div className="text-center py-8 px-4">
             <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500">첫 번째 메모를 남겨보세요!</p>
           </div>
         ) : (
-          comments.map((comment, index) => (
+          comments.map((comment) => (
             <div
               key={comment.id}
-              className={`flex items-start gap-3 mb-4 ${
-                index % 2 === 0 ? "flex-row" : "flex-row-reverse"
-              }`}
+              className="w-full border-b border-gray-200 p-4 flex items-start gap-3"
             >
               {/* 캐릭터 아바타 */}
-              <div className="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+              <div className="flex-shrink-0 w-10 h-10 bg-gray-200 border border-gray-300 flex items-center justify-center overflow-hidden">
                 <Image
                   src={getRandomCharacter() || "/placeholder.svg"}
                   alt="러닝 캐릭터"
-                  width={32}
-                  height={32}
-                  className="w-8 h-8"
+                  width={24}
+                  height={24}
+                  className="w-6 h-6"
                 />
               </div>
 
-              {/* 말풍선 */}
-              <div
-                className={`relative max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
-                  index % 2 === 0
-                    ? "bg-gray-100 text-gray-900 rounded-bl-sm"
-                    : "bg-gray-700 text-white rounded-br-sm"
-                }`}
-              >
-                {/* 말풍선 꼬리 */}
-                <div
-                  className={`absolute top-4 w-0 h-0 ${
-                    index % 2 === 0
-                      ? "-left-2 border-t-[8px] border-r-[8px] border-b-[8px] border-t-transparent border-r-gray-100 border-b-transparent"
-                      : "-right-2 border-t-[8px] border-l-[8px] border-b-[8px] border-t-transparent border-l-orange-500 border-b-transparent"
-                  }`}
-                ></div>
-
-                <div className="mb-2">
-                  <span
-                    className={`text-sm font-semibold ${
-                      index % 2 === 0 ? "text-gray-800" : "text-gray-100"
-                    }`}
-                  >
+              {/* 내용 */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-bold text-gray-900">
                     {comment.author_nickname}
                   </span>
+                  <span className="text-xs text-gray-500">
+                    {formatCommentDate(comment.created_at)}
+                  </span>
                 </div>
-
-                <p className="text-sm leading-relaxed mb-3">
+                <p className="text-sm text-gray-700 leading-relaxed">
                   {comment.message}
                 </p>
-
-                {/* 시간 */}
-                <div className="flex justify-end">
-                  <p
-                    className={`text-xs ${
-                      index % 2 === 0 ? "text-gray-500" : "text-gray-200"
-                    }`}
-                  >
-                    {formatDistanceToNow(new Date(comment.created_at), {
-                      addSuffix: true,
-                      locale: ko,
-                    })}
-                  </p>
-                </div>
               </div>
             </div>
           ))
@@ -211,59 +188,57 @@ export function ChatBubbleList({
       </div>
 
       {/* 메모 작성 토글 버튼 */}
-      <div className="p-4 border-t border-gray-100">
+      <div className="border-t border-gray-200 p-4">
         {!showCommentForm ? (
-          <Button
+          <button
             onClick={() => setShowCommentForm(true)}
-            className="w-full bg-gray-700 hover:bg-gray-800 text-white py-3"
+            className="w-full bg-gray-700 hover:bg-gray-800 text-white py-3 px-4 border border-gray-700 font-medium"
           >
-            <Plus className="w-4 h-4 mr-2" />
-          </Button>
+            <Plus className="w-4 h-4 mr-2 inline" />
+            메모 작성
+          </button>
         ) : (
           <>
             {/* 닫기 버튼 헤더 */}
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="font-medium text-gray-900">메모 작성</h4>
-              <Button
-                variant="ghost"
-                size="sm"
+            <div className="flex items-start justify-between mb-3 pb-3 border-b border-gray-200">
+              <h4 className="font-bold text-gray-900 mt-1">메모 작성</h4>
+              <button
                 onClick={() => {
                   setShowCommentForm(false);
                   setMessage("");
                 }}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 p-1 border border-gray-300 text-xs"
               >
-                <X className="w-4 h-4" />
-              </Button>
+                <X className="w-3 h-3" />
+              </button>
             </div>
 
             {/* 입력 폼 */}
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* 메시지 입력과 전송 버튼 */}
               <div className="space-y-3">
-                <Textarea
+                <textarea
                   placeholder="메모를 입력하세요... (예: 코스 반환점에 화장실 있어요!)"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="w-full min-h-[80px] bg-white border-gray-200 focus:border-orange-300 focus:ring-orange-200 resize-none"
+                  className="w-full min-h-[80px] bg-white border-2 border-gray-300 focus:border-gray-500 p-3 resize-none text-sm"
                   maxLength={200}
                 />
 
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500">
+                <div className="flex items-end justify-between gap-4">
+                  <p className="text-xs text-gray-500 flex-1">
                     {message.length}/200자 • 따뜻한 응원과 유용한 정보를
                     남겨주세요
                   </p>
 
-                  <Button
+                  <button
                     type="submit"
                     disabled={!message.trim() || submitting}
-                    className="bg-gray-700 hover:bg-gray-800 disabled:bg-gray-300 px-6 py-2 font-medium"
-                    size="sm"
+                    className="bg-gray-700 hover:bg-gray-800 disabled:bg-gray-300 text-white px-6 py-2 border border-gray-700 font-medium"
                   >
                     {submitting ? (
                       <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent animate-spin" />
                         <span>등록중...</span>
                       </div>
                     ) : (
@@ -272,7 +247,7 @@ export function ChatBubbleList({
                         <span>메모 등록</span>
                       </div>
                     )}
-                  </Button>
+                  </button>
                 </div>
               </div>
             </form>

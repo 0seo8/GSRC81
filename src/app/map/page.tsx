@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { MapboxMap } from "@/components/map/MapboxMap";
 import { CourseMarker } from "@/components/map/CourseMarker";
@@ -31,6 +32,7 @@ export default function MapPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedCourses, setSelectedCourses] = useState<Course[]>([]);
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -185,7 +187,7 @@ export default function MapPage() {
             zoom={8} // 더 넓은 범위로 시작
             onMapLoad={handleMapLoad}
             className="w-full h-full"
-            style="mapbox://styles/mapbox/light-v11" // 라이트 지도로 변경
+            style="mapbox://styles/mapbox/light-v11" // 회색톤 라이트 지도 + 한국어 지원
           />
 
           {/* 코스 마커 */}
@@ -210,7 +212,7 @@ export default function MapPage() {
 
           {/* 에러 메시지 */}
           {error && (
-            <div className="absolute top-20 left-4 bg-gray-50 border border-gray-200 rounded-lg p-3 max-w-sm z-10">
+            <div className="absolute top-20 left-4 bg-gray-50 border border-gray-200 rounded-lg max-w-sm z-10">
               <p className="text-sm text-gray-700">{error}</p>
               <Button
                 variant="ghost"
@@ -223,151 +225,149 @@ export default function MapPage() {
             </div>
           )}
 
-          {/* Course Cards Stack */}
-          {selectedCourses.length > 0 && (
-            <div className="absolute bottom-4 left-4 right-4 z-20">
-              {/* Stacked Cards */}
-              <div className="relative h-80">
-                {selectedCourses.map((course, index) => {
-                  const cardColors = [
-                    "bg-stone-500", // 갈색
-                    "bg-emerald-500", // 초록
-                    "bg-yellow-400", // 노랑
-                    "bg-red-500", // 빨강
-                    "bg-gray-400", // 회색
-                    "bg-orange-500", // 주황
-                  ];
-                  const cardColor = cardColors[index % cardColors.length];
-
-                  // 스택 효과: 위에서 아래로 쌓임, 아래 카드는 상단만 보임
-                  const zIndex = selectedCourses.length - index;
-                  const offsetY = index * 50; // 50px씩 아래로 (각 카드 상단이 보이도록)
-                  const offsetX = 0; // X축 offset 없음 (중앙 정렬)
-                  const scale = 1; // 크기는 동일하게
-
-                  return (
-                    <div
-                      key={course.id}
-                      className={`absolute inset-x-0 ${cardColor} rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:scale-105 shadow-xl`}
-                      style={{
-                        zIndex: zIndex,
-                        top: offsetY,
-                        left: offsetX,
-                        right: offsetX,
-                        transform: `scale(${scale})`,
-                        animationDelay: `${index * 150}ms`,
-                      }}
+          {/* Course Cards Drawer - Full Height Drawer */}
+          <AnimatePresence>
+            {(selectedCourses.length > 0 || selectedCourse) && (
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{
+                  type: "spring",
+                  damping: 25,
+                  stiffness: 300,
+                  duration: 0.3,
+                }}
+                className="absolute inset-0 bg-white z-30 flex flex-col"
+              >
+                {/* Drawer Header */}
+                <div className="px-4 pt-4 pb-8">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold text-gray-900">코스</h2>
+                    <button
                       onClick={() => {
-                        router.push(`/courses/${course.id}`);
                         setSelectedCourses([]);
+                        setSelectedCourse(null);
                       }}
+                      className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
                     >
-                      {/* Profile Circle */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="w-12 h-12 bg-white bg-opacity-30 rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold text-lg">
-                            {course.title.charAt(0)}
-                          </span>
-                        </div>
-                        <div className="text-white opacity-70">
-                          <span className="text-lg font-bold">
-                            {course.avg_time_min}분
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Course Info */}
-                      <div className="text-white">
-                        <h3 className="font-bold text-xl leading-tight mb-1">
-                          {course.title}
-                        </h3>
-                        <p className="text-white opacity-80 text-sm mb-2 line-clamp-1">
-                          {course.description}
-                        </p>
-                        <div className="text-white opacity-70 text-xs">
-                          {course.distance_km}km •{" "}
-                          {course.difficulty === "easy"
-                            ? "쉬움"
-                            : course.difficulty === "medium"
-                            ? "보통"
-                            : "어려움"}
-                        </div>
-                      </div>
-
-                      {/* Star */}
-                      <div className="absolute top-4 right-4">
-                        <div className="w-6 h-6 text-white opacity-70">★</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Close Button */}
-              <div className="flex justify-center mt-6">
-                <Button
-                  onClick={() => setSelectedCourses([])}
-                  className="bg-black bg-opacity-50 hover:bg-opacity-70 text-white px-8 py-3 rounded-full backdrop-blur-sm"
-                >
-                  닫기
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Single Course Card */}
-          {selectedCourse && (
-            <div className="absolute bottom-4 left-4 right-4 z-20">
-              <div className="bg-gray-200 rounded-2xl p-6 shadow-lg animate-in slide-in-from-bottom-4">
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                  {selectedCourse.title}
-                </h2>
-                <p className="text-gray-600 mb-4">
-                  {selectedCourse.description}
-                </p>
-
-                <div className="grid grid-cols-3 gap-3 mb-6">
-                  <div className="bg-gray-100 rounded-xl p-4 text-center">
-                    <p className="text-xl font-bold text-gray-800">
-                      {selectedCourse.distance_km}km
-                    </p>
-                    <p className="text-xs text-gray-500">거리</p>
-                  </div>
-                  <div className="bg-gray-100 rounded-xl p-4 text-center">
-                    <p className="text-xl font-bold text-gray-800">
-                      {selectedCourse.avg_time_min}분
-                    </p>
-                    <p className="text-xs text-gray-500">시간</p>
-                  </div>
-                  <div className="bg-gray-100 rounded-xl p-4 text-center">
-                    <p className="text-xl font-bold text-gray-800">
-                      {selectedCourse.comment_count || 0}개
-                    </p>
-                    <p className="text-xs text-gray-500">댓글</p>
+                      <span className="text-gray-500 text-lg transform rotate-90">
+                        {">"}
+                      </span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="flex gap-3">
-                  <Button
-                    onClick={() => {
-                      router.push(`/courses/${selectedCourse.id}`);
-                      setSelectedCourse(null);
-                    }}
-                    className="flex-1 bg-gray-800 hover:bg-gray-900 text-white py-3"
-                  >
-                    자세히 보기
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedCourse(null)}
-                    className="px-6 py-3"
-                  >
-                    닫기
-                  </Button>
+                {/* Stacked Cards Container */}
+                <div className="flex-1 px-4 relative">
+                  {(() => {
+                    const coursesToRender =
+                      selectedCourses.length > 0
+                        ? selectedCourses
+                        : selectedCourse
+                        ? [selectedCourse]
+                        : [];
+                    return coursesToRender.map((course, index) => {
+                      const cardColors = [
+                        "bg-gray-900", // 첫 번째 카드 - 진한 회색
+                        "bg-gray-700", // 두 번째 카드 - 회색
+                        "bg-gray-600", // 세 번째 카드 - 중간 회색
+                        "bg-gray-500", // 네 번째 카드 - 밝은 회색
+                        "bg-gray-400", // 다섯 번째 카드 - 더 밝은 회색
+                        "bg-gray-300", // 여섯 번째 카드 - 아주 밝은 회색
+                      ];
+
+                      const cardColor = cardColors[index % cardColors.length];
+
+                      // 텍스트 색상: 밝은 카드에는 검정 텍스트, 어두운 카드에는 흰 텍스트
+                      const textColor =
+                        index % cardColors.length >= 3
+                          ? "text-gray-900"
+                          : "text-white";
+                      const textOpacity =
+                        index % cardColors.length >= 3
+                          ? "opacity-60"
+                          : "opacity-70";
+
+                      // 스택 효과: expense 앱처럼 큰 숫자가 아래 깔리고 작은 숫자가 위에 쌓임
+                      const baseZIndex = index + 1; // 기본 zIndex
+                      const isHovered = hoveredCardId === course.id;
+                      const zIndex = isHovered
+                        ? coursesToRender.length + 10
+                        : baseZIndex; // hover된 카드는 가장 위로
+                      const topOffset = index * 90; // 90px씩 아래로 이동 (카드 높이 140px의 약 65%만 겹침)
+                      const leftOffset = 0; // 좌우 정렬
+
+                      return (
+                        <div
+                          key={course.id}
+                          className={`absolute ${cardColor} rounded-3xl p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg ${
+                            isHovered ? "shadow-2xl" : ""
+                          }`}
+                          style={{
+                            zIndex: zIndex,
+                            top: topOffset,
+                            left: leftOffset,
+                            right: leftOffset,
+                            height: "140px",
+                          }}
+                          onMouseEnter={() => setHoveredCardId(course.id)}
+                          onMouseLeave={() => setHoveredCardId(null)}
+                          onClick={() => {
+                            router.push(`/courses/${course.id}`);
+                            setSelectedCourses([]);
+                            setSelectedCourse(null);
+                          }}
+                        >
+                          <div className="flex items-center justify-between h-full">
+                            {/* Left: Course Info */}
+                            <div className="flex flex-col justify-center">
+                              {/* Course Title */}
+                              <h3
+                                className={`${textColor} text-xl font-bold mb-2`}
+                              >
+                                {course.title}
+                              </h3>
+
+                              {/* Course Details */}
+                              <div className="flex items-center space-x-4">
+                                <span
+                                  className={`${textColor} ${textOpacity} text-sm`}
+                                >
+                                  {course.distance_km}km
+                                </span>
+                                <span
+                                  className={`${textColor} ${textOpacity} text-sm`}
+                                >
+                                  {course.avg_time_min}분
+                                </span>
+                                <span
+                                  className={`${textColor} ${textOpacity} text-sm`}
+                                >
+                                  {course.difficulty === "easy"
+                                    ? "쉬움"
+                                    : course.difficulty === "medium"
+                                    ? "보통"
+                                    : "어려움"}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Right: Distance (Large) */}
+                            <div className={`${textColor} text-right`}>
+                              <span className="text-2xl font-bold">
+                                {course.distance_km}km
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
-              </div>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* 빈 상태 */}
           {!loading && courses.length === 0 && !error && (

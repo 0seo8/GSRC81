@@ -128,7 +128,7 @@ export async function loadGPXData(courseId: string): Promise<TrailData> {
         const gpxCoords = JSON.parse(courseData.gpx_coordinates);
         let cumulativeDistance = 0;
         points = gpxCoords.map(
-          (coord: { lat: number; lng: number }, index: number) => {
+          (coord: { lat: number; lng: number; ele: number }, index: number) => {
             if (index > 0) {
               const prevCoord = gpxCoords[index - 1];
               cumulativeDistance += calculateDistance(
@@ -141,8 +141,8 @@ export async function loadGPXData(courseId: string): Promise<TrailData> {
 
             return {
               lat: coord.lat,
-              lon: coord.lng,
-              ele: 100, // 기본 고도 (실제 고도 데이터가 없으므로)
+              lon: coord.lng, // lng를 lon으로 변환
+              ele: coord.ele || 100, // 실제 고도 데이터 사용
               distance: cumulativeDistance,
             };
           }
