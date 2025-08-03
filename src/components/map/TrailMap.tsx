@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import Map, { Source, Layer, Marker, MapRef } from "react-map-gl/mapbox";
 import { motion, AnimatePresence } from "framer-motion";
+import mapboxgl from "mapbox-gl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Mountain,
-  Compass,
   Eye,
   Coffee,
   Trees,
@@ -114,17 +114,31 @@ const TrailMap: React.FC<TrailMapProps> = ({
   const [isAnimating, setIsAnimating] = useState(false);
   const [animationProgress, setAnimationProgress] = useState(0);
   const [selectedPOI, setSelectedPOI] = useState<POIPoint | null>(null);
-  const [showPOIs, setShowPOIs] = useState(true);
+  const [showPOIs] = useState(true);
   const mapRef = useRef<MapRef>(null);
   const animationRef = useRef<number | null>(null);
 
-  // 실시간 트레킹 정보
+  // 실시간 트레킹 정보 - 주석처리된 UI에서 사용
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [currentDistance, setCurrentDistance] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [elapsedTime, setElapsedTime] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [currentElevation, setCurrentElevation] = useState(0);
 
   // 완주 이펙트
   const [showCompletionEffect, setShowCompletionEffect] = useState(false);
+
+  // GPS 상태 추적
+  const [isGPSActive, setIsGPSActive] = useState(false);
+  const [savedTrailPosition, setSavedTrailPosition] = useState<{
+    longitude: number;
+    latitude: number;
+    zoom: number;
+    pitch: number;
+    bearing: number;
+  } | null>(null);
+  const geolocateControlRef = useRef<mapboxgl.GeolocateControl | null>(null);
 
   const [viewState, setViewState] = useState({
     longitude: 129.0,
@@ -179,7 +193,8 @@ const TrailMap: React.FC<TrailMapProps> = ({
     }
   }, [courseId, is3D]);
 
-  // 3D 토글 - 입체적 지형뷰와 2D 뷰 전환
+  // 3D 토글 - 입체적 지형뷰와 2D 뷰 전환 (주석처리된 UI에서 사용)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const toggle3D = useCallback(() => {
     setIs3D((prev) => {
       const new3D = !prev;
@@ -192,25 +207,41 @@ const TrailMap: React.FC<TrailMapProps> = ({
     });
   }, []);
 
-  // 지도 줌 컨트롤
-  const zoomIn = useCallback(() => {
-    if (mapRef.current) {
-      mapRef.current.getMap().zoomIn();
-    }
-  }, []);
-
-  const zoomOut = useCallback(() => {
-    if (mapRef.current) {
-      mapRef.current.getMap().zoomOut();
-    }
-  }, []);
-
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const resetNorth = useCallback(() => {
     setViewState((prev) => ({
       ...prev,
       bearing: 0,
     }));
   }, []);
+
+  // 저장된 트레일 위치로 돌아가기
+  const returnToTrail = useCallback(() => {
+    if (savedTrailPosition && mapRef.current) {
+      const map = mapRef.current.getMap();
+      map.easeTo({
+        center: [savedTrailPosition.longitude, savedTrailPosition.latitude],
+        zoom: savedTrailPosition.zoom,
+        pitch: savedTrailPosition.pitch,
+        bearing: savedTrailPosition.bearing,
+        duration: 1500,
+        essential: true,
+      });
+
+      // viewState도 업데이트
+      setViewState(savedTrailPosition);
+      setIsGPSActive(false);
+      setSavedTrailPosition(null);
+
+      // GPS 컨트롤 다시 보이기
+      if (geolocateControlRef.current) {
+        const controlElement = geolocateControlRef.current._container;
+        if (controlElement) {
+          controlElement.style.display = "block";
+        }
+      }
+    }
+  }, [savedTrailPosition]);
 
   // 두 점 사이의 방향 계산 (베어링)
   const calculateBearing = useCallback(
@@ -402,12 +433,6 @@ const TrailMap: React.FC<TrailMapProps> = ({
 
     // 최소 26초, 최대 104초로 제한 (15% 감소)
     const duration = Math.max(26000, Math.min(104000, calculatedDuration));
-
-    console.log(
-      `Trail distance: ${totalDistanceKm.toFixed(2)}km, Animation duration: ${(
-        duration / 1000
-      ).toFixed(1)}s, Points: ${trailData.points.length}`
-    );
 
     const startTime = Date.now();
     const map = mapRef.current.getMap();
@@ -739,7 +764,8 @@ const TrailMap: React.FC<TrailMapProps> = ({
     };
   }, []);
 
-  // 트레일 중심으로 이동 (전체보기)
+  // 트레일 중심으로 이동 (전체보기) - 주석처리된 UI에서 사용
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const fitToTrail = useCallback(() => {
     if (trailData && mapRef.current) {
       const bounds = trailData.stats.bounds;
@@ -778,7 +804,8 @@ const TrailMap: React.FC<TrailMapProps> = ({
     }
   }, [trailData]);
 
-  // GPX 파일 다운로드 핸들러
+  // GPX 파일 다운로드 핸들러 - 주석처리된 UI에서 사용
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleGPXDownload = useCallback(() => {
     const gpxUrl = `/gpx/${courseId}.gpx`;
     const link = document.createElement("a");
@@ -895,6 +922,60 @@ const TrailMap: React.FC<TrailMapProps> = ({
         },
       });
     }
+
+    // 현재 위치 찾기 컨트롤 추가 (메인 맵과 동일한 기능)
+    if (!geolocateControlRef.current) {
+      const geolocateControl = new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true,
+        },
+        trackUserLocation: false, // 추적 모드 비활성화로 버튼 상태 변경 방지
+        showUserHeading: true,
+      });
+
+      // 컨트롤 ref 저장
+      geolocateControlRef.current = geolocateControl;
+
+      // GPS 버튼 클릭 시 애니메이션 중단 및 위치 저장
+      geolocateControl.on("geolocate", () => {
+        // 현재 트레일 위치 저장 (첫 클릭 시에만)
+        setIsGPSActive((currentActive) => {
+          if (!currentActive) {
+            // 현재 지도 상태를 가져와서 저장
+            if (mapRef.current) {
+              const currentMap = mapRef.current.getMap();
+              const center = currentMap.getCenter();
+              setSavedTrailPosition({
+                longitude: center.lng,
+                latitude: center.lat,
+                zoom: currentMap.getZoom(),
+                pitch: currentMap.getPitch(),
+                bearing: currentMap.getBearing(),
+              });
+            }
+          }
+          return true; // GPS 활성화
+        });
+
+        // 현재 진행 중인 애니메이션 중단
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+          animationRef.current = null;
+        }
+        setIsAnimating(false);
+        setAnimationProgress(1); // 완료 상태로 설정
+
+        // GPS 컨트롤 숨기기 (첫 번째 클릭 후 바로)
+        setTimeout(() => {
+          const controlElement = geolocateControl._container;
+          if (controlElement) {
+            controlElement.style.display = "none";
+          }
+        }, 500); // 위치 이동 후 숨기기
+      });
+
+      map.addControl(geolocateControl, "top-right");
+    }
   }, [trailData, isAnimating, animationProgress, startTrailAnimation]);
 
   // 3D 모드 변경 시 지형 적용
@@ -975,25 +1056,6 @@ const TrailMap: React.FC<TrailMapProps> = ({
       </Card>
     );
   }
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "Easy":
-        return "bg-green-100 text-green-800";
-      case "Moderate":
-        return "bg-yellow-100 text-yellow-800";
-      case "Hard":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const formatTime = (hours: number) => {
-    const h = Math.floor(hours);
-    const m = Math.round((hours - h) * 60);
-    return `${h}시간 ${m}분`;
-  };
 
   return (
     <motion.div
@@ -1118,6 +1180,19 @@ const TrailMap: React.FC<TrailMapProps> = ({
             >
               {/* 커스텀 한글 네비게이션 컨트롤 */}
               <div className="absolute top-4 right-4 flex flex-col gap-1 z-10">
+                {/* 트레일로 돌아가기 버튼 - GPS 활성화 시에만 표시 */}
+                {isGPSActive && savedTrailPosition && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={returnToTrail}
+                    className="w-8 h-8 p-0 bg-white/90 backdrop-blur-sm border-gray-300 hover:bg-white"
+                    title="트레일로 돌아가기"
+                  >
+                    <Mountain className="w-4 h-4" />
+                  </Button>
+                )}
+
                 {/* <Button
                   variant="outline"
                   size="sm"
@@ -1136,7 +1211,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
                 >
                   <ZoomOut className="w-4 h-4" />
                 </Button> */}
-                <Button
+                {/* <Button
                   variant="outline"
                   size="sm"
                   onClick={resetNorth}
@@ -1144,7 +1219,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
                   title="북쪽으로 회전"
                 >
                   <Compass className="w-4 h-4" />
-                </Button>
+                </Button> */}
               </div>
 
               {/* 트레일 레이어 */}
@@ -1356,11 +1431,6 @@ const TrailMap: React.FC<TrailMapProps> = ({
                 </div>
               </motion.div>
             )}
-
-            {/* 한글 저작권 표시 */}
-            <div className="absolute bottom-2 left-2 text-xs text-gray-500 bg-white/80 px-2 py-1 rounded backdrop-blur-sm">
-              © Mapbox © OpenStreetMap
-            </div>
           </div>
 
           {/* 하단 통계 */}

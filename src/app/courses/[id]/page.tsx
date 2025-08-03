@@ -89,19 +89,6 @@ export default function CourseDetailPage() {
     }
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "easy":
-        return "bg-gray-100 text-gray-800";
-      case "medium":
-        return "bg-gray-200 text-gray-800";
-      case "hard":
-        return "bg-gray-300 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
   const getDifficultyText = (difficulty: string) => {
     switch (difficulty) {
       case "easy":

@@ -195,7 +195,6 @@ export function ChatBubbleList({
             className="w-full bg-gray-700 hover:bg-gray-800 text-white py-3 px-4 border border-gray-700 font-medium"
           >
             <Plus className="w-4 h-4 mr-2 inline" />
-            메모 작성
           </button>
         ) : (
           <>
