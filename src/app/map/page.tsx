@@ -243,7 +243,7 @@ export default function MapPage() {
                 {/* Drawer Header */}
                 <div className="px-4 pt-4 pb-8">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-gray-900">코스</h2>
+                    <div></div>
                     <button
                       onClick={() => {
                         setSelectedCourses([]);
@@ -251,9 +251,20 @@ export default function MapPage() {
                       }}
                       className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
                     >
-                      <span className="text-gray-500 text-lg transform rotate-90">
-                        {">"}
-                      </span>
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 15 15"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M4.18179 6.18181C4.35753 6.00608 4.64245 6.00608 4.81819 6.18181L7.49999 8.86362L10.1818 6.18181C10.3575 6.00608 10.6424 6.00608 10.8182 6.18181C10.9939 6.35755 10.9939 6.64247 10.8182 6.81821L7.81819 9.81821C7.73379 9.9026 7.61934 9.95001 7.49999 9.95001C7.38064 9.95001 7.26618 9.9026 7.18179 9.81821L4.18179 6.81821C4.00605 6.64247 4.00605 6.35755 4.18179 6.18181Z"
+                          fill="currentColor"
+                          fillRule="evenodd"
+                          clipRule="evenodd"
+                        ></path>
+                      </svg>
                     </button>
                   </div>
                 </div>
@@ -289,13 +300,13 @@ export default function MapPage() {
                           ? "opacity-60"
                           : "opacity-70";
 
-                      // 스택 효과: expense 앱처럼 큰 숫자가 아래 깔리고 작은 숫자가 위에 쌓임
-                      const baseZIndex = index + 1; // 기본 zIndex
+                      // 스택 효과: 맨 위 카드가 가장 낮은 z-index를 가짐
+                      const baseZIndex = coursesToRender.length - index; // 역순 zIndex
                       const isHovered = hoveredCardId === course.id;
                       const zIndex = isHovered
                         ? coursesToRender.length + 10
                         : baseZIndex; // hover된 카드는 가장 위로
-                      const topOffset = index * 90; // 90px씩 아래로 이동 (카드 높이 140px의 약 65%만 겹침)
+                      const bottomOffset = index * 90; // 90px씩 위로 쌓임 (화면 하단부터)
                       const leftOffset = 0; // 좌우 정렬
 
                       return (
@@ -306,7 +317,7 @@ export default function MapPage() {
                           }`}
                           style={{
                             zIndex: zIndex,
-                            top: topOffset,
+                            bottom: bottomOffset,
                             left: leftOffset,
                             right: leftOffset,
                             height: "140px",
