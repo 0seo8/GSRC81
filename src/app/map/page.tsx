@@ -306,7 +306,7 @@ export default function MapPage() {
                       const zIndex = isHovered
                         ? coursesToRender.length + 10
                         : baseZIndex; // hover된 카드는 가장 위로
-                      const bottomOffset = index * 90; // 90px씩 위로 쌓임 (화면 하단부터)
+                      const bottomOffset = index * 97; // 100px씩 위로 쌓임 (화면 하단부터) - 텍스트가 보이도록 간격 조정
                       const leftOffset = 0; // 좌우 정렬
 
                       return (
