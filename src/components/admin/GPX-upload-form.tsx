@@ -272,10 +272,17 @@ export function GPXUploadForm({
               </span>
             </div>
           </div>
-          <div className="mt-2 text-xs text-gray-600">
-            <MapPin className="w-3 h-3 inline mr-1" />
-            시작점: {gpxData.startPoint.lat.toFixed(6)},{" "}
-            {gpxData.startPoint.lng.toFixed(6)}
+          <div className="mt-2 text-xs text-gray-600 space-y-1">
+            <div>
+              <MapPin className="w-3 h-3 inline mr-1" />
+              시작점: {gpxData.startPoint.lat.toFixed(6)},{" "}
+              {gpxData.startPoint.lng.toFixed(6)}
+            </div>
+            <div>
+              <MapPin className="w-3 h-3 inline mr-1" />
+              종료점: {gpxData.endPoint.lat.toFixed(6)},{" "}
+              {gpxData.endPoint.lng.toFixed(6)}
+            </div>
           </div>
         </div>
       )}

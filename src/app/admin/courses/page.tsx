@@ -22,20 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { GPXUploadForm } from "@/components/admin/GPX-upload-form";
-
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  start_latitude: number;
-  start_longitude: number;
-  distance_km: number;
-  avg_time_min: number;
-  difficulty: "easy" | "medium" | "hard";
-  nearest_station: string;
-  is_active: boolean;
-  created_at: string;
-}
+import { Course } from "@/types";
 
 export default function CoursesManagePage() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -89,12 +76,16 @@ export default function CoursesManagePage() {
       // GPX 데이터에서 코스 정보 추출
       const gpx = gpxData as Record<string, unknown>;
       const startPoint = gpx.startPoint as Record<string, number>;
+      const endPoint = gpx.endPoint as Record<string, number>;
+      const coordinates = gpx.coordinates as Array<{ lat: number; lng: number; ele?: number }>;
 
       const courseData = {
         title: formData.get("title") as string,
         description: formData.get("description") as string,
         start_latitude: startPoint.lat,
         start_longitude: startPoint.lng,
+        end_latitude: endPoint.lat, // 종료점 위도 추가
+        end_longitude: endPoint.lng, // 종료점 경도 추가
         distance_km: gpx.distance as number,
         avg_time_min: gpx.duration as number,
         difficulty: formData.get("difficulty") as string,
@@ -104,9 +95,29 @@ export default function CoursesManagePage() {
         is_active: true,
       };
 
-      const { error } = await supabase.from("courses").insert([courseData]);
+      // 1. 먼저 코스 정보 저장
+      const { data: course, error: courseError } = await supabase
+        .from("courses")
+        .insert([courseData])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (courseError) throw courseError;
+
+      // 2. course_points 테이블에 상세 좌표 저장
+      const coursePoints = coordinates.map((coord, index) => ({
+        course_id: course.id,
+        seq: index,
+        latitude: coord.lat,
+        longitude: coord.lng,
+        elevation: coord.ele || null,
+      }));
+
+      const { error: pointsError } = await supabase
+        .from("course_points")
+        .insert(coursePoints);
+
+      if (pointsError) throw pointsError;
 
       alert("GPX 파일로부터 코스가 성공적으로 등록되었습니다!");
       setIsGPXFormExpanded(false);

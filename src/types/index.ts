@@ -3,23 +3,22 @@
 export interface Course {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   gpx_url?: string;
-  gpx_data?: string;
-  start_point: GeoPoint;
-  finish_point?: GeoPoint;
-  route_geometry?: GeoLineString;
+  gpx_coordinates?: string; // JSON string of coordinates
+  start_latitude: number;
+  start_longitude: number;
+  end_latitude?: number; // 새로 추가된 컬럼
+  end_longitude?: number; // 새로 추가된 컬럼
   distance_km: number;
   avg_time_min?: number;
-  altitude_gain?: number;
+  elevation_gain?: number; // altitude_gain에서 elevation_gain으로 변경
   difficulty: "easy" | "medium" | "hard";
   nearest_station?: string;
   cover_image_url?: string;
-  landmarks?: string[];
   is_active: boolean;
-  created_by?: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export interface CoursePoint {

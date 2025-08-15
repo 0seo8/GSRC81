@@ -9,22 +9,9 @@ import { supabase } from "@/lib/supabase";
 
 import { ChatBubbleList } from "@/components/chat/chat-bubble-list";
 import { MapPin } from "lucide-react";
+import { Course } from "@/types";
 
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  start_latitude: number;
-  start_longitude: number;
-  distance_km: number;
-  difficulty: "easy" | "medium" | "hard";
-  avg_time_min: number;
-  nearest_station: string;
-  is_active: boolean;
-  created_at: string;
-}
-
-const TrailMap = dynamic(() => import("@/components/map/trail-map"), {
+const TrailMapDB = dynamic(() => import("@/components/map/trail-map-db"), {
   ssr: false,
   loading: () => (
     <div className="h-[70vh] md:h-[80vh] bg-gray-100 rounded-lg flex items-center justify-center">
@@ -138,7 +125,7 @@ export default function CourseDetailPage() {
         <div className="max-w-2xl mx-auto">
           {/* 코스 지도 */}
           <div className="relative overflow-hidden">
-            <TrailMap courseId={course.id} className="h-[70vh] md:h-[80vh]" />
+            <TrailMapDB courseId={course.id} className="h-[70vh] md:h-[80vh]" />
           </div>
 
           {/* 코스 정보 */}
@@ -211,6 +198,30 @@ export default function CourseDetailPage() {
                   </p>
                 </div>
               )}
+
+              {/* 고도 상승 정보 */}
+              {course.elevation_gain && course.elevation_gain > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>고도 상승:</span>
+                    <span className="font-medium text-green-600">+{course.elevation_gain}m</span>
+                  </div>
+                </div>
+              )}
+
+              {/* 시작점/종료점 정보 */}
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <div className="grid grid-cols-1 gap-2 text-xs text-gray-500">
+                  <div>
+                    시작점: {course.start_latitude.toFixed(6)}, {course.start_longitude.toFixed(6)}
+                  </div>
+                  {course.end_latitude && course.end_longitude && (
+                    <div>
+                      종료점: {course.end_latitude.toFixed(6)}, {course.end_longitude.toFixed(6)}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
