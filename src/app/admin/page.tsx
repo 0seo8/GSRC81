@@ -14,13 +14,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Shield,
   MapPin,
   Plus,
   Edit,
   Trash2,
   Settings,
-  LogOut,
   Users,
   Map,
   Lock,

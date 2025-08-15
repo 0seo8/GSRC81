@@ -40,7 +40,7 @@ export function AdminLoginForm() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <Card className="shadow-xl border-0">
+        <Card className="shadow-xl border-0 py-6">
           <CardHeader className="text-center pb-8">
             <motion.div
               initial={{ scale: 0 }}

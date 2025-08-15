@@ -16,14 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ArrowLeft,
-  Save,
-  MapPin,
-  MessageSquare,
-  Trash2,
-  AlertCircle,
-} from "lucide-react";
+import { Save, MapPin, MessageSquare, Trash2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 interface Course {
@@ -272,7 +265,7 @@ export default function CourseManagePage() {
 
             {/* 코스 정보 탭 */}
             <TabsContent value="info">
-              <Card>
+              <Card className="shadow-xl border-0 py-6">
                 <CardHeader>
                   <CardTitle>코스 기본 정보</CardTitle>
                 </CardHeader>

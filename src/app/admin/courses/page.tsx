@@ -16,7 +16,6 @@ import {
   Edit,
   Trash2,
   MapPin,
-  ArrowLeft,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -77,7 +76,11 @@ export default function CoursesManagePage() {
       const gpx = gpxData as Record<string, unknown>;
       const startPoint = gpx.startPoint as Record<string, number>;
       const endPoint = gpx.endPoint as Record<string, number>;
-      const coordinates = gpx.coordinates as Array<{ lat: number; lng: number; ele?: number }>;
+      const coordinates = gpx.coordinates as Array<{
+        lat: number;
+        lng: number;
+        ele?: number;
+      }>;
 
       const courseData = {
         title: formData.get("title") as string,
@@ -202,14 +205,14 @@ export default function CoursesManagePage() {
           ) : courses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course) => (
-                <Card key={course.id}>
+                <Card key={course.id} className="shadow-xl border-0 py-6 gap-2">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle className="text-lg">
                           {course.title}
                         </CardTitle>
-                        <CardDescription className="mt-1">
+                        <CardDescription className="">
                           {course.nearest_station &&
                             `${course.nearest_station} 인근`}
                         </CardDescription>
