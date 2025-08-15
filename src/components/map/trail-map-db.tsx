@@ -16,6 +16,9 @@ import {
   ZoomOut,
   Compass,
   Play,
+  Square,
+  Eye,
+  Navigation,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Course, CoursePoint } from "@/types";
@@ -73,6 +76,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isFullRouteView, setIsFullRouteView] = useState(false);
   const [animationProgress, setAnimationProgress] = useState(0);
+  const [savedProgress, setSavedProgress] = useState(0); // 중단된 진행률 저장
   const [viewState, setViewState] = useState({
     longitude: 129.0,
     latitude: 35.2,
@@ -142,23 +146,22 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     };
   }, []);
 
-  // 데이터 로드 완료 후 자동 비행 시작
+  // 데이터 로드 완료 후 자동 비행 시작 (저장된 진행률이 없을 때만)
   useEffect(() => {
-    if (trailData && !isAnimating && !isFullRouteView) {
+    if (trailData && !isAnimating && !isFullRouteView && savedProgress === 0) {
       const timer = setTimeout(() => {
         startTrailAnimation();
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [trailData, isAnimating, isFullRouteView]);
+  }, [trailData, isAnimating, isFullRouteView, savedProgress]);
 
-  // 비행 애니메이션 함수 (공통 속도 제어 적용)
+  // 비행 애니메이션 함수 (중단/재시작 지원)
   const startTrailAnimation = useCallback(() => {
     if (!trailData || isAnimating || !mapRef.current) return;
 
     setIsAnimating(true);
     setIsFullRouteView(false);
-    setAnimationProgress(0); // 진행률 초기화
 
     const points = trailData.points;
     if (points.length === 0) return;
@@ -175,10 +178,12 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
       FLIGHT_CONFIG.MAX_TOTAL_DURATION
     );
     
-    const startTime = Date.now();
-    let currentIndex = 0;
+    // 저장된 진행률부터 시작 (중단된 지점부터 재시작)
+    const startProgress = savedProgress;
+    const startTime = Date.now() - (startProgress * totalDuration);
+    let currentIndex = Math.floor(startProgress * (pointCount - 1));
 
-    console.log(`Flight animation - Points: ${pointCount}, Duration: ${totalDuration}ms, Speed: ${(totalDuration/pointCount).toFixed(1)}ms per point`);
+    console.log(`Flight animation - Points: ${pointCount}, Duration: ${totalDuration}ms, Speed: ${(totalDuration/pointCount).toFixed(1)}ms per point, Starting from: ${(startProgress * 100).toFixed(1)}%`);
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
@@ -208,6 +213,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
         setIsAnimating(false);
         setIsFullRouteView(true);
         setAnimationProgress(1); // 전체 노선 표시
+        setSavedProgress(0); // 완료 후 저장된 진행률 리셋
         
         // 완료 후 전체보기로 전환
         setTimeout(() => {
@@ -216,36 +222,45 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
       }
     };
 
-    // 첫 번째 포인트로 이동 후 애니메이션 시작
-    const firstPoint = points[0];
+    // 저장된 위치가 있으면 해당 포인트로, 없으면 첫 번째 포인트로 이동
+    const startPointIndex = Math.floor(startProgress * (pointCount - 1));
+    const startPoint = points[startPointIndex] || points[0];
+    
     map.easeTo({
-      center: [firstPoint.longitude, firstPoint.latitude],
+      center: [startPoint.longitude, startPoint.latitude],
       zoom: FLIGHT_CONFIG.FLIGHT_ZOOM,
       pitch: FLIGHT_CONFIG.FLIGHT_PITCH,
       bearing: FLIGHT_CONFIG.FLIGHT_BEARING,
-      duration: 2000,
+      duration: startProgress > 0 ? 1000 : 2000, // 재시작이면 빠르게, 처음이면 천천히
       essential: true,
     });
 
-    // 2초 후 애니메이션 시작
+    // 애니메이션 시작 (재시작이면 1초, 처음이면 2초 후)
     setTimeout(() => {
       animationRef.current = requestAnimationFrame(animate);
-    }, 2000);
+    }, startProgress > 0 ? 1000 : 2000);
     
-  }, [trailData, isAnimating]);
+  }, [trailData, isAnimating, savedProgress]);
 
-  // 전체 경로 보기
+  // 전체 경로 보기 (애니메이션 중단 시 진행률 저장)
   const showFullRoute = useCallback(() => {
     if (!trailData || !mapRef.current) return;
 
-    // 진행 중인 애니메이션 중단
+    // 진행 중인 애니메이션 중단하고 현재 진행률 저장
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
+      
+      // 현재 진행률이 100%가 아니라면 저장 (중단된 상태)
+      if (animationProgress < 1 && animationProgress > 0) {
+        setSavedProgress(animationProgress);
+        console.log(`Animation paused at ${(animationProgress * 100).toFixed(1)}%`);
+      }
     }
     
     setIsAnimating(false);
     setIsFullRouteView(true);
+    setAnimationProgress(1); // 전체 노선 표시
 
     const bounds = trailData.stats.bounds;
     const padding = 0.001;
@@ -269,7 +284,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
         essential: true,
       }
     );
-  }, [trailData]);
+  }, [trailData, animationProgress]);
 
 
   // 애니메이션 진행률에 따른 부분 GeoJSON 생성
@@ -587,52 +602,6 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     >
       <Card>
         <CardContent className="p-0">
-          {/* 헤더 */}
-          <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-green-50">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                  {trailData.course.title}
-                </h3>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <Route className="w-4 h-4" />
-                    <span>{trailData.stats.totalDistance.toFixed(1)} km</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Mountain className="w-4 h-4" />
-                    <span>+{trailData.stats.elevationGain.toFixed(0)}m</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Timer className="w-4 h-4" />
-                    <span>{formatTime(trailData.stats.estimatedTime)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={isFullRouteView ? startTrailAnimation : showFullRoute}
-                  disabled={isAnimating}
-                  className="text-xs"
-                >
-                  <Play className="w-3 h-3 mr-1" />
-                  {isAnimating
-                    ? "지형 추적 중..."
-                    : isFullRouteView
-                    ? "경로 추적 비행"
-                    : "전체보기"}
-                </Button>
-                
-                {/* 속도 설정 표시 (개발용) */}
-                <span className="text-xs text-gray-500">
-                  속도: {FLIGHT_CONFIG.BASE_DURATION_PER_POINT}ms/pt
-                </span>
-              </div>
-            </div>
-          </div>
 
           {/* 지도 */}
           <div className="relative h-[70vh] md:h-[80vh] overflow-hidden">
@@ -647,17 +616,30 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
               doubleClickZoom={false}
               attributionControl={false}
             >
-              {/* 경로 추적 버튼 */}
+              {/* 지도 위 컨트롤 버튼 */}
               <div className="absolute top-4 right-4 flex flex-col gap-1 z-10">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={isFullRouteView ? startTrailAnimation : showFullRoute}
-                  disabled={isAnimating}
-                  className="w-8 h-8 p-0 bg-white/90 backdrop-blur-sm border-gray-300 hover:bg-white disabled:opacity-50"
-                  title={isAnimating ? "비행 중..." : isFullRouteView ? "경로 추적 비행" : "전체보기"}
+                  onClick={isAnimating ? showFullRoute : isFullRouteView ? startTrailAnimation : showFullRoute}
+                  className="w-8 h-8 p-0 bg-white/90 backdrop-blur-sm border-gray-300 hover:bg-white"
+                  title={
+                    isAnimating 
+                      ? "비행 중단하고 전체보기" 
+                      : isFullRouteView 
+                        ? savedProgress > 0 
+                          ? `경로 추적 재시작 (${(savedProgress * 100).toFixed(0)}%부터)`
+                          : "경로 추적 비행"
+                        : "전체보기"
+                  }
                 >
-                  <Mountain className="w-4 h-4" />
+                  {isAnimating ? (
+                    <Square className="w-4 h-4" />
+                  ) : isFullRouteView ? (
+                    <Navigation className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
 
@@ -708,35 +690,40 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
             </Map>
           </div>
 
-          {/* 코스 정보 - 지도 바깥으로 이동 */}
+          {/* 코스 정보 푸터 */}
           <div className="p-4 bg-gradient-to-r from-blue-50 to-green-50 border-t">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-1">
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-semibold text-gray-800">
                   {trailData.course.title}
                 </h3>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <Route className="w-4 h-4" />
-                    <span>{trailData.stats.totalDistance.toFixed(1)} km</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Mountain className="w-4 h-4" />
-                    <span>+{trailData.stats.elevationGain.toFixed(0)}m</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Timer className="w-4 h-4" />
-                    <span>{formatTime(trailData.stats.estimatedTime)}</span>
-                  </div>
+                
+                {/* 속도 설정 및 진행률 표시 (개발용) */}
+                <div className="text-xs text-gray-500 text-right">
+                  <div>속도: {FLIGHT_CONFIG.BASE_DURATION_PER_POINT}ms/pt</div>
+                  {savedProgress > 0 && (
+                    <div>저장됨: {(savedProgress * 100).toFixed(0)}%</div>
+                  )}
                 </div>
               </div>
-
+              <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
+                <div className="flex items-center gap-1">
+                  <Route className="w-4 h-4" />
+                  <span>{trailData.stats.totalDistance.toFixed(1)} km</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Mountain className="w-4 h-4" />
+                  <span>+{trailData.stats.elevationGain.toFixed(0)}m</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Timer className="w-4 h-4" />
+                  <span>{formatTime(trailData.stats.estimatedTime)}</span>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* 상세 통계 */}
-          <div className="p-4 bg-gray-50 border-t">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* 상세 통계 */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div className="text-center">
                 <div className="text-lg font-semibold text-gray-800">
                   {trailData.stats.maxElevation.toFixed(0)}m
@@ -765,7 +752,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
             {/* 코스 설명 */}
             {trailData.course.description && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="pt-4 border-t border-gray-200">
                 <p className="text-gray-700 text-sm leading-relaxed">
                   {trailData.course.description}
                 </p>
