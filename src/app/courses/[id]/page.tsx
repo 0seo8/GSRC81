@@ -122,111 +122,14 @@ export default function CourseDetailPage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
         {/* 메인 콘텐츠 */}
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-4">
           {/* 코스 지도 */}
-          <div className="relative overflow-hidden">
-            <TrailMapDB courseId={course.id} className="h-[70vh] md:h-[80vh]" />
-          </div>
-
-          {/* 코스 정보 */}
-          <div className="w-full">
-            <div className="bg-white rounded-t-2xl shadow-sm p-6">
-              {/* 헤더 */}
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                  {course.title}
-                </h1>
-              </div>
-
-              {/* 코스 통계 그리드 */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                {/* 거리 */}
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-gray-900 mb-1">
-                    {course.distance_km}{" "}
-                    <span className="text-lg font-normal text-gray-700">+</span>
-                  </div>
-                  <div className="text-sm text-gray-700 font-medium">
-                    +0.3k (12%)
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">거리 (km)</div>
-                </div>
-
-                {/* 소요시간 */}
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-gray-900 mb-1">
-                    {Math.round((course.avg_time_min / 60) * 10) / 10}
-                  </div>
-                  <div className="text-sm text-gray-500">시간</div>
-                  <div className="text-xs text-gray-500 mt-1">예상 시간</div>
-                </div>
-
-                {/* 코스 면적/범위 */}
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-gray-900 mb-1">
-                    {Math.round(course.distance_km * 100)} m²{" "}
-                    <span className="text-lg font-normal text-gray-700">+</span>
-                  </div>
-                  <div className="text-sm text-gray-700 font-medium">
-                    +{Math.round(course.distance_km * 20)} m² (15%)
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">코스 범위</div>
-                </div>
-
-                {/* 난이도 점수 */}
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-gray-900 mb-1">
-                    {course.difficulty === "easy"
-                      ? "8"
-                      : course.difficulty === "medium"
-                      ? "6"
-                      : "4"}{" "}
-                    점
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {getDifficultyText(course.difficulty)}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">난이도 점수</div>
-                </div>
-              </div>
-
-              {/* 코스 설명 */}
-              {course.description && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <p className="text-gray-700 text-sm leading-relaxed">
-                    {course.description}
-                  </p>
-                </div>
-              )}
-
-              {/* 고도 상승 정보 */}
-              {course.elevation_gain && course.elevation_gain > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <span>고도 상승:</span>
-                    <span className="font-medium text-green-600">+{course.elevation_gain}m</span>
-                  </div>
-                </div>
-              )}
-
-              {/* 시작점/종료점 정보 */}
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="grid grid-cols-1 gap-2 text-xs text-gray-500">
-                  <div>
-                    시작점: {course.start_latitude.toFixed(6)}, {course.start_longitude.toFixed(6)}
-                  </div>
-                  {course.end_latitude && course.end_longitude && (
-                    <div>
-                      종료점: {course.end_latitude.toFixed(6)}, {course.end_longitude.toFixed(6)}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+          <div className="bg-white rounded-lg shadow-sm">
+            <TrailMapDB courseId={course.id} />
           </div>
 
           {/* 크루원 메모 */}
-          <div>
+          <div className="bg-white rounded-lg shadow-sm">
             <ChatBubbleList
               courseId={course.id}
               onCommentUpdate={loadCommentCount}
