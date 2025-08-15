@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { CourseCardStack } from "./course-card-stack";
 import { type CourseWithComments } from "@/lib/courses-data";
+import { useState } from "react";
 
 interface CourseDrawerProps {
   selectedCourses: CourseWithComments[];
@@ -17,6 +18,7 @@ export function CourseDrawer({
   onClose,
   onCourseClick,
 }: CourseDrawerProps) {
+  const [isDragging, setIsDragging] = useState(false);
   const isOpen = selectedCourses.length > 0 || selectedCourse !== null;
   const courses = selectedCourses.length > 0 
     ? selectedCourses 
@@ -48,8 +50,24 @@ export function CourseDrawer({
               stiffness: 300,
               duration: 0.3,
             }}
-            className="absolute inset-0 bg-white z-30 flex flex-col drawer-safe-bottom"
-            onClick={onClose} // 드로어 자체도 클릭하면 닫히도록
+            drag="y"
+            dragConstraints={{ top: 0 }}
+            dragElastic={0.2}
+            onDragStart={() => setIsDragging(true)}
+            onDragEnd={(_, info) => {
+              setIsDragging(false);
+              // 드래그 속도나 거리가 충분하면 드로어를 닫음
+              if (info.velocity.y > 500 || info.offset.y > 100) {
+                onClose();
+              }
+            }}
+            className="absolute inset-0 bg-white z-30 flex flex-col drawer-safe-bottom cursor-grab active:cursor-grabbing"
+            onClick={(e) => {
+              // 드래그 중이 아닐 때만 클릭으로 닫기
+              if (!isDragging) {
+                onClose();
+              }
+            }}
           >
             <CourseCardStack
               courses={courses}
