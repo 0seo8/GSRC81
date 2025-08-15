@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { AdminLoginForm } from '@/components/admin/AdminLoginForm';
-import { useAdmin } from '@/contexts/AdminContext';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { AdminLoginForm } from "@/components/admin/admin-login-form";
+import { useAdmin } from "@/contexts/AdminContext";
 
 export default function AdminLoginPage() {
   const { isAdminAuthenticated } = useAdmin();
@@ -11,7 +11,7 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (isAdminAuthenticated) {
-      router.replace('/admin');
+      router.replace("/admin");
     }
   }, [isAdminAuthenticated]); // router 제거
 

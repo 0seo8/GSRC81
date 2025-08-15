@@ -5,6 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminProvider } from "@/contexts/AdminContext";
+import { SafeAreaProvider } from "@/providers/safe-area-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
   description: "은평구 기반 러닝 코스 지도 서비스",
   keywords: ["러닝", "코스", "지도", "GSRC81", "은평구", "구파발"],
   authors: [{ name: "GSRC81" }],
-  viewport: "width=device-width, initial-scale=1",
+  viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
   themeColor: "#ff6b35",
 };
 
@@ -35,21 +36,23 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <AdminProvider>
-            {children}
-            <Toaster 
-              position="top-center"
-              toastOptions={{
-                duration: 3000,
-                style: {
-                  background: '#fff',
-                  border: '1px solid #e5e7eb',
-                },
-              }}
-            />
-          </AdminProvider>
-        </AuthProvider>
+        <SafeAreaProvider>
+          <AuthProvider>
+            <AdminProvider>
+              {children}
+              <Toaster 
+                position="top-center"
+                toastOptions={{
+                  duration: 3000,
+                  style: {
+                    background: '#fff',
+                    border: '1px solid #e5e7eb',
+                  },
+                }}
+              />
+            </AdminProvider>
+          </AuthProvider>
+        </SafeAreaProvider>
       </body>
     </html>
   );

@@ -37,7 +37,7 @@ export function CourseDrawer({
             stiffness: 300,
             duration: 0.3,
           }}
-          className="absolute inset-0 bg-white z-30 flex flex-col"
+          className="absolute inset-0 bg-white z-30 flex flex-col drawer-safe-bottom"
         >
           <CourseCardStack
             courses={courses}
