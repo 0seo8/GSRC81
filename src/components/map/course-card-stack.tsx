@@ -9,23 +9,33 @@ interface CourseCardStackProps {
   onCourseClick: (courseId: string) => void;
 }
 
-const CourseCardStackComponent = function CourseCardStack({ courses, onClose, onCourseClick }: CourseCardStackProps) {
+const CourseCardStackComponent = function CourseCardStack({
+  courses,
+  onClose,
+  onCourseClick,
+}: CourseCardStackProps) {
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
-  
+
   // 난이도 텍스트 변환 함수를 useCallback으로 최적화
   const getDifficultyText = useCallback((difficulty: string) => {
     switch (difficulty) {
-      case "easy": return "쉬움";
-      case "medium": return "보통";
-      case "hard": return "어려움";
-      default: return difficulty;
+      case "easy":
+        return "쉬움";
+      case "medium":
+        return "보통";
+      case "hard":
+        return "어려움";
+      default:
+        return difficulty;
     }
   }, []);
 
   return (
-    <>
+    <div onClick={(e) => e.stopPropagation()}>
+      {" "}
+      {/* 전체 컨테이너에서 이벤트 전파 방지 */}
       {/* Header - 전체 영역 클릭 가능 */}
-      <div 
+      <div
         className="px-4 pt-4 pb-8 cursor-pointer hover:bg-gray-50 transition-colors"
         onClick={onClose}
         aria-label="코스 목록 닫기"
@@ -33,7 +43,6 @@ const CourseCardStackComponent = function CourseCardStack({ courses, onClose, on
         <div className="flex items-center justify-between">
           <div className="flex-1 text-center">
             <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
-            <p className="text-sm text-gray-500">탭하여 닫기</p>
           </div>
           <button
             onClick={(e) => {
@@ -60,9 +69,8 @@ const CourseCardStackComponent = function CourseCardStack({ courses, onClose, on
           </button>
         </div>
       </div>
-
       {/* Stacked Cards Container */}
-      <div className="flex-1 px-4 relative">
+      <div className="">
         {courses.map((course, index) => {
           const cardColors = [
             "bg-gray-900", // 첫 번째 카드
@@ -76,8 +84,10 @@ const CourseCardStackComponent = function CourseCardStack({ courses, onClose, on
           const cardColor = cardColors[index % cardColors.length];
 
           // 텍스트 색상: 밝은 카드에는 검정 텍스트, 어두운 카드에는 흰 텍스트
-          const textColor = index % cardColors.length >= 3 ? "text-gray-900" : "text-white";
-          const textOpacity = index % cardColors.length >= 3 ? "opacity-60" : "opacity-70";
+          const textColor =
+            index % cardColors.length >= 3 ? "text-gray-900" : "text-white";
+          const textOpacity =
+            index % cardColors.length >= 3 ? "opacity-60" : "opacity-70";
 
           // 스택 효과
           const baseZIndex = courses.length - index;
@@ -143,7 +153,7 @@ const CourseCardStackComponent = function CourseCardStack({ courses, onClose, on
           );
         })}
       </div>
-    </>
+    </div>
   );
 };
 
