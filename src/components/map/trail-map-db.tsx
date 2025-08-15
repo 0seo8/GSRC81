@@ -706,49 +706,41 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
-                <div className="flex items-center gap-1">
-                  <Route className="w-4 h-4" />
-                  <span>{trailData.stats.totalDistance.toFixed(1)} km</span>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <Route className="w-4 h-4 text-blue-600" />
+                  <div>
+                    <div className="font-semibold text-gray-800">{trailData.stats.totalDistance.toFixed(1)} km</div>
+                    <div className="text-xs text-gray-500">거리</div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Mountain className="w-4 h-4" />
-                  <span>+{trailData.stats.elevationGain.toFixed(0)}m</span>
+                <div className="flex items-center gap-2">
+                  <Timer className="w-4 h-4 text-green-600" />
+                  <div>
+                    <div className="font-semibold text-gray-800">{formatTime(trailData.stats.estimatedTime)}</div>
+                    <div className="text-xs text-gray-500">예상 시간</div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Timer className="w-4 h-4" />
-                  <span>{formatTime(trailData.stats.estimatedTime)}</span>
+                <div className="flex items-center gap-2">
+                  <Mountain className="w-4 h-4 text-orange-600" />
+                  <div>
+                    <div className="font-semibold text-gray-800">+{trailData.stats.elevationGain.toFixed(0)}m</div>
+                    <div className="text-xs text-gray-500">고도 상승</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-4 h-4 rounded-full ${
+                    trailData.course.difficulty === 'easy' ? 'bg-green-500' :
+                    trailData.course.difficulty === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
+                  }`} />
+                  <div>
+                    <div className="font-semibold text-gray-800 capitalize">{trailData.stats.difficulty}</div>
+                    <div className="text-xs text-gray-500">난이도</div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* 상세 통계 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              <div className="text-center">
-                <div className="text-lg font-semibold text-gray-800">
-                  {trailData.stats.maxElevation.toFixed(0)}m
-                </div>
-                <div className="text-xs text-gray-600">최고 고도</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-gray-800">
-                  {trailData.stats.minElevation.toFixed(0)}m
-                </div>
-                <div className="text-xs text-gray-600">최저 고도</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-green-600">
-                  +{trailData.stats.elevationGain.toFixed(0)}m
-                </div>
-                <div className="text-xs text-gray-600">누적 상승</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-red-600">
-                  -{trailData.stats.elevationLoss.toFixed(0)}m
-                </div>
-                <div className="text-xs text-gray-600">누적 하강</div>
-              </div>
-            </div>
 
             {/* 코스 설명 */}
             {trailData.course.description && (
