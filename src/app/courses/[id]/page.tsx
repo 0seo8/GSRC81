@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ProtectedRoute } from "@/components/protected-route";
 
 import { supabase } from "@/lib/supabase";
 
@@ -24,7 +24,7 @@ interface Course {
   created_at: string;
 }
 
-const TrailMap = dynamic(() => import("@/components/map/TrailMap"), {
+const TrailMap = dynamic(() => import("@/components/map/trail-map"), {
   ssr: false,
   loading: () => (
     <div className="h-[70vh] md:h-[80vh] bg-gray-100 rounded-lg flex items-center justify-center">

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Drawer } from "@/components/ui/drawer";
-import { MapPin, Clock, TrendingUp, X, MessageCircle } from "lucide-react";
+import { Clock, TrendingUp, X, MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Course {
@@ -100,7 +100,9 @@ export function CourseDetailDrawer({
           <div className="bg-gray-100 border border-gray-200 rounded-xl p-4 md:p-5">
             <div className="flex items-center space-x-2 mb-2">
               <TrendingUp className="w-4 h-4 text-gray-500" />
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">거리</span>
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                거리
+              </span>
             </div>
             <p className="text-xl font-bold text-gray-800">
               {course.distance_km}km
@@ -122,7 +124,9 @@ export function CourseDetailDrawer({
           <div className="bg-gray-100 border border-gray-200 rounded-xl p-4 md:p-5">
             <div className="flex items-center space-x-2 mb-2">
               <MessageCircle className="w-4 h-4 text-gray-500" />
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">댓글</span>
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                댓글
+              </span>
             </div>
             <p className="text-xl font-bold text-gray-800">
               {course.comment_count || 0}개

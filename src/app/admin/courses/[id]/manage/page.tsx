@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
+import { ProtectedAdminRoute } from "@/components/protected-admin-route";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

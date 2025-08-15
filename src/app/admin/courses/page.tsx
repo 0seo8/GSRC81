@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
+import { ProtectedAdminRoute } from "@/components/protected-admin-route";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +21,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
-import { GPXUploadForm } from "@/components/admin/GPXUploadForm";
+import { GPXUploadForm } from "@/components/admin/GPX-upload-form";
 
 interface Course {
   id: string;

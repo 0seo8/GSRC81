@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, memo } from "react";
 import mapboxgl from "mapbox-gl";
 
 interface MapboxMapProps {
@@ -12,7 +12,7 @@ interface MapboxMapProps {
   onMapLoad?: (map: mapboxgl.Map) => void;
 }
 
-export function MapboxMap({
+const MapboxMapComponent = function MapboxMap({
   accessToken,
   center = [126.9784, 37.5665], // 서울 중심
   zoom = 10, // 서울 전체가 보이도록 줌 레벨 조정
@@ -43,8 +43,8 @@ export function MapboxMap({
       pitch: 0,
       bearing: 0,
       antialias: true,
-      maxZoom: 18, // 최대 줌 제한 (상세 보기 가능)
-      minZoom: 8, // 최소 줌 제한 (더 넓은 지역 보기 가능)
+      maxZoom: 12.85, // 사용자 요구사항에 따른 최대 줌 제한
+      minZoom: 10, // 사용자 요구사항에 따른 최소 줌 제한
       preserveDrawingBuffer: true, // 캔버스 캡처를 위해 필요
     });
 
@@ -255,4 +255,7 @@ export function MapboxMap({
       </div> */}
     </div>
   );
-}
+};
+
+// React.memo로 불필요한 re-render 방지
+export const MapboxMap = memo(MapboxMapComponent);
