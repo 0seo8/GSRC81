@@ -270,34 +270,37 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
       if (timeProgress < 1 && currentIndex < pointCount - 1) {
         const point = points[currentIndex];
 
-        // km 마커 표시 로직 (경로 그리기와 동기화, actualProgress 사용)
-        const totalDistanceKm = trailData.course.distance_km || 16;
-        const currentDistanceKm = actualProgress * totalDistanceKm; // actualProgress로 변경
-        const currentKmMark = Math.floor(currentDistanceKm);
+        // km 마커 표시 로직 (정확한 타이밍으로 수정)
+        // 현재 포인트까지의 실제 누적 거리 계산
+        let cumulativeDistance = 0;
+        for (let i = 1; i <= currentIndex; i++) {
+          const prevPt = points[i - 1];
+          const currPt = points[i];
 
-        // 새로운 km 지점을 지났는지 확인
+          const prevLat = "lat" in prevPt ? prevPt.lat : prevPt.latitude;
+          const prevLng = "lng" in prevPt ? prevPt.lng : prevPt.longitude;
+          const currLat = "lat" in currPt ? currPt.lat : currPt.latitude;
+          const currLng = "lng" in currPt ? currPt.lng : currPt.longitude;
+
+          cumulativeDistance += calculateDistance(
+            prevLat,
+            prevLng,
+            currLat,
+            currLng
+          );
+        }
+
+        const currentKmMark = Math.floor(cumulativeDistance / 1000);
+
+        // 새로운 km 지점을 지났는지 확인 (사라지지 않도록 수정)
         if (currentKmMark > lastShownKm && currentKmMark > 0) {
-          // 이전 포인트 기반으로 이전 거리 계산
-          const prevPointIndex = Math.max(0, currentIndex - 1);
-          const previousProgress = prevPointIndex / (pointCount - 1);
-          const previousDistanceKm = previousProgress * totalDistanceKm;
-          const previousKmMark = Math.floor(previousDistanceKm);
+          setLastShownKm(currentKmMark);
 
-          // 정확히 km 경계를 넘었을 때
-          if (previousKmMark < currentKmMark) {
-            setLastShownKm(currentKmMark);
-
-            // 새 km 마커 표시
-            setVisibleKmMarkers((prev) => new Set([...prev, currentKmMark]));
-            // 3초 후 마커 제거
-            setTimeout(() => {
-              setVisibleKmMarkers((prev) => {
-                const newSet = new Set(prev);
-                newSet.delete(currentKmMark);
-                return newSet;
-              });
-            }, 3000);
-          }
+          // 새 km 마커 표시 (계속 보이도록 수정)
+          setVisibleKmMarkers((prev) => new Set([...prev, currentKmMark]));
+          console.log(
+            `🏃 ${currentKmMark}km 지점 통과! (실제 거리: ${(cumulativeDistance / 1000).toFixed(2)}km)`
+          );
         }
 
         // 실시간 진행 상황 로깅 (10% 단위로)
@@ -684,7 +687,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     id: "trail-line",
     type: "line" as const,
     paint: {
-      "line-color": "#ff6b35",
+      "line-color": "#ff004b",
       "line-width": 4,
       "line-opacity": 0.8,
     },
@@ -698,9 +701,9 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     id: "trail-outline",
     type: "line" as const,
     paint: {
-      "line-color": "#333333",
+      "line-color": "#B8860B",
       "line-width": 6,
-      "line-opacity": 0.6,
+      "line-opacity": 0.7,
     },
     layout: {
       "line-join": "round" as const,
@@ -766,7 +769,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
               onMove={(evt) => setViewState(evt.viewState)}
               mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
               style={{ width: "100%", height: "100%" }}
-              mapStyle="mapbox://styles/mapbox/light-v11"
+              mapStyle="mapbox://styles/mapbox/streets-v12"
               onLoad={onMapLoad}
               doubleClickZoom={false}
               attributionControl={false}
