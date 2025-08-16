@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import Map, { Source, Layer, Marker } from "react-map-gl/mapbox";
+import Map, { Source, Layer, Marker, MapRef } from "react-map-gl/mapbox";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,11 +22,11 @@ import "mapbox-gl/dist/mapbox-gl.css";
 // 비행 애니메이션 속도 제어 상수들
 const FLIGHT_CONFIG = {
   // 기본 비행 속도 (포인트당 지속시간 ms) - 낮을수록 빠름
-  BASE_DURATION_PER_POINT: 250, // 200 → 250 (조금 더 천천히)
+  BASE_DURATION_PER_POINT: 500, // 500ms로 더 천천히
 
   // 최소/최대 총 애니메이션 시간 (ms)
-  MIN_TOTAL_DURATION: 25000, // 18초 → 25초 (더 길게, 강제로 느리게)
-  MAX_TOTAL_DURATION: 45000, // 45초 유지
+  MIN_TOTAL_DURATION: 80000, // 80초 최소 시간 (더 느리게)
+  MAX_TOTAL_DURATION: 100000, // 100초
 
   // 카메라 설정
   FLIGHT_ZOOM: 16,
@@ -45,7 +45,7 @@ interface TrailMapProps {
 interface TrailData {
   course: Course;
   points: CoursePoint[];
-  geoJSON: any;
+  geoJSON: TrailGeoJSON;
   stats: {
     totalDistance: number;
     elevationGain: number;
@@ -63,6 +63,29 @@ interface TrailData {
   };
 }
 
+// 개별 좌표 타입
+export type GpxCoordinate = {
+  lat: number;
+  lng: number;
+  ele?: number | null; // 고도는 선택적
+};
+
+// 파싱 후 사용할 배열 타입
+export type GpxCoordinates = GpxCoordinate[];
+
+// GeoJSON 타입 정의
+export type TrailGeoJSON = {
+  type: "FeatureCollection";
+  features: {
+    type: "Feature";
+    properties: Record<string, unknown>;
+    geometry: {
+      type: "LineString";
+      coordinates: number[][];
+    };
+  }[];
+};
+
 const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   // 모든 state를 먼저 정의
   const [trailData, setTrailData] = useState<TrailData | null>(null);
@@ -72,6 +95,13 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   const [isFullRouteView, setIsFullRouteView] = useState(false);
   const [animationProgress, setAnimationProgress] = useState(0);
   const [savedProgress, setSavedProgress] = useState(0); // 중단된 진행률 저장
+  const [kmMarkers, setKmMarkers] = useState<
+    { km: number; position: { lat: number; lng: number } }[]
+  >([]); // km 지점 마커들
+  const [visibleKmMarkers, setVisibleKmMarkers] = useState<Set<number>>(
+    new Set()
+  ); // 현재 보이는 km 지점들
+  const [lastShownKm, setLastShownKm] = useState(0); // 마지막으로 표시된 km
   const [viewState, setViewState] = useState({
     longitude: 129.0,
     latitude: 35.2,
@@ -81,8 +111,78 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   });
 
   // 모든 ref를 함께 정의
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<MapRef>(null);
   const animationRef = useRef<number | null>(null);
+
+  // 두 좌표 간 거리 계산 (Haversine formula)
+  const calculateDistance = (
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number
+  ): number => {
+    const R = 6371000; // 지구 반지름 (미터)
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // 미터 단위
+  };
+
+  // 경로상의 km 지점 좌표들 계산
+  const calculateKmMarkers = (points: GpxCoordinate[] | CoursePoint[]) => {
+    const markers: { km: number; position: { lat: number; lng: number } }[] =
+      [];
+    let cumulativeDistance = 0;
+    let targetKm = 1;
+
+    for (let i = 1; i < points.length; i++) {
+      const prevPoint = points[i - 1];
+      const currentPoint = points[i];
+
+      // CoursePoint는 latitude/longitude, GpxCoordinate는 lat/lng 사용
+      const prevLat = "lat" in prevPoint ? prevPoint.lat : prevPoint.latitude;
+      const prevLng = "lng" in prevPoint ? prevPoint.lng : prevPoint.longitude;
+      const currLat =
+        "lat" in currentPoint ? currentPoint.lat : currentPoint.latitude;
+      const currLng =
+        "lng" in currentPoint ? currentPoint.lng : currentPoint.longitude;
+
+      const segmentDistance = calculateDistance(
+        prevLat,
+        prevLng,
+        currLat,
+        currLng
+      );
+
+      cumulativeDistance += segmentDistance;
+
+      // 1km, 2km, 3km... 지점을 지났는지 확인
+      while (cumulativeDistance >= targetKm * 1000 && targetKm <= 20) {
+        // 최대 20km까지
+        // 선형 보간으로 정확한 km 지점 좌표 계산
+        const overDistance = cumulativeDistance - targetKm * 1000;
+        const ratio = 1 - overDistance / segmentDistance;
+
+        const lat = prevLat + (currLat - prevLat) * ratio;
+        const lng = prevLng + (currLng - prevLng) * ratio;
+
+        markers.push({
+          km: targetKm,
+          position: { lat, lng },
+        });
+
+        targetKm++;
+      }
+    }
+
+    return markers;
+  };
 
   // 컴포넌트 언마운트 시 애니메이션 정리
   useEffect(() => {
@@ -109,24 +209,26 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
     setIsAnimating(true);
     setIsFullRouteView(false);
+    setVisibleKmMarkers(new Set()); // km 마커 상태 리셋
+    setLastShownKm(0);
 
     // gpx_coordinates에서 포인트 추출 (마커와 동일한 데이터 소스)
-    let points: any[] = [];
+    let points: GpxCoordinate[] | CoursePoint[] = [];
     if (trailData.course.gpx_coordinates) {
       try {
         points = JSON.parse(trailData.course.gpx_coordinates);
-        console.log(`🎯 Using gpx_coordinates for animation: ${points.length} points`);
-      } catch (e) {
-        console.error("Failed to parse gpx_coordinates for animation:", e);
+      } catch {
         // fallback to trailData.points
         points = trailData.points;
-        console.log(`⚠️ Fallback to trailData.points: ${points.length} points`);
       }
     } else {
       points = trailData.points;
-      console.log(`📍 Using trailData.points: ${points.length} points`);
     }
-    
+
+    // km 지점 마커들 미리 계산
+    const calculatedKmMarkers = calculateKmMarkers(points);
+    setKmMarkers(calculatedKmMarkers);
+
     if (points.length === 0) return;
 
     const map = mapRef.current.getMap();
@@ -149,24 +251,6 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
       pointCount - 1
     );
 
-    console.log(
-      `🚀 Flight animation - Points: ${pointCount}, Duration: ${totalDuration}ms, Speed: ${(totalDuration / pointCount).toFixed(1)}ms per point, Starting from: ${(startProgress * 100).toFixed(1)}%`
-    );
-    console.log(`📊 Speed calculation: ${pointCount} × ${FLIGHT_CONFIG.BASE_DURATION_PER_POINT}ms = ${pointCount * FLIGHT_CONFIG.BASE_DURATION_PER_POINT}ms → final: ${totalDuration}ms`);
-
-    // 시작점과 끝점 정보 로깅
-    const firstPoint = points[0];
-    const lastPoint = points[pointCount - 1];
-    console.log("🚀 Course Start Point:", firstPoint);
-    console.log("🏁 Course End Point:", lastPoint);
-    console.log(
-      "📍 Total distance between start/end:",
-      Math.sqrt(
-        Math.pow(((lastPoint.lat || lastPoint.latitude) - (firstPoint.lat || firstPoint.latitude)) * 111000, 2) +
-          Math.pow(((lastPoint.lng || lastPoint.longitude) - (firstPoint.lng || firstPoint.longitude)) * 111000, 2)
-      ).toFixed(1) + "m"
-    );
-
     const animate = () => {
       const elapsed = Date.now() - startTime;
       const timeProgress = Math.min(elapsed / totalDuration, 1);
@@ -186,63 +270,69 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
       if (timeProgress < 1 && currentIndex < pointCount - 1) {
         const point = points[currentIndex];
 
+        // km 마커 표시 로직 (경로 그리기와 동기화, actualProgress 사용)
+        const totalDistanceKm = trailData.course.distance_km || 16;
+        const currentDistanceKm = actualProgress * totalDistanceKm; // actualProgress로 변경
+        const currentKmMark = Math.floor(currentDistanceKm);
+
+        // 새로운 km 지점을 지났는지 확인
+        if (currentKmMark > lastShownKm && currentKmMark > 0) {
+          // 이전 포인트 기반으로 이전 거리 계산
+          const prevPointIndex = Math.max(0, currentIndex - 1);
+          const previousProgress = prevPointIndex / (pointCount - 1);
+          const previousDistanceKm = previousProgress * totalDistanceKm;
+          const previousKmMark = Math.floor(previousDistanceKm);
+
+          // 정확히 km 경계를 넘었을 때
+          if (previousKmMark < currentKmMark) {
+            setLastShownKm(currentKmMark);
+
+            // 새 km 마커 표시
+            setVisibleKmMarkers((prev) => new Set([...prev, currentKmMark]));
+            // 3초 후 마커 제거
+            setTimeout(() => {
+              setVisibleKmMarkers((prev) => {
+                const newSet = new Set(prev);
+                newSet.delete(currentKmMark);
+                return newSet;
+              });
+            }, 3000);
+          }
+        }
+
         // 실시간 진행 상황 로깅 (10% 단위로)
         if (
           Math.floor(actualProgress * 10) !==
           Math.floor((actualProgress - 0.01) * 10)
         ) {
-          console.log(
-            `⚡ Progress: ${(actualProgress * 100).toFixed(1)}% | Time: ${(timeProgress * 100).toFixed(1)}% | Index: ${currentIndex}/${pointCount - 1} | Point: ${point.seq || currentIndex}`
-          );
         }
 
+        // CoursePoint는 latitude/longitude, GpxCoordinate는 lat/lng 사용
+        const pointLat = "lat" in point ? point.lat : point.latitude;
+        const pointLng = "lng" in point ? point.lng : point.longitude;
+
         map.easeTo({
-          center: [point.lng || point.longitude, point.lat || point.latitude],
+          center: [pointLng, pointLat],
           zoom: FLIGHT_CONFIG.FLIGHT_ZOOM,
           pitch: FLIGHT_CONFIG.FLIGHT_PITCH,
           bearing: FLIGHT_CONFIG.FLIGHT_BEARING,
-          duration: 100, // 부드러운 전환을 위한 짧은 지속시간
+          duration: 200, // 더 부드러운 전환
           essential: true,
         });
 
         animationRef.current = requestAnimationFrame(animate);
       } else {
         // 애니메이션 종료 시점 디버깅 정보
-        const currentPoint = points[currentIndex];
         const lastPoint = points[pointCount - 1];
 
-        console.log("🔴 Animation ENDING:");
-        console.log(
-          "  Actual Progress:",
-          (actualProgress * 100).toFixed(2) + "%"
-        );
-        console.log("  Time Progress:", (timeProgress * 100).toFixed(2) + "%");
-        console.log("  Current Index:", currentIndex, "/", pointCount - 1);
-        console.log("  Current Point:", {
-          lat: currentPoint.lat || currentPoint.latitude,
-          lng: currentPoint.lng || currentPoint.longitude,
-          seq: currentPoint.seq || currentIndex,
-        });
-        console.log("  Target Last Point:", {
-          lat: lastPoint.lat || lastPoint.latitude,
-          lng: lastPoint.lng || lastPoint.longitude,
-          seq: lastPoint.seq || (pointCount - 1)
-        });
-        console.log(
-          "  Distance to end:",
-          Math.sqrt(
-            Math.pow(((lastPoint.lat || lastPoint.latitude) - (currentPoint.lat || currentPoint.latitude)) * 111000, 2) +
-              Math.pow(
-                ((lastPoint.lng || lastPoint.longitude) - (currentPoint.lng || currentPoint.longitude)) * 111000,
-                2
-              )
-          ).toFixed(1) + "m"
-        );
-        console.log("  Reached last point?", currentIndex === pointCount - 1);
-
         // 애니메이션 완료 - 마지막 포인트로 확실히 이동
+        const lastPointLat =
+          "lat" in lastPoint ? lastPoint.lat : lastPoint.latitude;
+        const lastPointLng =
+          "lng" in lastPoint ? lastPoint.lng : lastPoint.longitude;
+
         map.easeTo({
-          center: [lastPoint.lng || lastPoint.longitude, lastPoint.lat || lastPoint.latitude],
+          center: [lastPointLng, lastPointLat],
           zoom: FLIGHT_CONFIG.FLIGHT_ZOOM,
           pitch: FLIGHT_CONFIG.FLIGHT_PITCH,
           bearing: FLIGHT_CONFIG.FLIGHT_BEARING,
@@ -272,23 +362,26 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     );
     const startPoint = points[startPointIndex] || points[0];
 
-    console.log("startPoint", startPoint);
-    console.log("finishPoint", points[pointCount - 1]);
+    const startPointLat =
+      "lat" in startPoint ? startPoint.lat : startPoint.latitude;
+    const startPointLng =
+      "lng" in startPoint ? startPoint.lng : startPoint.longitude;
+
     map.easeTo({
-      center: [startPoint.lng || startPoint.longitude, startPoint.lat || startPoint.latitude],
+      center: [startPointLng, startPointLat],
       zoom: FLIGHT_CONFIG.FLIGHT_ZOOM,
       pitch: FLIGHT_CONFIG.FLIGHT_PITCH,
       bearing: FLIGHT_CONFIG.FLIGHT_BEARING,
-      duration: startProgress > 0 ? 1000 : 2000, // 재시작이면 빠르게, 처음이면 천천히
+      duration: startProgress > 0 ? 200 : 500, // 재시작이면 0.2초, 처음이면 0.5초
       essential: true,
     });
 
-    // 애니메이션 시작 (재시작이면 1초, 처음이면 2초 후)
+    // 애니메이션 시작 (재시작이면 0.2초, 처음이면 0.5초 후)
     setTimeout(
       () => {
         animationRef.current = requestAnimationFrame(animate);
       },
-      startProgress > 0 ? 1000 : 2000
+      startProgress > 0 ? 200 : 500
     );
   }, [trailData, isAnimating, savedProgress]);
 
@@ -304,15 +397,13 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
       // 현재 진행률이 100%가 아니라면 저장 (중단된 상태)
       if (animationProgress < 1 && animationProgress > 0) {
         setSavedProgress(animationProgress);
-        console.log(
-          `Animation paused at ${(animationProgress * 100).toFixed(1)}%`
-        );
       }
     }
 
     setIsAnimating(false);
     setIsFullRouteView(true);
     setAnimationProgress(1); // 전체 노선 표시
+    setVisibleKmMarkers(new Set()); // km 마커 숨기기
 
     const bounds = trailData.stats.bounds;
     const padding = 0.001;
@@ -343,7 +434,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     if (!trailData?.course?.gpx_coordinates) return null;
 
     // gpx_coordinates에서 좌표 파싱
-    let coordinates: any[] = [];
+    let coordinates: GpxCoordinate[] = [];
     try {
       coordinates = JSON.parse(trailData.course.gpx_coordinates);
     } catch (e) {
@@ -361,10 +452,14 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
             properties: {},
             geometry: {
               type: "LineString" as const,
-              coordinates: coordinates.map(coord => [coord.lng, coord.lat, coord.ele || 0])
-            }
-          }
-        ]
+              coordinates: coordinates.map((coord) => [
+                coord.lng,
+                coord.lat,
+                coord.ele || 0,
+              ]),
+            },
+          },
+        ],
       };
     }
 
@@ -389,7 +484,11 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
           properties: {},
           geometry: {
             type: "LineString" as const,
-            coordinates: currentCoordinates.map(coord => [coord.lng, coord.lat, coord.ele || 0]),
+            coordinates: currentCoordinates.map((coord) => [
+              coord.lng,
+              coord.lat,
+              coord.ele || 0,
+            ]),
           },
         },
       ],
@@ -431,25 +530,23 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     if ((!points || points.length === 0) && course.gpx_coordinates) {
       try {
         const coordinates = JSON.parse(course.gpx_coordinates);
-        console.warn(`⚠️ Using incomplete gpx_coordinates fallback: ${coordinates.length} points vs expected full route`);
-        finalPoints = coordinates.map((coord: any, index: number) => ({
-          id: `${courseId}-${index}`,
-          course_id: courseId,
-          seq: index,
-          latitude: coord.lat,
-          longitude: coord.lng || coord.lon,
-          elevation: coord.ele || null,
-          created_at: course.created_at,
-        }));
+        console.warn(
+          `⚠️ Using incomplete gpx_coordinates fallback: ${coordinates.length} points vs expected full route`
+        );
+        finalPoints = coordinates.map(
+          (coord: GpxCoordinate, index: number) => ({
+            id: `${courseId}-${index}`,
+            course_id: courseId,
+            seq: index,
+            latitude: coord.lat,
+            longitude: coord.lng,
+            elevation: coord.ele || null,
+            created_at: course.created_at,
+          })
+        );
       } catch (e) {
         console.error("GPX coordinates parsing error:", e);
       }
-    }
-
-    // 데이터 소스 확인 로그
-    console.log(`📊 Data source: ${points && points.length > 0 ? 'course_points DB' : 'gpx_coordinates JSON'} (${finalPoints.length} points)`);
-    if (finalPoints.length > 0) {
-      console.log(`🗺️ Route: ${finalPoints[0].latitude},${finalPoints[0].longitude} → ${finalPoints[finalPoints.length-1].latitude},${finalPoints[finalPoints.length-1].longitude}`);
     }
 
     if (finalPoints.length === 0) {
@@ -457,7 +554,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     }
 
     // 4. GeoJSON 생성
-    const geoJSON = {
+    const geoJSON: TrailGeoJSON = {
       type: "FeatureCollection",
       features: [
         {
@@ -542,7 +639,6 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
         const data = await loadCourseData(courseId);
         setTrailData(data);
 
-        console.log("data", data);
         // 지도 중심과 줌 레벨 설정
         const bounds = data.stats.bounds;
         const centerLon = (bounds.minLon + bounds.maxLon) / 2;
@@ -722,51 +818,82 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
               })()}
 
               {/* 시작점 마커 (gpx_coordinates 기반 - 애니메이션과 동일) */}
-              {trailData.course.gpx_coordinates && (() => {
-                try {
-                  const coords = JSON.parse(trailData.course.gpx_coordinates);
-                  if (coords.length > 0) {
-                    return (
-                      <Marker
-                        longitude={coords[0].lng}
-                        latitude={coords[0].lat}
-                        anchor="bottom"
-                      >
-                        <div className="bg-green-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
-                          <Flag className="w-4 h-4" />
-                        </div>
-                      </Marker>
+              {trailData.course.gpx_coordinates &&
+                (() => {
+                  try {
+                    const coords = JSON.parse(trailData.course.gpx_coordinates);
+                    if (coords.length > 0) {
+                      return (
+                        <Marker
+                          longitude={coords[0].lng}
+                          latitude={coords[0].lat}
+                          anchor="bottom"
+                        >
+                          <div className="bg-green-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
+                            <Flag className="w-4 h-4" />
+                          </div>
+                        </Marker>
+                      );
+                    }
+                  } catch (e) {
+                    console.error(
+                      "Failed to parse start point from gpx_coordinates:",
+                      e
                     );
                   }
-                } catch (e) {
-                  console.error("Failed to parse start point from gpx_coordinates:", e);
-                }
-                return null;
-              })()}
+                  return null;
+                })()}
 
               {/* 종료점 마커 (gpx_coordinates 기반 - 애니메이션과 동일) */}
-              {trailData.course.gpx_coordinates && (() => {
-                try {
-                  const coords = JSON.parse(trailData.course.gpx_coordinates);
-                  if (coords.length > 1) {
-                    const lastCoord = coords[coords.length - 1];
-                    return (
-                      <Marker
-                        longitude={lastCoord.lng}
-                        latitude={lastCoord.lat}
-                        anchor="bottom"
-                      >
-                        <div className="bg-red-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
-                          <Flag className="w-4 h-4" />
-                        </div>
-                      </Marker>
+              {trailData.course.gpx_coordinates &&
+                (() => {
+                  try {
+                    const coords = JSON.parse(trailData.course.gpx_coordinates);
+                    if (coords.length > 1) {
+                      const lastCoord = coords[coords.length - 1];
+                      return (
+                        <Marker
+                          longitude={lastCoord.lng}
+                          latitude={lastCoord.lat}
+                          anchor="bottom"
+                        >
+                          <div className="bg-red-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
+                            <Flag className="w-4 h-4" />
+                          </div>
+                        </Marker>
+                      );
+                    }
+                  } catch (e) {
+                    console.error(
+                      "Failed to parse end point from gpx_coordinates:",
+                      e
                     );
                   }
-                } catch (e) {
-                  console.error("Failed to parse end point from gpx_coordinates:", e);
-                }
-                return null;
-              })()}
+                  return null;
+                })()}
+
+              {/* km 지점 마커들 (비행 중 지나갈 때만 잠깐 표시) */}
+              {isAnimating &&
+                kmMarkers
+                  .filter((marker) => visibleKmMarkers.has(marker.km))
+                  .map((marker) => (
+                    <Marker
+                      key={`km-${marker.km}`}
+                      longitude={marker.position.lng}
+                      latitude={marker.position.lat}
+                      anchor="center"
+                    >
+                      <motion.div
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="bg-blue-500 text-white px-2 py-1 rounded-full shadow-lg border-2 border-white font-bold text-xs"
+                      >
+                        {marker.km}km
+                      </motion.div>
+                    </Marker>
+                  ))}
             </Map>
           </div>
 
