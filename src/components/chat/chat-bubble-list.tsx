@@ -34,6 +34,7 @@ export function ChatBubbleList({
     loadComments();
     const cleanup = subscribeToComments();
     return cleanup;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
   const loadComments = async () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ProtectedAdminRoute } from "@/components/protected-admin-route";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -43,10 +43,13 @@ interface Comment {
   created_at: string;
 }
 
-export default function CourseManagePage() {
-  const params = useParams();
+interface CourseManagePageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function CourseManagePage({ params }: CourseManagePageProps) {
   const router = useRouter();
-  const courseId = params.id as string;
+  const [courseId, setCourseId] = useState<string | null>(null);
 
   const [course, setCourse] = useState<Course | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -69,6 +72,14 @@ export default function CourseManagePage() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    async function getParams() {
+      const resolvedParams = await params;
+      setCourseId(resolvedParams.id);
+    }
+    getParams();
+  }, [params]);
 
   useEffect(() => {
     if (courseId) {

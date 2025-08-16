@@ -10,12 +10,7 @@ import {
   Mountain,
   Route,
   Timer,
-  MapPin,
   Flag,
-  ZoomIn,
-  ZoomOut,
-  Compass,
-  Play,
   Square,
   Eye,
   Navigation,
@@ -28,16 +23,16 @@ import "mapbox-gl/dist/mapbox-gl.css";
 const FLIGHT_CONFIG = {
   // 기본 비행 속도 (포인트당 지속시간 ms) - 낮을수록 빠름
   BASE_DURATION_PER_POINT: 120,
-  
+
   // 최소/최대 총 애니메이션 시간 (ms)
-  MIN_TOTAL_DURATION: 8000,  // 8초
+  MIN_TOTAL_DURATION: 8000, // 8초
   MAX_TOTAL_DURATION: 25000, // 25초
-  
+
   // 카메라 설정
   FLIGHT_ZOOM: 16,
   FLIGHT_PITCH: 60,
   FLIGHT_BEARING: 0,
-  
+
   // 애니메이션 완료 후 전체보기 전환 지연시간
   COMPLETION_DELAY: 1500,
 } as const;
@@ -99,11 +94,13 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
         const data = await loadCourseData(courseId);
         setTrailData(data);
 
+        console.log("data", data);
+
         // 지도 중심과 줌 레벨 설정
         const bounds = data.stats.bounds;
         const centerLon = (bounds.minLon + bounds.maxLon) / 2;
         const centerLat = (bounds.minLat + bounds.maxLat) / 2;
-        
+
         // 줌 레벨 계산
         const latDiff = bounds.maxLat - bounds.minLat;
         const lonDiff = bounds.maxLon - bounds.minLon;
@@ -167,7 +164,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     if (points.length === 0) return;
 
     const map = mapRef.current.getMap();
-    
+
     // 코스 길이에 관계없이 일정한 속도로 애니메이션
     const pointCount = points.length;
     const totalDuration = Math.min(
@@ -177,27 +174,29 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
       ),
       FLIGHT_CONFIG.MAX_TOTAL_DURATION
     );
-    
+
     // 저장된 진행률부터 시작 (중단된 지점부터 재시작)
     const startProgress = savedProgress;
-    const startTime = Date.now() - (startProgress * totalDuration);
+    const startTime = Date.now() - startProgress * totalDuration;
     let currentIndex = Math.floor(startProgress * (pointCount - 1));
 
-    console.log(`Flight animation - Points: ${pointCount}, Duration: ${totalDuration}ms, Speed: ${(totalDuration/pointCount).toFixed(1)}ms per point, Starting from: ${(startProgress * 100).toFixed(1)}%`);
+    console.log(
+      `Flight animation - Points: ${pointCount}, Duration: ${totalDuration}ms, Speed: ${(totalDuration / pointCount).toFixed(1)}ms per point, Starting from: ${(startProgress * 100).toFixed(1)}%`
+    );
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / totalDuration, 1);
-      
+
       // 진행률 업데이트 (노선 그리기용)
       setAnimationProgress(progress);
-      
+
       // 진행률에 따른 현재 포인트 인덱스 계산
       currentIndex = Math.floor(progress * (pointCount - 1));
-      
+
       if (currentIndex < pointCount && progress < 1) {
         const point = points[currentIndex];
-        
+
         map.easeTo({
           center: [point.longitude, point.latitude],
           zoom: FLIGHT_CONFIG.FLIGHT_ZOOM,
@@ -214,7 +213,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
         setIsFullRouteView(true);
         setAnimationProgress(1); // 전체 노선 표시
         setSavedProgress(0); // 완료 후 저장된 진행률 리셋
-        
+
         // 완료 후 전체보기로 전환
         setTimeout(() => {
           showFullRoute();
@@ -225,7 +224,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     // 저장된 위치가 있으면 해당 포인트로, 없으면 첫 번째 포인트로 이동
     const startPointIndex = Math.floor(startProgress * (pointCount - 1));
     const startPoint = points[startPointIndex] || points[0];
-    
+
     map.easeTo({
       center: [startPoint.longitude, startPoint.latitude],
       zoom: FLIGHT_CONFIG.FLIGHT_ZOOM,
@@ -236,10 +235,12 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     });
 
     // 애니메이션 시작 (재시작이면 1초, 처음이면 2초 후)
-    setTimeout(() => {
-      animationRef.current = requestAnimationFrame(animate);
-    }, startProgress > 0 ? 1000 : 2000);
-    
+    setTimeout(
+      () => {
+        animationRef.current = requestAnimationFrame(animate);
+      },
+      startProgress > 0 ? 1000 : 2000
+    );
   }, [trailData, isAnimating, savedProgress]);
 
   // 전체 경로 보기 (애니메이션 중단 시 진행률 저장)
@@ -250,14 +251,16 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
-      
+
       // 현재 진행률이 100%가 아니라면 저장 (중단된 상태)
       if (animationProgress < 1 && animationProgress > 0) {
         setSavedProgress(animationProgress);
-        console.log(`Animation paused at ${(animationProgress * 100).toFixed(1)}%`);
+        console.log(
+          `Animation paused at ${(animationProgress * 100).toFixed(1)}%`
+        );
       }
     }
-    
+
     setIsAnimating(false);
     setIsFullRouteView(true);
     setAnimationProgress(1); // 전체 노선 표시
@@ -286,24 +289,27 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     );
   }, [trailData, animationProgress]);
 
-
   // 애니메이션 진행률에 따른 부분 GeoJSON 생성
   const getAnimatedGeoJSON = useCallback(() => {
     if (!trailData?.geoJSON) return null;
-    
+
     // 애니메이션 중이 아니거나 완료되었으면 전체 노선 표시
     if (!isAnimating || animationProgress === 1) {
       return trailData.geoJSON;
     }
-    
+
     // 애니메이션 중이면 진행률에 따라 부분 노선만 표시
-    const originalCoordinates = trailData.geoJSON.features[0].geometry.coordinates;
+    const originalCoordinates =
+      trailData.geoJSON.features[0].geometry.coordinates;
     const totalPoints = originalCoordinates.length;
     const currentPointIndex = Math.floor(animationProgress * totalPoints);
-    
+
     // 현재까지의 좌표들만 포함
-    const animatedCoordinates = originalCoordinates.slice(0, Math.max(1, currentPointIndex + 1));
-    
+    const animatedCoordinates = originalCoordinates.slice(
+      0,
+      Math.max(1, currentPointIndex + 1)
+    );
+
     return {
       type: "FeatureCollection",
       features: [
@@ -520,7 +526,6 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     }));
   }, []);
 
-
   // 트레일 라인 스타일
   const trailLineLayer = {
     id: "trail-line",
@@ -585,13 +590,11 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     );
   }
 
-
   const formatTime = (hours: number) => {
     const h = Math.floor(hours);
     const m = Math.round((hours - h) * 60);
     return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
   };
-
 
   return (
     <motion.div
@@ -602,7 +605,6 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     >
       <Card>
         <CardContent className="p-0">
-
           {/* 지도 */}
           <div className="relative h-[70vh] md:h-[80vh] overflow-hidden">
             <Map
@@ -621,13 +623,19 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={isAnimating ? showFullRoute : isFullRouteView ? startTrailAnimation : showFullRoute}
+                  onClick={
+                    isAnimating
+                      ? showFullRoute
+                      : isFullRouteView
+                        ? startTrailAnimation
+                        : showFullRoute
+                  }
                   className="w-8 h-8 p-0 bg-white/90 backdrop-blur-sm border-gray-300 hover:bg-white"
                   title={
-                    isAnimating 
-                      ? "비행 중단하고 전체보기" 
-                      : isFullRouteView 
-                        ? savedProgress > 0 
+                    isAnimating
+                      ? "비행 중단하고 전체보기"
+                      : isFullRouteView
+                        ? savedProgress > 0
                           ? `경로 추적 재시작 (${(savedProgress * 100).toFixed(0)}%부터)`
                           : "경로 추적 비행"
                         : "전체보기"
@@ -648,11 +656,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                 const geoJSONData = getAnimatedGeoJSON();
                 return (
                   geoJSONData && (
-                    <Source
-                      id="trail"
-                      type="geojson"
-                      data={geoJSONData}
-                    >
+                    <Source id="trail" type="geojson" data={geoJSONData}>
                       <Layer {...trailOutlineLayer} />
                       <Layer {...trailLineLayer} />
                     </Source>
@@ -697,7 +701,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                 <h3 className="text-lg font-semibold text-gray-800">
                   {trailData.course.title}
                 </h3>
-                
+
                 {/* 속도 설정 및 진행률 표시 (개발용) */}
                 <div className="text-xs text-gray-500 text-right">
                   <div>속도: {FLIGHT_CONFIG.BASE_DURATION_PER_POINT}ms/pt</div>
@@ -710,37 +714,49 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                 <div className="flex items-center gap-2">
                   <Route className="w-4 h-4 text-blue-600" />
                   <div>
-                    <div className="font-semibold text-gray-800">{trailData.stats.totalDistance.toFixed(1)} km</div>
+                    <div className="font-semibold text-gray-800">
+                      {trailData.stats.totalDistance.toFixed(1)} km
+                    </div>
                     <div className="text-xs text-gray-500">거리</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Timer className="w-4 h-4 text-green-600" />
                   <div>
-                    <div className="font-semibold text-gray-800">{formatTime(trailData.stats.estimatedTime)}</div>
+                    <div className="font-semibold text-gray-800">
+                      {formatTime(trailData.stats.estimatedTime)}
+                    </div>
                     <div className="text-xs text-gray-500">예상 시간</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mountain className="w-4 h-4 text-orange-600" />
                   <div>
-                    <div className="font-semibold text-gray-800">+{trailData.stats.elevationGain.toFixed(0)}m</div>
+                    <div className="font-semibold text-gray-800">
+                      +{trailData.stats.elevationGain.toFixed(0)}m
+                    </div>
                     <div className="text-xs text-gray-500">고도 상승</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className={`w-4 h-4 rounded-full ${
-                    trailData.course.difficulty === 'easy' ? 'bg-green-500' :
-                    trailData.course.difficulty === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
-                  }`} />
+                  <div
+                    className={`w-4 h-4 rounded-full ${
+                      trailData.course.difficulty === "easy"
+                        ? "bg-green-500"
+                        : trailData.course.difficulty === "medium"
+                          ? "bg-yellow-500"
+                          : "bg-red-500"
+                    }`}
+                  />
                   <div>
-                    <div className="font-semibold text-gray-800 capitalize">{trailData.stats.difficulty}</div>
+                    <div className="font-semibold text-gray-800 capitalize">
+                      {trailData.stats.difficulty}
+                    </div>
                     <div className="text-xs text-gray-500">난이도</div>
                   </div>
                 </div>
               </div>
             </div>
-
 
             {/* 코스 설명 */}
             {trailData.course.description && (

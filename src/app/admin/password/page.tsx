@@ -1,14 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { ProtectedAdminRoute } from "@/components/protected-admin-route";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  ArrowLeft,
   Lock,
   Eye,
   EyeOff,
@@ -19,7 +17,6 @@ import {
   Copy,
   RefreshCw,
 } from "lucide-react";
-import Link from "next/link";
 
 interface AccessLink {
   id: string;
@@ -45,6 +42,7 @@ export default function PasswordManagePage() {
 
   useEffect(() => {
     loadAccessLinks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadAccessLinks = async () => {

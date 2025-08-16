@@ -11,8 +11,9 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.replace("/splash");
+      router.replace("/map");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, isLoading]); // router 제거
 
   if (isLoading) {

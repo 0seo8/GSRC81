@@ -39,7 +39,6 @@ export const ANIMATION_CONFIG = {
   MASCOT_SPEED: 2000, // ms per animation cycle
   FADE_DURATION: 300,
   SLIDE_DURATION: 400,
-  SPLASH_DURATION: 2000,
 } as const;
 
 // UI Configuration
@@ -54,7 +53,6 @@ export const UI_CONFIG = {
 export const STORAGE_KEYS = {
   AUTH_TOKEN: "gsrc81_auth_token",
   MAP_VIEW_STATE: "gsrc81_map_view_state",
-  SPLASH_SHOWN: "gsrc81_splash_shown",
   USER_PREFERENCES: "gsrc81_user_preferences",
 } as const;
 

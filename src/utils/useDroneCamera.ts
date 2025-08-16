@@ -1,6 +1,3 @@
-// utils/useDroneCamera.ts
-import * as turf from "@turf/turf";
-
 interface Point {
   ele?: number;
   elevation?: number;

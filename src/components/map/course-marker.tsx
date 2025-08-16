@@ -24,6 +24,7 @@ interface CourseMarkerProps {
 
 let effectCallCount = 0;
 
+// TODO: 2. 전체맵에서 클러스트 간격을 조절하기.
 // 두 지점 간 거리 계산 (Haversine formula)
 function getDistanceInMeters(
   lat1: number,
@@ -49,7 +50,7 @@ function getClusterDistance(zoom: number): number {
   // 줌 범위: 10(최소) ~ 12.85(최대)
   if (zoom >= 12.5) return 0; // 최대 줌에 가까우면 클러스터링 없음
   if (zoom >= 12.0) return 100; // 높은 줌: 100m 이내 클러스터링
-  if (zoom >= 11.5) return 200; // 중간 줌: 200m 이내 클러스터링  
+  if (zoom >= 11.5) return 200; // 중간 줌: 200m 이내 클러스터링
   if (zoom >= 11.0) return 400; // 중간-낮은 줌: 400m 이내 클러스터링
   if (zoom >= 10.5) return 600; // 낮은 줌: 600m 이내 클러스터링
   return 800; // 최소 줌: 800m 이내 클러스터링
@@ -78,21 +79,21 @@ const CourseMarkerComponent = function CourseMarker({
     // 줌 이벤트 리스너 (debounce 적용)
     let timeoutId: NodeJS.Timeout;
     let isZooming = false;
-    
+
     const handleZoomStart = () => {
       isZooming = true;
     };
-    
+
     const handleZoomEnd = () => {
       isZooming = false;
       // 줌이 완료된 후 마커 업데이트
       const newZoom = map.getZoom();
       setZoomLevel(newZoom);
     };
-    
+
     const handleZoom = () => {
       if (!isZooming) return;
-      
+
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         const newZoom = map.getZoom();
@@ -347,14 +348,14 @@ const CourseMarkerComponent = function CourseMarker({
 
       // styledata 이벤트 리스너 추가
       map.on("styledata", styleLoadHandlerRef.current);
-      
+
       // idle 이벤트도 한번 체크 (지도가 완전히 렌더링된 후)
       map.once("idle", () => {
         if (map.isStyleLoaded()) {
           addMarkersNow();
         }
       });
-      
+
       return;
     }
 
@@ -377,15 +378,15 @@ const CourseMarkerComponent = function CourseMarker({
   }, [map, courses, onCourseClick, onClusterClick, zoomLevel]);
 
   // 스켈레톤 위치 계산 (코스의 시작점들)
-  const skeletonPositions = courses.map(course => ({
+  const skeletonPositions = courses.map((course) => ({
     lat: course.start_latitude,
-    lng: course.start_longitude
+    lng: course.start_longitude,
   }));
 
   return (
     <>
       {/* 초기 로딩 시에만 스켈레톤 표시 */}
-      <MarkerSkeleton 
+      <MarkerSkeleton
         map={map}
         positions={skeletonPositions}
         isLoading={isInitialLoading}

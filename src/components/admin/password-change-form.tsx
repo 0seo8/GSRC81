@@ -12,7 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Lock, Eye, EyeOff, Check, AlertCircle } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 
 export function PasswordChangeForm({ onClose }: { onClose?: () => void }) {
   const [currentPassword, setCurrentPassword] = useState("");

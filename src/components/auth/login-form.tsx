@@ -27,7 +27,7 @@ export function LoginForm() {
 
     const success = await login(password);
     if (success) {
-      router.push("/splash");
+      router.push("/map");
     }
   };
 

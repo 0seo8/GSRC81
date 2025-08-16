@@ -70,8 +70,8 @@ const MapboxMapComponent = function MapboxMap({
 
           console.log("Total layers found:", style.layers.length);
 
-          style.layers.forEach((layer: any) => {
-            if (layer.layout && layer.layout["text-field"]) {
+          style.layers.forEach((layer: mapboxgl.Layer) => {
+            if (layer.layout && "text-field" in layer.layout) {
               try {
                 const currentTextField = layer.layout["text-field"];
                 console.log(

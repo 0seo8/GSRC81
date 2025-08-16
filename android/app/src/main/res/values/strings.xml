@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GSRC81 Maps</string>
+    <string name="title_activity_main">GSRC81 Maps</string>
+    <string name="package_name">com.gsrc81.maps</string>
+    <string name="custom_url_scheme">com.gsrc81.maps</string>
+</resources>
