@@ -32,7 +32,9 @@ async function getCourse(courseId: string): Promise<Course | null> {
   }
 }
 
-export default async function CourseDetailPage({ params }: CourseDetailPageProps) {
+export default async function CourseDetailPage({
+  params,
+}: CourseDetailPageProps) {
   const { id } = await params;
   const course = await getCourse(id);
 
@@ -44,13 +46,11 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-2xl mx-auto space-y-4">
-          <div className="bg-white rounded-lg shadow-sm">
-            <CourseDetailMapClient courseId={course.id} />
-          </div>
+          <CourseDetailMapClient courseId={course.id} />
 
-          <div className="bg-white rounded-lg shadow-sm">
+          {/* <div className="bg-white rounded-lg shadow-sm">
             <ChatBubbleList courseId={course.id} />
-          </div>
+          </div> */}
         </div>
       </div>
     </ProtectedRoute>

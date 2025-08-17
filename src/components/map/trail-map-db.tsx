@@ -9,7 +9,12 @@ import { supabase } from "@/lib/supabase";
 import { Course, CoursePoint } from "@/types";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-import { TrailMapProps, TrailData, GpxCoordinate, TrailGeoJSON } from "./trail-map/types";
+import {
+  TrailMapProps,
+  TrailData,
+  GpxCoordinate,
+  TrailGeoJSON,
+} from "./trail-map/types";
 import { INITIAL_VIEW_STATE, MAP_STYLES } from "./trail-map/constants";
 import { calculateStats } from "./trail-map/utils";
 import { useTrailAnimation } from "./trail-map/hooks/use-trail-animation";
@@ -19,7 +24,6 @@ import { LoadingState } from "./trail-map/components/loading-state";
 import { ErrorState } from "./trail-map/components/error-state";
 import { MapControls } from "./trail-map/components/map-controls";
 import { CourseInfo } from "./trail-map/components/course-info";
-
 
 const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   const [trailData, setTrailData] = useState<TrailData | null>(null);
@@ -58,9 +62,6 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     stopAnimation,
   } = useTrailAnimation(mapRef, trailData, showKmMarker, resetKmMarkers);
 
-
-
-
   // 위치/경로보기 버튼 클릭 핸들러
   const handleLocationRouteButton = useCallback(() => {
     if (locationButtonState === "location") {
@@ -70,7 +71,6 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
       showFullRoute();
     }
   }, [locationButtonState, findMyLocation, resetLocation, showFullRoute]);
-
 
   // 데이터 로드 완료 후 지도 다시 로드 트리거 (onMapLoad에서 fitBounds 실행됨)
   useEffect(() => {
@@ -84,8 +84,6 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
       }
     }
   }, [trailData, showFullRoute]);
-
-
 
   // 애니메이션 진행률에 따른 부분 GeoJSON 생성
   const getAnimatedGeoJSON = useCallback(() => {
@@ -151,7 +149,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
   const onMapLoad = useCallback(() => {
     if (!mapRef.current || !trailData) return;
-    
+
     // 지도 로드 완료 후 전체 경로가 보이도록 fitBounds 실행
     setTimeout(() => {
       showFullRoute();
@@ -241,7 +239,6 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     };
   };
 
-
   // 데이터 로드
   useEffect(() => {
     const loadData = async () => {
@@ -256,12 +253,12 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
         const bounds = data.stats.bounds;
         const centerLon = (bounds.minLon + bounds.maxLon) / 2;
         const centerLat = (bounds.minLat + bounds.maxLat) / 2;
-        
+
         // 경로 범위에 맞는 대략적인 줌 레벨 계산
         const latRange = bounds.maxLat - bounds.minLat;
         const lonRange = bounds.maxLon - bounds.minLon;
         const maxRange = Math.max(latRange, lonRange);
-        
+
         let initialZoom = 10;
         if (maxRange < 0.01) initialZoom = 14;
         else if (maxRange < 0.05) initialZoom = 12;
@@ -325,153 +322,160 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className={className}
-    >
-      <Card>
-        <CardContent className="p-0">
-          {/* 지도 */}
-          <div className="relative h-[70vh] md:h-[80vh] overflow-hidden">
-            <Map
-              ref={mapRef}
-              {...viewState}
-              onMove={(evt) => setViewState(evt.viewState)}
-              mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
-              style={{ width: "100%", height: "100%" }}
-              mapStyle="mapbox://styles/mapbox/streets-v12"
-              onLoad={onMapLoad}
-              doubleClickZoom={false}
-              attributionControl={false}
-            >
-              <MapControls
-                isAnimating={isAnimating}
-                isFullRouteView={isFullRouteView}
-                savedProgress={savedProgress}
-                locationButtonState={locationButtonState}
-                onAnimationToggle={
-                  isAnimating
-                    ? showFullRoute
-                    : isFullRouteView
-                      ? startTrailAnimation
-                      : showFullRoute
-                }
-                onLocationRouteToggle={handleLocationRouteButton}
-              />
-
-              {/* 트레일 레이어 (애니메이션에 따라 동적 렌더링) */}
-              {(() => {
-                const geoJSONData = getAnimatedGeoJSON();
-                return (
-                  geoJSONData && (
-                    <Source id="trail" type="geojson" data={geoJSONData}>
-                      <Layer {...trailOutlineLayer} />
-                      <Layer {...trailLineLayer} />
-                    </Source>
-                  )
-                );
-              })()}
-
-              {/* 시작점 마커 (gpx_coordinates 기반 - 애니메이션과 동일) */}
-              {trailData.course.gpx_coordinates &&
-                (() => {
-                  try {
-                    const coords = JSON.parse(trailData.course.gpx_coordinates);
-                    if (coords.length > 0) {
-                      return (
-                        <Marker
-                          longitude={coords[0].lng}
-                          latitude={coords[0].lat}
-                          anchor="bottom"
-                        >
-                          <div className="bg-green-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
-                            <Flag className="w-4 h-4" />
-                          </div>
-                        </Marker>
-                      );
-                    }
-                  } catch (e) {
-                    console.error(
-                      "Failed to parse start point from gpx_coordinates:",
-                      e
-                    );
+    <div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className={className}
+      >
+        <Card>
+          <CardContent className="p-0">
+            {/* 지도 */}
+            <div className="relative h-[70vh] md:h-[80vh] overflow-hidden">
+              <Map
+                ref={mapRef}
+                {...viewState}
+                onMove={(evt) => setViewState(evt.viewState)}
+                mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
+                style={{ width: "100%", height: "100%" }}
+                mapStyle="mapbox://styles/mapbox/streets-v12"
+                onLoad={onMapLoad}
+                doubleClickZoom={false}
+                attributionControl={false}
+              >
+                <MapControls
+                  isAnimating={isAnimating}
+                  isFullRouteView={isFullRouteView}
+                  savedProgress={savedProgress}
+                  locationButtonState={locationButtonState}
+                  onAnimationToggle={
+                    isAnimating
+                      ? showFullRoute
+                      : isFullRouteView
+                        ? startTrailAnimation
+                        : showFullRoute
                   }
-                  return null;
+                  onLocationRouteToggle={handleLocationRouteButton}
+                />
+
+                {/* 트레일 레이어 (애니메이션에 따라 동적 렌더링) */}
+                {(() => {
+                  const geoJSONData = getAnimatedGeoJSON();
+                  return (
+                    geoJSONData && (
+                      <Source id="trail" type="geojson" data={geoJSONData}>
+                        <Layer {...trailOutlineLayer} />
+                        <Layer {...trailLineLayer} />
+                      </Source>
+                    )
+                  );
                 })()}
 
-              {/* 종료점 마커 (gpx_coordinates 기반 - 애니메이션과 동일) */}
-              {trailData.course.gpx_coordinates &&
-                (() => {
-                  try {
-                    const coords = JSON.parse(trailData.course.gpx_coordinates);
-                    if (coords.length > 1) {
-                      const lastCoord = coords[coords.length - 1];
-                      return (
-                        <Marker
-                          longitude={lastCoord.lng}
-                          latitude={lastCoord.lat}
-                          anchor="bottom"
-                        >
-                          <div className="bg-red-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
-                            <Flag className="w-4 h-4" />
-                          </div>
-                        </Marker>
+                {/* 시작점 마커 (gpx_coordinates 기반 - 애니메이션과 동일) */}
+                {trailData.course.gpx_coordinates &&
+                  (() => {
+                    try {
+                      const coords = JSON.parse(
+                        trailData.course.gpx_coordinates
+                      );
+                      if (coords.length > 0) {
+                        return (
+                          <Marker
+                            longitude={coords[0].lng}
+                            latitude={coords[0].lat}
+                            anchor="bottom"
+                          >
+                            <div className="bg-green-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
+                              <Flag className="w-4 h-4" />
+                            </div>
+                          </Marker>
+                        );
+                      }
+                    } catch (e) {
+                      console.error(
+                        "Failed to parse start point from gpx_coordinates:",
+                        e
                       );
                     }
-                  } catch (e) {
-                    console.error(
-                      "Failed to parse end point from gpx_coordinates:",
-                      e
-                    );
-                  }
-                  return null;
-                })()}
+                    return null;
+                  })()}
 
-              {/* km 지점 마커들 (비행 중 지나갈 때만 잠깐 표시) */}
-              {isAnimating &&
-                kmMarkers
-                  .filter((marker) => visibleKmMarkers.has(marker.km))
-                  .map((marker) => (
-                    <Marker
-                      key={`km-${marker.km}`}
-                      longitude={marker.position.lng}
-                      latitude={marker.position.lat}
-                      anchor="center"
-                    >
-                      <motion.div
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="bg-blue-500 text-white px-2 py-1 rounded-full shadow-lg border-2 border-white font-bold text-xs"
+                {/* 종료점 마커 (gpx_coordinates 기반 - 애니메이션과 동일) */}
+                {trailData.course.gpx_coordinates &&
+                  (() => {
+                    try {
+                      const coords = JSON.parse(
+                        trailData.course.gpx_coordinates
+                      );
+                      if (coords.length > 1) {
+                        const lastCoord = coords[coords.length - 1];
+                        return (
+                          <Marker
+                            longitude={lastCoord.lng}
+                            latitude={lastCoord.lat}
+                            anchor="bottom"
+                          >
+                            <div className="bg-red-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
+                              <Flag className="w-4 h-4" />
+                            </div>
+                          </Marker>
+                        );
+                      }
+                    } catch (e) {
+                      console.error(
+                        "Failed to parse end point from gpx_coordinates:",
+                        e
+                      );
+                    }
+                    return null;
+                  })()}
+
+                {/* km 지점 마커들 (비행 중 지나갈 때만 잠깐 표시) */}
+                {isAnimating &&
+                  kmMarkers
+                    .filter((marker) => visibleKmMarkers.has(marker.km))
+                    .map((marker) => (
+                      <Marker
+                        key={`km-${marker.km}`}
+                        longitude={marker.position.lng}
+                        latitude={marker.position.lat}
+                        anchor="center"
                       >
-                        {marker.km}km
-                      </motion.div>
-                    </Marker>
-                  ))}
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="bg-blue-500 text-white px-2 py-1 rounded-full shadow-lg border-2 border-white font-bold text-xs"
+                        >
+                          {marker.km}km
+                        </motion.div>
+                      </Marker>
+                    ))}
 
-              {/* 사용자 현재 위치 마커 */}
-              {userLocation && (
-                <Marker
-                  longitude={userLocation.lng}
-                  latitude={userLocation.lat}
-                  anchor="center"
-                >
-                  <div className="relative">
-                    <div className="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg"></div>
-                    <div className="absolute -inset-2 bg-blue-200 rounded-full opacity-30 animate-pulse"></div>
-                  </div>
-                </Marker>
-              )}
-            </Map>
-          </div>
+                {/* 사용자 현재 위치 마커 */}
+                {userLocation && (
+                  <Marker
+                    longitude={userLocation.lng}
+                    latitude={userLocation.lat}
+                    anchor="center"
+                  >
+                    <div className="relative">
+                      <div className="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg"></div>
+                      <div className="absolute -inset-2 bg-blue-200 rounded-full opacity-30 animate-pulse"></div>
+                    </div>
+                  </Marker>
+                )}
+              </Map>
+            </div>
+          </CardContent>
+        </Card>
 
-          <CourseInfo trailData={trailData} savedProgress={savedProgress} />
-        </CardContent>
-      </Card>
-    </motion.div>
+        {/* 코스 정보 Card (별도 분리) */}
+      </motion.div>
+      <CourseInfo trailData={trailData} savedProgress={savedProgress} />
+    </div>
   );
 };
 
