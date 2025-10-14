@@ -26,8 +26,8 @@ export interface TrailData {
     bounds: {
       minLat: number;
       maxLat: number;
-      minLon: number;
-      maxLon: number;
+      minLng: number;
+      maxLng: number;
     };
   };
 }

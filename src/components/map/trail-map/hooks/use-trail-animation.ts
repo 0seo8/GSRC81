@@ -202,8 +202,8 @@ export const useTrailAnimation = (
     // 전체 경로가 잘 보이도록 fitBounds 사용
     mapRef.current.getMap().fitBounds(
       [
-        [bounds.minLon, bounds.minLat],
-        [bounds.maxLon, bounds.maxLat],
+        [bounds.minLng, bounds.minLat],
+        [bounds.maxLng, bounds.maxLat],
       ],
       {
         padding: { top: 80, bottom: 80, left: 80, right: 80 }, // 더 큰 패딩으로 여백 확보

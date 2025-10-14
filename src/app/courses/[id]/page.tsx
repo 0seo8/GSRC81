@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { ProtectedRoute } from "@/components/protected-route";
-import { supabase } from "@/lib/supabase";
 import { ChatBubbleList } from "@/components/chat/chat-bubble-list";
 import { CourseDetailMapClient } from "@/components/course-detail-map-client";
-import { Course } from "@/types";
+import { CourseV2 } from "@/types/unified";
+import { getCourseByIdV2 } from "@/lib/courses-data-v2";
 
 interface CourseDetailPageProps {
   params: Promise<{
@@ -11,21 +11,9 @@ interface CourseDetailPageProps {
   }>;
 }
 
-async function getCourse(courseId: string): Promise<Course | null> {
+async function getCourse(courseId: string): Promise<CourseV2 | null> {
   try {
-    const { data, error } = await supabase
-      .from("courses")
-      .select("*")
-      .eq("id", courseId)
-      .eq("is_active", true)
-      .single();
-
-    if (error) {
-      console.error("Failed to load course:", error);
-      return null;
-    }
-
-    return data;
+    return await getCourseByIdV2(courseId);
   } catch (error) {
     console.error("Failed to load course:", error);
     return null;

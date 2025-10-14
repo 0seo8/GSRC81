@@ -21,10 +21,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { GPXUploadForm } from "@/components/admin/GPX-upload-form";
-import { Course } from "@/types";
+import { CourseV2, getDistance, getDuration } from "@/types/unified";
 
 export default function CoursesManagePage() {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<CourseV2[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isGPXFormExpanded, setIsGPXFormExpanded] = useState(false);
@@ -36,6 +36,7 @@ export default function CoursesManagePage() {
   const loadCourses = async () => {
     try {
       setLoading(true);
+      // V2 API 사용 (비활성 코스도 포함하여 관리자가 모든 코스를 볼 수 있도록)
       const { data, error } = await supabase
         .from("courses")
         .select("*")
@@ -50,7 +51,7 @@ export default function CoursesManagePage() {
     }
   };
 
-  const handleDelete = async (course: Course) => {
+  const handleDelete = async (course: CourseV2) => {
     if (!confirm(`"${course.title}" 코스를 삭제하시겠습니까?`)) return;
 
     try {
@@ -82,23 +83,48 @@ export default function CoursesManagePage() {
         ele?: number;
       }>;
 
+      // 통계 계산
+      const bounds = {
+        minLat: Math.min(...coordinates.map((c) => c.lat)),
+        maxLat: Math.max(...coordinates.map((c) => c.lat)),
+        minLng: Math.min(...coordinates.map((c) => c.lng)),
+        maxLng: Math.max(...coordinates.map((c) => c.lng)),
+      };
+
+      // 새로운 통합 GPX 데이터 구조 (v1.1)
+      const unifiedGpxData = {
+        version: "1.1",
+        points: coordinates,
+        bounds,
+        stats: {
+          totalDistance: gpx.distance as number,
+          elevationGain: (gpx.elevationGain as number) || 0,
+          estimatedDuration: gpx.duration as number,
+        },
+        metadata: {
+          importedAt: new Date().toISOString(),
+          source: "gpx_upload",
+        },
+      };
+
       const courseData = {
         title: formData.get("title") as string,
         description: formData.get("description") as string,
         start_latitude: startPoint.lat,
         start_longitude: startPoint.lng,
-        end_latitude: endPoint.lat, // 종료점 위도 추가
-        end_longitude: endPoint.lng, // 종료점 경도 추가
+        end_latitude: endPoint.lat,
+        end_longitude: endPoint.lng,
         distance_km: gpx.distance as number,
         avg_time_min: gpx.duration as number,
         difficulty: formData.get("difficulty") as string,
         nearest_station: formData.get("nearest_station") as string,
-        gpx_coordinates: JSON.stringify(gpx.coordinates), // GPX 좌표 저장
-        elevation_gain: (gpx.elevationGain as number) || 0, // 고도 상승 저장
+        elevation_gain: (gpx.elevationGain as number) || 0,
+        gpx_data: unifiedGpxData, // 새로운 JSONB 컬럼 사용
         is_active: true,
       };
 
-      // 1. 먼저 코스 정보 저장
+      // 실제 DB 저장 부분을 주석 처리
+
       const { data: course, error: courseError } = await supabase
         .from("courses")
         .insert([courseData])
@@ -107,24 +133,9 @@ export default function CoursesManagePage() {
 
       if (courseError) throw courseError;
 
-      // 2. course_points 테이블에 상세 좌표 저장
-      const coursePoints = coordinates.map((coord, index) => ({
-        course_id: course.id,
-        seq: index,
-        latitude: coord.lat,
-        longitude: coord.lng,
-        elevation: coord.ele || null,
-      }));
-
-      const { error: pointsError } = await supabase
-        .from("course_points")
-        .insert(coursePoints);
-
-      if (pointsError) throw pointsError;
-
-      alert("GPX 파일로부터 코스가 성공적으로 등록되었습니다!");
+      // 폼은 리셋하지만 페이지는 새로고침하지 않음
       setIsGPXFormExpanded(false);
-      loadCourses();
+      // loadCourses(); // 실제 저장하지 않았으므로 리로드 불필요
     } catch (error) {
       console.error("Failed to save course from GPX:", error);
       alert("코스 등록 중 오류가 발생했습니다.");
@@ -213,8 +224,8 @@ export default function CoursesManagePage() {
                           {course.title}
                         </CardTitle>
                         <CardDescription className="">
-                          {course.nearest_station &&
-                            `${course.nearest_station} 인근`}
+                          {course.gpx_data.metadata?.nearestStation &&
+                            `${course.gpx_data.metadata.nearestStation} 인근`}
                         </CardDescription>
                       </div>
                       <span
@@ -234,15 +245,13 @@ export default function CoursesManagePage() {
                     <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                       <div>
                         <span className="text-gray-500">거리</span>
-                        <p className="font-medium">{course.distance_km}km</p>
+                        <p className="font-medium">
+                          {getDistance(course).toFixed(2)}km
+                        </p>
                       </div>
                       <div>
                         <span className="text-gray-500">소요시간</span>
-                        <p className="font-medium">
-                          {course.avg_time_min
-                            ? `${course.avg_time_min}분`
-                            : "-"}
-                        </p>
+                        <p className="font-medium">{getDuration(course)}</p>
                       </div>
                     </div>
 

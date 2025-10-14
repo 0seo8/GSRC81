@@ -10,10 +10,10 @@ import { MapTokenError } from "./map-token-error";
 import { MapEmptyState } from "./map-empty-state";
 import { useMapState } from "@/hooks/use-map-state";
 import { useMapBounds } from "@/hooks/use-map-bounds";
-import { type CourseWithComments } from "@/lib/courses-data";
+import { type CourseV2WithComments } from "@/lib/courses-data-v2-extended";
 
 interface MapClientProps {
-  courses: CourseWithComments[];
+  courses: CourseV2WithComments[];
 }
 
 export function MapClient({ courses }: MapClientProps) {

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-const TrailMapDB = dynamic(() => import("@/components/map/trail-map-db"), {
+const TrailMapV2 = dynamic(() => import("@/components/map/trail-map-v2"), {
   ssr: false,
   loading: () => (
     <div className="h-[70vh] md:h-[80vh] bg-gray-100 rounded-lg flex items-center justify-center">
@@ -19,5 +19,5 @@ interface CourseDetailMapClientProps {
 }
 
 export function CourseDetailMapClient({ courseId }: CourseDetailMapClientProps) {
-  return <TrailMapDB courseId={courseId} />;
+  return <TrailMapV2 courseId={courseId} />;
 }

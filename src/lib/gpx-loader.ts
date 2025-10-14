@@ -122,15 +122,15 @@ export async function loadGPXData(courseId: string): Promise<TrailData> {
     let points: TrailPoint[] = [];
     let coordinates: number[][] = [];
 
-    // GPX 좌표가 있으면 사용, 없으면 시작점만 사용
-    if (courseData.gpx_coordinates) {
+    // 새로운 gpx_data JSONB 구조 확인
+    if (courseData.gpx_data && courseData.gpx_data.points) {
       try {
-        const gpxCoords = JSON.parse(courseData.gpx_coordinates);
+        const gpxPoints = courseData.gpx_data.points;
         let cumulativeDistance = 0;
-        points = gpxCoords.map(
-          (coord: { lat: number; lng: number; ele: number }, index: number) => {
+        points = gpxPoints.map(
+          (coord: { lat: number; lng: number; ele?: number }, index: number) => {
             if (index > 0) {
-              const prevCoord = gpxCoords[index - 1];
+              const prevCoord = gpxPoints[index - 1];
               cumulativeDistance += calculateDistance(
                 prevCoord.lat,
                 prevCoord.lng,
@@ -150,8 +150,49 @@ export async function loadGPXData(courseId: string): Promise<TrailData> {
 
         coordinates = points.map((p) => [p.lon, p.lat, p.ele]);
       } catch (parseError) {
-        console.error("GPX 좌표 파싱 오류:", parseError);
+        console.error("GPX 데이터 파싱 오류:", parseError);
         // 파싱 실패 시 시작점만 사용
+        points = [
+          {
+            lat: courseData.start_latitude,
+            lon: courseData.start_longitude,
+            ele: 100,
+            distance: 0,
+          },
+        ];
+        coordinates = [
+          [courseData.start_longitude, courseData.start_latitude, 100],
+        ];
+      }
+    } else if (courseData.gpx_coordinates) {
+      // 구형 gpx_coordinates 컬럼 fallback (하위호환성)
+      try {
+        const gpxCoords = JSON.parse(courseData.gpx_coordinates);
+        let cumulativeDistance = 0;
+        points = gpxCoords.map(
+          (coord: { lat: number; lng: number; ele: number }, index: number) => {
+            if (index > 0) {
+              const prevCoord = gpxCoords[index - 1];
+              cumulativeDistance += calculateDistance(
+                prevCoord.lat,
+                prevCoord.lng,
+                coord.lat,
+                coord.lng
+              );
+            }
+
+            return {
+              lat: coord.lat,
+              lon: coord.lng,
+              ele: coord.ele || 100,
+              distance: cumulativeDistance,
+            };
+          }
+        );
+
+        coordinates = points.map((p) => [p.lon, p.lat, p.ele]);
+      } catch (parseError) {
+        console.error("구형 GPX 좌표 파싱 오류:", parseError);
         points = [
           {
             lat: courseData.start_latitude,
@@ -179,23 +220,40 @@ export async function loadGPXData(courseId: string): Promise<TrailData> {
       ];
     }
 
-    // 통계 계산
-    const totalDistance =
-      points.length > 1
-        ? points[points.length - 1].distance
-        : courseData.distance_km || 0;
+    // 통계 계산 (gpx_data의 stats 우선 사용)
+    let totalDistance = courseData.distance_km || 0;
+    let elevationGain = courseData.elevation_gain || 100;
+    let bounds;
+
+    // 새로운 gpx_data 구조에서 통계 사용
+    if (courseData.gpx_data && courseData.gpx_data.stats) {
+      totalDistance = courseData.gpx_data.stats.totalDistance || totalDistance;
+      elevationGain = courseData.gpx_data.stats.elevationGain || elevationGain;
+    } else if (points.length > 1) {
+      totalDistance = points[points.length - 1].distance;
+    }
+
+    // bounds 계산 (gpx_data의 bounds 우선 사용)
+    if (courseData.gpx_data && courseData.gpx_data.bounds) {
+      bounds = {
+        minLat: courseData.gpx_data.bounds.minLat,
+        maxLat: courseData.gpx_data.bounds.maxLat,
+        minLon: courseData.gpx_data.bounds.minLng,
+        maxLon: courseData.gpx_data.bounds.maxLng,
+      };
+    } else {
+      bounds = {
+        minLat: Math.min(...points.map((p) => p.lat)),
+        maxLat: Math.max(...points.map((p) => p.lat)),
+        minLon: Math.min(...points.map((p) => p.lon)),
+        maxLon: Math.max(...points.map((p) => p.lon)),
+      };
+    }
+
     const elevations = points.map((p) => p.ele);
     const minElevation = Math.min(...elevations);
     const maxElevation = Math.max(...elevations);
-    const elevationGain = courseData.elevation_gain || 100; // 기본값
     const elevationLoss = elevationGain * 0.8; // 추정값
-
-    const bounds = {
-      minLat: Math.min(...points.map((p) => p.lat)),
-      maxLat: Math.max(...points.map((p) => p.lat)),
-      minLon: Math.min(...points.map((p) => p.lon)),
-      maxLon: Math.max(...points.map((p) => p.lon)),
-    };
 
     const stats: TrailStats = {
       totalDistance,

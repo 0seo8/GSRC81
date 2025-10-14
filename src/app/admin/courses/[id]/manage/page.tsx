@@ -25,6 +25,8 @@ interface Course {
   description: string;
   start_latitude: number;
   start_longitude: number;
+  end_latitude: number;
+  end_longitude: number;
   distance_km: number;
   avg_time_min: number;
   difficulty: "easy" | "medium" | "hard";
@@ -32,7 +34,20 @@ interface Course {
   is_active: boolean;
   created_at: string;
   elevation_gain?: number;
-  gpx_coordinates?: string;
+  gpx_data?: {
+    version: string;
+    points: Array<{ lat: number; lng: number; ele?: number }>;
+    bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number };
+    stats: {
+      totalDistance: number;
+      elevationGain: number;
+      estimatedDuration: number;
+    };
+    metadata?: {
+      importedAt: string;
+      source: string;
+    };
+  };
 }
 
 interface Comment {
@@ -67,9 +82,13 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
     nearest_station: "",
     start_latitude: "",
     start_longitude: "",
+    end_latitude: "",
+    end_longitude: "",
     elevation_gain: "",
     is_active: true,
   });
+  
+  const [hasGpxData, setHasGpxData] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -107,18 +126,28 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
       const courseData = courseResult.data;
       setCourse(courseData);
       setComments(commentsResult.data || []);
+      
+      // GPX 데이터 존재 여부 확인
+      setHasGpxData(!!courseData.gpx_data);
+
+      // gpx_data가 있으면 그 데이터를 우선 사용
+      const distance = courseData.gpx_data?.stats?.totalDistance || courseData.distance_km;
+      const duration = courseData.gpx_data?.stats?.estimatedDuration || courseData.avg_time_min;
+      const elevation = courseData.gpx_data?.stats?.elevationGain || courseData.elevation_gain || 0;
 
       // 폼 데이터 초기화
       setFormData({
         title: courseData.title,
         description: courseData.description || "",
-        distance_km: courseData.distance_km.toString(),
-        avg_time_min: courseData.avg_time_min.toString(),
+        distance_km: distance.toString(),
+        avg_time_min: duration.toString(),
         difficulty: courseData.difficulty,
         nearest_station: courseData.nearest_station || "",
         start_latitude: courseData.start_latitude.toString(),
         start_longitude: courseData.start_longitude.toString(),
-        elevation_gain: (courseData.elevation_gain || 0).toString(),
+        end_latitude: (courseData.end_latitude || courseData.start_latitude).toString(),
+        end_longitude: (courseData.end_longitude || courseData.start_longitude).toString(),
+        elevation_gain: elevation.toString(),
         is_active: courseData.is_active,
       });
     } catch (error) {
@@ -170,6 +199,8 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
         nearest_station: formData.nearest_station.trim(),
         start_latitude: parseFloat(formData.start_latitude),
         start_longitude: parseFloat(formData.start_longitude),
+        end_latitude: parseFloat(formData.end_latitude) || parseFloat(formData.start_latitude),
+        end_longitude: parseFloat(formData.end_longitude) || parseFloat(formData.start_longitude),
         elevation_gain: parseInt(formData.elevation_gain) || 0,
         is_active: formData.is_active,
       };
@@ -282,6 +313,21 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSaveCourse} className="space-y-6">
+                    {/* GPX 데이터 상태 */}
+                    {hasGpxData && course?.gpx_data && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                        <h3 className="font-medium text-green-900 mb-2">
+                          ✅ GPX 데이터 (v{course.gpx_data.version})
+                        </h3>
+                        <div className="text-sm text-green-700 space-y-1">
+                          <p>• 총 {course.gpx_data.points.length}개의 GPS 포인트</p>
+                          <p>• 거리: {course.gpx_data.stats.totalDistance.toFixed(3)}km</p>
+                          <p>• 고도상승: {course.gpx_data.stats.elevationGain}m</p>
+                          <p>• 예상시간: {course.gpx_data.stats.estimatedDuration}분</p>
+                        </div>
+                      </div>
+                    )}
+                    
                     {/* 기본 정보 */}
                     <div className="space-y-4">
                       <div>
@@ -446,55 +492,104 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                       </div>
                     </div>
 
-                    {/* 시작점 좌표 */}
+                    {/* 시작점/종료점 좌표 */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium text-gray-900">
-                        시작점 좌표
+                        경로 좌표
                       </h3>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-4">
+                        {/* 시작점 */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            위도 (Latitude) *
-                          </label>
-                          <Input
-                            type="number"
-                            step="any"
-                            value={formData.start_latitude}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                start_latitude: e.target.value,
-                              })
-                            }
-                            placeholder="37.6361"
-                            className={
-                              errors.coordinates ? "border-red-300" : ""
-                            }
-                          />
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">시작점</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-600 mb-1">
+                                위도 (Latitude) *
+                              </label>
+                              <Input
+                                type="number"
+                                step="any"
+                                value={formData.start_latitude}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    start_latitude: e.target.value,
+                                  })
+                                }
+                                placeholder="37.6361"
+                                className={
+                                  errors.coordinates ? "border-red-300" : ""
+                                }
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-600 mb-1">
+                                경도 (Longitude) *
+                              </label>
+                              <Input
+                                type="number"
+                                step="any"
+                                value={formData.start_longitude}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    start_longitude: e.target.value,
+                                  })
+                                }
+                                placeholder="126.9185"
+                                className={
+                                  errors.coordinates ? "border-red-300" : ""
+                                }
+                              />
+                            </div>
+                          </div>
                         </div>
 
+                        {/* 종료점 */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            경도 (Longitude) *
-                          </label>
-                          <Input
-                            type="number"
-                            step="any"
-                            value={formData.start_longitude}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                start_longitude: e.target.value,
-                              })
-                            }
-                            placeholder="126.9185"
-                            className={
-                              errors.coordinates ? "border-red-300" : ""
-                            }
-                          />
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">종료점</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-600 mb-1">
+                                위도 (Latitude)
+                              </label>
+                              <Input
+                                type="number"
+                                step="any"
+                                value={formData.end_latitude}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    end_latitude: e.target.value,
+                                  })
+                                }
+                                placeholder="37.6361"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-600 mb-1">
+                                경도 (Longitude)
+                              </label>
+                              <Input
+                                type="number"
+                                step="any"
+                                value={formData.end_longitude}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    end_longitude: e.target.value,
+                                  })
+                                }
+                                placeholder="126.9185"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
+                      
                       {errors.coordinates && (
                         <p className="text-gray-600 text-xs">
                           {errors.coordinates}

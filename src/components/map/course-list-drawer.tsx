@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Drawer } from "@/components/ui/drawer";
-import { X, Clock, TrendingUp } from "lucide-react";
+import { X, Clock, TrendingUp, MapPin, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Course {
