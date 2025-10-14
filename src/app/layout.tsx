@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import 'mapbox-gl/dist/mapbox-gl.css';
+import "mapbox-gl/dist/mapbox-gl.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminProvider } from "@/contexts/AdminContext";
@@ -72,13 +72,13 @@ export default function RootLayout({
           <AuthProvider>
             <AdminProvider>
               {children}
-              <Toaster 
+              <Toaster
                 position="top-center"
                 toastOptions={{
                   duration: 3000,
                   style: {
-                    background: '#fff',
-                    border: '1px solid #e5e7eb',
+                    background: "#fff",
+                    border: "1px solid #e5e7eb",
                   },
                 }}
               />

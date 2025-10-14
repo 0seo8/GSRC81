@@ -1,10 +1,10 @@
 export const FLIGHT_CONFIG = {
   // 기본 비행 속도 (포인트당 지속시간 ms) - 낮을수록 빠름
-  BASE_DURATION_PER_POINT: 500,
+  BASE_DURATION_PER_POINT: 200,
 
   // 최소/최대 총 애니메이션 시간 (ms)
-  MIN_TOTAL_DURATION: 80000,
-  MAX_TOTAL_DURATION: 100000,
+  MIN_TOTAL_DURATION: 30000,  // 30초
+  MAX_TOTAL_DURATION: 60000,  // 60초
 
   // 카메라 설정
   FLIGHT_ZOOM: 16,

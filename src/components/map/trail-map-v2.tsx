@@ -73,9 +73,9 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     }
   }, [locationButtonState, findMyLocation, resetLocation, showFullRoute]);
 
-  // 데이터 로드 완료 후 지도 다시 로드 트리거
+  // 데이터 로드 완료 후 지도 다시 로드 트리거 (애니메이션 중이 아닐 때만)
   useEffect(() => {
-    if (trailData && mapRef.current) {
+    if (trailData && mapRef.current && !isAnimating) {
       const map = mapRef.current.getMap();
       if (map.isStyleLoaded()) {
         setTimeout(() => {
@@ -83,7 +83,7 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
         }, 100);
       }
     }
-  }, [trailData, showFullRoute]);
+  }, [trailData, showFullRoute, isAnimating]);
 
   // 애니메이션 진행률에 따른 부분 GeoJSON 생성 (gpx_data 기반)
   const getAnimatedGeoJSON = useCallback(() => {
@@ -142,12 +142,12 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   }, [trailData, isAnimating, animationProgress]);
 
   const onMapLoad = useCallback(() => {
-    if (!mapRef.current || !trailData) return;
+    if (!mapRef.current || !trailData || isAnimating) return;
 
     setTimeout(() => {
       showFullRoute();
     }, 100);
-  }, [trailData, showFullRoute]);
+  }, [trailData, showFullRoute, isAnimating]);
 
   // V2 API를 사용한 데이터 로드
   const loadCourseData = async (courseId: string): Promise<TrailData> => {
