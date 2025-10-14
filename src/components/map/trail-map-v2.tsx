@@ -61,7 +61,7 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     startTrailAnimation,
     showFullRoute,
     stopAnimation,
-  } = useTrailAnimation(mapRef, trailData, showKmMarker, resetKmMarkers);
+  } = useTrailAnimation(mapRef, trailData, showKmMarker, resetKmMarkers, setKmMarkers);
 
   // 위치/경로보기 버튼 클릭 핸들러
   const handleLocationRouteButton = useCallback(() => {

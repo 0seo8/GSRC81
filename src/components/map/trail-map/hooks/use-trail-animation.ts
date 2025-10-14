@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { MapRef } from "react-map-gl/mapbox";
-import { TrailData, GpxCoordinate } from "../types";
+import { TrailData, GpxCoordinate, KmMarker } from "../types";
 import { FLIGHT_CONFIG } from "../constants";
 import { calculateDistance, calculateKmMarkers } from "../utils";
 import { CoursePoint } from "@/types";
@@ -9,7 +9,8 @@ export const useTrailAnimation = (
   mapRef: React.RefObject<MapRef>,
   trailData: TrailData | null,
   onKmMarkerShow: (km: number) => void,
-  onResetKmMarkers: () => void
+  onResetKmMarkers: () => void,
+  setKmMarkers: (markers: KmMarker[]) => void
 ) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isFullRouteView, setIsFullRouteView] = useState(true); // 초기에는 전체 보기로 시작
@@ -80,6 +81,39 @@ export const useTrailAnimation = (
       return;
     }
 
+    // km 마커 위치 미리 계산
+    const kmMarkerPositions: KmMarker[] = [];
+    let cumulativeDistance = 0;
+    let nextKmTarget = 1;
+    
+    for (let i = 1; i < points.length; i++) {
+      const prevPt = points[i - 1];
+      const currPt = points[i];
+      
+      const segmentDistance = calculateDistance(
+        prevPt.lat,
+        prevPt.lng,
+        currPt.lat,
+        currPt.lng
+      );
+      
+      cumulativeDistance += segmentDistance;
+      
+      // 1km 지점마다 마커 위치 저장
+      if (cumulativeDistance >= nextKmTarget * 1000) {
+        kmMarkerPositions.push({
+          km: nextKmTarget,
+          position: { lat: currPt.lat, lng: currPt.lng }
+        });
+        console.log(`📍 ${nextKmTarget}km 마커 위치 설정: ${currPt.lat}, ${currPt.lng}`);
+        nextKmTarget++;
+      }
+    }
+    
+    // km 마커들을 useKmMarkers에 설정
+    setKmMarkers(kmMarkerPositions);
+    console.log(`📍 총 ${kmMarkerPositions.length}개의 km 마커 설정 완료`);
+
     const map = mapRef.current.getMap();
 
     // 코스 길이에 관계없이 일정한 속도로 애니메이션
@@ -109,6 +143,11 @@ export const useTrailAnimation = (
       Math.floor(startProgress * (pointCount - 1)),
       pointCount - 1
     );
+    
+    // km 마커 표시를 위한 변수들
+    let shownKmMarkers = new Set<number>();
+    let lastCalculatedIndex = 0;
+    let lastCumulativeDistance = 0;
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
@@ -135,30 +174,30 @@ export const useTrailAnimation = (
       if (timeProgress < 1 && currentIndex < pointCount - 1) {
         const point = points[currentIndex];
 
-        // km 마커 표시 로직
-        let cumulativeDistance = 0;
-        for (let i = 1; i <= currentIndex; i++) {
-          const prevPt = points[i - 1];
-          const currPt = points[i];
-
-          const prevLat = prevPt.lat;
-          const prevLng = prevPt.lng;
-          const currLat = currPt.lat;
-          const currLng = currPt.lng;
-
-          cumulativeDistance += calculateDistance(
-            prevLat,
-            prevLng,
-            currLat,
-            currLng
-          );
+        // km 마커 표시 로직 - 실제 애니메이션 진행과 정확히 동기화
+        // 효율적인 증분 거리 계산 (이전 계산에서 이어서)
+        if (currentIndex > lastCalculatedIndex) {
+          for (let i = lastCalculatedIndex + 1; i <= currentIndex; i++) {
+            const prevPt = points[i - 1];
+            const currPt = points[i];
+            
+            lastCumulativeDistance += calculateDistance(
+              prevPt.lat,
+              prevPt.lng,
+              currPt.lat,
+              currPt.lng
+            );
+          }
+          lastCalculatedIndex = currentIndex;
         }
-
-        const currentKmMark = Math.floor(cumulativeDistance / 1000);
-
-        // 새로운 km 지점을 지났는지 확인
-        if (currentKmMark > 0) {
+        
+        const currentKmMark = Math.floor(lastCumulativeDistance / 1000);
+        
+        // 새로운 km 지점을 지났는지 확인 (이미 표시되지 않은 것만)
+        if (currentKmMark > 0 && !shownKmMarkers.has(currentKmMark)) {
           onKmMarkerShow(currentKmMark);
+          shownKmMarkers.add(currentKmMark);
+          console.log(`🏃 ${currentKmMark}km 지점 통과! (실제 거리: ${(lastCumulativeDistance/1000).toFixed(2)}km, 포인트: ${currentIndex})`);
         }
 
         const pointLat = point.lat;
@@ -234,7 +273,7 @@ export const useTrailAnimation = (
       },
       delay
     );
-  }, [trailData, isAnimating, savedProgress, mapRef, onKmMarkerShow, onResetKmMarkers]);
+  }, [trailData, isAnimating, savedProgress, mapRef, onKmMarkerShow, onResetKmMarkers, setKmMarkers]);
 
   const showFullRoute = useCallback(() => {
     if (!trailData || !mapRef.current) return;
