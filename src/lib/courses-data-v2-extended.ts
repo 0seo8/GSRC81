@@ -27,9 +27,9 @@ export async function getActiveCoursesForMap(): Promise<CourseV2WithComments[]> 
     if (isNaN(startLat) || isNaN(startLng)) {
       console.error(`❌ Invalid coordinates for course "${course.title}":`, {
         course,
-        gpx_data: course.gpx_data,
-        startPoint: course.gpx_data?.metadata?.startPoint,
-        firstPoint: course.gpx_data?.points?.[0]
+        gpx_data_v2: course.gpx_data_v2,
+        startPoint: course.gpx_data_v2?.metadata?.startPoint,
+        firstPoint: course.gpx_data_v2?.points?.[0]
       });
     }
     

@@ -11,7 +11,7 @@ import { CourseV2, UnifiedGPXData } from '@/types/unified';
 export async function migrateCourseToV2(course: Course): Promise<Partial<CourseV2>> {
   try {
     // 1. course_points 테이블에서 데이터 가져오기
-    let points: any[] = [];
+    let points: Array<{lat: number; lng: number; ele?: number}> = [];
     
     const { data: coursePoints } = await supabase
       .from('course_points')
@@ -77,7 +77,7 @@ export async function migrateCourseToV2(course: Course): Promise<Partial<CourseV
       description: course.description,
       difficulty: course.difficulty,
       course_type: determineCourseType(course), // 타입 추론
-      gpx_data: gpxData,
+      gpx_data_v2: gpxData,
       cover_image_url: course.cover_image_url,
       is_active: course.is_active,
       created_at: course.created_at,
@@ -128,7 +128,7 @@ export async function migrateAllCourses(): Promise<{
     const { data: courses, error } = await supabase
       .from('courses')
       .select('*')
-      .is('gpx_data', null); // 아직 마이그레이션 안된 것만
+      .is('gpx_data_v2', null); // 아직 마이그레이션 안된 것만
     
     if (error) throw error;
     
@@ -145,7 +145,7 @@ export async function migrateAllCourses(): Promise<{
         // 3. 업데이트
         const { error: updateError } = await supabase
           .from('courses')
-          .update({ gpx_data: courseV2.gpx_data })
+          .update({ gpx_data_v2: courseV2.gpx_data_v2 })
           .eq('id', course.id);
         
         if (updateError) throw updateError;

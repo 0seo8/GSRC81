@@ -1,0 +1,917 @@
+현재 상황을 정리해줄게. 너가 처음 말했던
+
+좋아요! 아래는 **PDF 기반 스키마 + 댓글 수정/삭제 + 댓글 사진 업로드**까지 모두 반영한 **완전 DDL 파일**입니다.
+(Supabase/PostgreSQL 기준, gen_random_uuid() 사용)
+
+> 파일명 제안: GSRC81_SCHEMA_WITH_COMMENTS_PHOTOS.sql
+
+
+sql
+-- ====================================================================
+-- GSRC81 MAPS — PDF 기반 최종 스키마 (+ 댓글 수정/삭제 + 사진 첨부)
+-- ====================================================================
+-- DB: PostgreSQL / Supabase
+-- 요구사항 요약:
+--  - 코스/카테고리
+--  - GPX 단일 소스(JSONB, points[].dist 포함 → 1km 마커용)
+--  - 비행 중 노트(지도 주석)
+--  - 사용자 댓글(카카오 로그인 기반, 수정/삭제 가능)
+--  - 댓글 사진 첨부(1:N)
+--  - 카카오 로그인 정보 저장(간단)
+--  - 관리자 계정
+--  - (선택) RLS 정책 샘플 포함
+-- ====================================================================
+
+BEGIN;
+
+-- --------------------------------------------------------------------
+-- 0) Extensions (Supabase는 기본 제공하는 경우가 많지만 안전하게)
+-- --------------------------------------------------------------------
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- --------------------------------------------------------------------
+-- 1) 카테고리 (진관/트랙/트레일/로드)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.course_categories (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  key          varchar UNIQUE NOT NULL,      -- 'jingwan'|'track'|'trail'|'road'
+  name         varchar NOT NULL,             -- 표시명
+  sort_order   int DEFAULT 0,
+  is_active    boolean DEFAULT true,
+  created_at   timestamptz DEFAULT now(),
+  updated_at   timestamptz DEFAULT now()
+);
+
+-- 기본 Seed (필요시)
+INSERT INTO public.course_categories (key, name, sort_order)
+VALUES
+  ('jingwan', '진관동러닝', 1),
+  ('track', '트랙러닝', 2),
+  ('trail', '트레일러닝', 3),
+  ('road', '로드러닝', 4)
+ON CONFLICT (key) DO NOTHING;
+
+-- --------------------------------------------------------------------
+-- 2) 코스 (메인 데이터 + GPX 단일소스)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.courses (
+  id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  category_id         uuid REFERENCES public.course_categories(id) ON DELETE SET NULL,
+
+  title               varchar NOT NULL,        -- 예: 구파발천 정기런
+  description         text,                    -- 예: 로드러닝코스
+  cover_image_url     text,                    -- 썸네일
+
+  difficulty          varchar NOT NULL DEFAULT 'medium'
+                     CHECK (difficulty IN ('easy','medium','hard')),
+  distance_km         numeric NOT NULL,        -- km 단위
+  avg_time_min        integer,                 -- 상세 헤더(시간)
+  elevation_gain      integer,                 -- 상세 헤더(고도)
+
+  start_latitude      double precision,
+  start_longitude     double precision,
+  end_latitude        double precision,
+  end_longitude       double precision,
+
+  -- GPX 단일소스(JSONB). points[].{lat,lng,ele,dist}, stats.{totalDistance,elevationGain}
+  gpx_data            jsonb NOT NULL,
+
+  view_count          int    DEFAULT 0,
+  like_count          int    DEFAULT 0,
+
+  is_active           boolean DEFAULT true,
+  created_at          timestamptz DEFAULT now(),
+  updated_at          timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_courses_category      ON public.courses(category_id);
+CREATE INDEX IF NOT EXISTS idx_courses_active        ON public.courses(is_active);
+CREATE INDEX IF NOT EXISTS idx_courses_gpxdata_gin   ON public.courses USING GIN (gpx_data);
+
+-- --------------------------------------------------------------------
+-- 3) 비행 중 노트 (지도 좌표 기반 주석)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.course_location_notes (
+  id                     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id              uuid NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
+
+  latitude               double precision NOT NULL,
+  longitude              double precision NOT NULL,
+  title                  varchar NOT NULL,
+  content                text,
+  memo_type              varchar DEFAULT 'general'
+                         CHECK (memo_type IN ('general','warning','highlight','rest')),
+  show_during_animation  boolean DEFAULT true,
+
+  created_by             varchar,
+  created_at             timestamptz DEFAULT now(),
+  updated_at             timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notes_course ON public.course_location_notes(course_id);
+
+-- --------------------------------------------------------------------
+-- 4) 사용자 댓글 (카카오 로그인 기반 수정/삭제 + 메타)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.course_comments (
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id        uuid NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
+
+  -- 표시용 스냅샷 (닉네임/아바타)
+  author_nickname  varchar NOT NULL,
+  avatar_url       text,
+
+  -- 소유권 판정 키 (카카오 식별자 또는 내부 사용자 키)
+  author_user_key  text,  -- 예: kakao_user_id (NULL 허용 → 비로그인/게스트 허용 시)
+
+  message          text NOT NULL,
+
+  -- 좋아요 집계(단순 카운트; 개별 사용자 히스토리는 범위 밖)
+  likes_count      int DEFAULT 0,
+
+  -- 수정/삭제 메타
+  edited_at        timestamptz,
+  edit_count       int DEFAULT 0,
+  is_deleted       boolean DEFAULT false,
+  deleted_at       timestamptz,
+  deleted_by       text,                    -- 본인 or 'admin:username'
+
+  created_at       timestamptz DEFAULT now(),
+  updated_at       timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_comments_course       ON public.course_comments(course_id);
+CREATE INDEX IF NOT EXISTS idx_comments_created      ON public.course_comments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_comments_user_key     ON public.course_comments(author_user_key);
+CREATE INDEX IF NOT EXISTS idx_comments_not_deleted  ON public.course_comments(course_id, is_deleted, created_at DESC);
+
+-- --------------------------------------------------------------------
+-- 5) 댓글 사진 (1:N)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.course_comment_photos (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  comment_id  uuid NOT NULL REFERENCES public.course_comments(id) ON DELETE CASCADE,
+  file_url    text NOT NULL,         -- Supabase Storage URL (public 또는 signed)
+  width       int,
+  height      int,
+  sort_order  int DEFAULT 0,
+  created_at  timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_comment_photos_comment ON public.course_comment_photos(comment_id);
+CREATE INDEX IF NOT EXISTS idx_comment_photos_sort    ON public.course_comment_photos(comment_id, sort_order);
+
+-- --------------------------------------------------------------------
+-- 6) 접근/로그인 (카카오 + 접근코드)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.access_links (
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  access_code      varchar UNIQUE,     -- 기존 비밀번호 기반 접근 (옵션)
+  kakao_user_id    varchar,            -- 카카오 식별자
+  kakao_nickname   varchar,
+  kakao_profile_url text,
+  is_active        boolean DEFAULT true,
+  created_at       timestamptz DEFAULT now(),
+  updated_at       timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_access_active ON public.access_links(is_active);
+CREATE INDEX IF NOT EXISTS idx_access_kakao  ON public.access_links(kakao_user_id);
+
+-- --------------------------------------------------------------------
+-- 7) 관리자 계정
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.admin (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  username       varchar UNIQUE NOT NULL,
+  password_hash  varchar NOT NULL,
+  role           varchar NOT NULL DEFAULT 'editor' CHECK (role IN ('super','editor')),
+  created_at     timestamptz DEFAULT now(),
+  updated_at     timestamptz DEFAULT now()
+);
+
+-- ====================================================================
+-- (선택) RLS 정책 샘플 — Supabase 권장
+--  - 전제: JWT에 kakao_user_id 클레임을 주입해 사용
+--  - 없을 경우, 정책의 current_setting 키를 프로젝트에 맞춰 수정 필요
+-- ====================================================================
+
+-- --------------------------------------------------
+-- 공개 조회는 허용(삭제된 댓글은 숨김)
+-- --------------------------------------------------
+ALTER TABLE public.course_comments ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname='public' AND tablename='course_comments' AND policyname='comments_select_not_deleted'
+  ) THEN
+    CREATE POLICY comments_select_not_deleted
+      ON public.course_comments
+      FOR SELECT
+      USING (is_deleted = false OR (author_user_key IS NOT NULL AND author_user_key = current_setting('request.jwt.claim.kakao_user_id', true)));
+  END IF;
+END$$;
+
+-- 작성(INSERT): 로그인 사용자만, 본인 키로 작성
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname='public' AND tablename='course_comments' AND policyname='comments_insert_self'
+  ) THEN
+    CREATE POLICY comments_insert_self
+      ON public.course_comments
+      FOR INSERT
+      WITH CHECK (
+        current_setting('request.jwt.claim.kakao_user_id', true) IS NOT NULL
+        AND author_user_key = current_setting('request.jwt.claim.kakao_user_id', true)
+      );
+  END IF;
+END$$;
+
+-- 수정/삭제(UPDATE/DELETE): 본인 또는 관리자
+--  - 관리자는 별도 RPC/서버에서 role 클레임을 넣어 실행하는 패턴 권장
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname='public' AND tablename='course_comments' AND policyname='comments_update_owner_or_admin'
+  ) THEN
+    CREATE POLICY comments_update_owner_or_admin
+      ON public.course_comments
+      FOR UPDATE
+      USING (
+        (author_user_key = current_setting('request.jwt.claim.kakao_user_id', true))
+        OR (current_setting('request.jwt.claim.role', true) = 'admin')
+      )
+      WITH CHECK (
+        (author_user_key = current_setting('request.jwt.claim.kakao_user_id', true))
+        OR (current_setting('request.jwt.claim.role', true) = 'admin')
+      );
+  END IF;
+END$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname='public' AND tablename='course_comments' AND policyname='comments_delete_owner_or_admin'
+  ) THEN
+    CREATE POLICY comments_delete_owner_or_admin
+      ON public.course_comments
+      FOR DELETE
+      USING (
+        (author_user_key = current_setting('request.jwt.claim.kakao_user_id', true))
+        OR (current_setting('request.jwt.claim.role', true) = 'admin')
+      );
+  END IF;
+END$$;
+
+-- 댓글 사진 RLS
+ALTER TABLE public.course_comment_photos ENABLE ROW LEVEL SECURITY;
+
+-- 조회: 상위 댓글이 보이는 조건과 동일하게 허용(간단 버전)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname='public' AND tablename='course_comment_photos' AND policyname='comment_photos_select_public'
+  ) THEN
+    CREATE POLICY comment_photos_select_public
+      ON public.course_comment_photos
+      FOR SELECT
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.course_comments c
+          WHERE c.id = course_comment_photos.comment_id
+            AND (c.is_deleted = false OR (c.author_user_key IS NOT NULL AND c.author_user_key = current_setting('request.jwt.claim.kakao_user_id', true)))
+        )
+      );
+  END IF;
+END$$;
+
+-- 삽입/삭제: 상위 댓글의 작성자(또는 관리자)만
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname='public' AND tablename='course_comment_photos' AND policyname='comment_photos_ins_del_owner_or_admin'
+  ) THEN
+    CREATE POLICY comment_photos_ins_del_owner_or_admin
+      ON public.course_comment_photos
+      FOR ALL
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.course_comments c
+          WHERE c.id = course_comment_photos.comment_id
+            AND (
+              c.author_user_key = current_setting('request.jwt.claim.kakao_user_id', true)
+              OR current_setting('request.jwt.claim.role', true) = 'admin'
+            )
+        )
+      )
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM public.course_comments c
+          WHERE c.id = course_comment_photos.comment_id
+            AND (
+              c.author_user_key = current_setting('request.jwt.claim.kakao_user_id', true)
+              OR current_setting('request.jwt.claim.role', true) = 'admin'
+            )
+        )
+      );
+  END IF;
+END$$;
+
+-- (선택) 공개 조회 허용을 위한 기본 anon 권한(프로젝트 정책에 맞게 조절)
+-- REVOKE ALL ON public.course_comments FROM PUBLIC;
+-- REVOKE ALL ON public.course_comment_photos FROM PUBLIC;
+
+COMMIT;
+
+-- ====================================================================
+-- 참고:
+-- - Kakao 로그인 시 서버(Edge Function 등)에서 JWT에
+--   `kakao_user_id`를 custom claim으로 주입하면 위 정책이 동작합니다.
+-- - Storage 버킷(`comment-photos`)은 정책을 별도로 구성하고
+--   업로드는 signed URL 발급 → 클라이언트 업로드 → file_url 저장 흐름 권장.
+-- - 1km 마커: gpx_data.points[].dist(미터) 사전계산 필수.
+-- ====================================================================
+
+
+이걸 SQL에디터에서 실행한 후
+
+
+
+sql
+-- ===============================================================
+-- GSRC81 MAPS - Migration from legacy schema to PDF final schema
+-- Safe, in-place migration (no data loss); requires pgcrypto ext.
+-- ===============================================================
+BEGIN;
+
+-- 0) Extensions (usually preinstalled on Supabase)
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- 1) Backup current important tables (lightweight snapshot)
+CREATE SCHEMA IF NOT EXISTS backup;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.tables
+                 WHERE table_schema='backup' AND table_name='courses') THEN
+    EXECUTE 'CREATE TABLE backup.courses AS TABLE public.courses';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.tables
+                 WHERE table_schema='backup' AND table_name='course_comments') THEN
+    EXECUTE 'CREATE TABLE backup.course_comments AS TABLE public.course_comments';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.tables
+                 WHERE table_schema='backup' AND table_name='course_location_notes') THEN
+    EXECUTE 'CREATE TABLE backup.course_location_notes AS TABLE public.course_location_notes';
+  END IF;
+END$$;
+
+-- 2) Categories (for tabs: jingwan/track/trail/road)
+CREATE TABLE IF NOT EXISTS public.course_categories (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  key          varchar UNIQUE NOT NULL,
+  name         varchar NOT NULL,
+  sort_order   int DEFAULT 0,
+  is_active    boolean DEFAULT true,
+  created_at   timestamptz DEFAULT now(),
+  updated_at   timestamptz DEFAULT now()
+);
+
+-- Seed initial categories if not present
+INSERT INTO public.course_categories (key, name, sort_order)
+VALUES
+  ('jingwan','진관동러닝',1),
+  ('track','트랙러닝',2),
+  ('trail','트레일러닝',3),
+  ('road','로드러닝',4)
+ON CONFLICT (key) DO NOTHING;
+
+-- 3) ACCESS: Kakao login fields (keep legacy access_code/password_hash but make optional)
+ALTER TABLE public.access_links
+  ALTER COLUMN access_code DROP NOT NULL,
+  ALTER COLUMN password_hash DROP NOT NULL;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_schema='public' AND table_name='access_links' AND column_name='kakao_user_id') THEN
+    ALTER TABLE public.access_links
+      ADD COLUMN kakao_user_id varchar,
+      ADD COLUMN kakao_nickname varchar,
+      ADD COLUMN kakao_profile_url text;
+  END IF;
+END$$;
+
+-- 4) COURSES: bring to final model (non-breaking, additive first)
+
+-- 4.a) Ensure types better for coords (numeric -> double precision)
+ALTER TABLE public.courses
+  ALTER COLUMN start_latitude  TYPE double precision USING start_latitude::double precision,
+  ALTER COLUMN start_longitude TYPE double precision USING start_longitude::double precision;
+-- end_lat/long already exist; upgrade types too if present
+ALTER TABLE public.courses
+  ALTER COLUMN end_latitude    TYPE double precision USING end_latitude::double precision,
+  ALTER COLUMN end_longitude   TYPE double precision USING end_longitude::double precision;
+
+-- 4.b) Add missing operational fields
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema='public' AND table_name='courses' AND column_name='category_id') THEN
+    ALTER TABLE public.courses ADD COLUMN category_id uuid REFERENCES public.course_categories(id) ON DELETE SET NULL;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema='public' AND table_name='courses' AND column_name='cover_image_url') THEN
+    ALTER TABLE public.courses ADD COLUMN cover_image_url text;
+  END IF;
+
+  -- like/view/updated_at for cards/stats
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema='public' AND table_name='courses' AND column_name='like_count') THEN
+    ALTER TABLE public.courses ADD COLUMN like_count int DEFAULT 0;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema='public' AND table_name='courses' AND column_name='view_count') THEN
+    ALTER TABLE public.courses ADD COLUMN view_count int DEFAULT 0;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema='public' AND table_name='courses' AND column_name='updated_at') THEN
+    ALTER TABLE public.courses ADD COLUMN updated_at timestamptz DEFAULT now();
+  END IF;
+END$$;
+
+-- 4.c) Difficulty constraint normalization (keep existing values, enforce set)
+-- If invalid values exist, you can map them to 'medium' before adding CHECK.
+DO $$
+BEGIN
+  -- Add temp constraint only if not exists
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'public.courses'::regclass
+      AND conname  = 'courses_difficulty_ck'
+  ) THEN
+    ALTER TABLE public.courses
+      ADD CONSTRAINT courses_difficulty_ck
+      CHECK (difficulty IN ('easy','medium','hard'));
+  END IF;
+END$$;
+
+-- 4.d) gpx_data should be JSONB and used as single source
+-- (column exists but can be NULL; set empty default then backfill in app)
+ALTER TABLE public.courses
+  ALTER COLUMN gpx_data TYPE jsonb USING gpx_data::jsonb,
+  ALTER COLUMN gpx_data SET DEFAULT '{}'::jsonb;
+
+-- 4.e) Optional: drop truly unused columns later (commented for now)
+-- ALTER TABLE public.courses DROP COLUMN IF EXISTS gpx_url;
+-- ALTER TABLE public.courses DROP COLUMN IF EXISTS gpx_coordinates;
+-- ALTER TABLE public.courses DROP COLUMN IF EXISTS nearest_station;
+
+-- 4.f) Indexes
+CREATE INDEX IF NOT EXISTS idx_courses_category      ON public.courses(category_id);
+CREATE INDEX IF NOT EXISTS idx_courses_active        ON public.courses(is_active);
+CREATE INDEX IF NOT EXISTS idx_courses_gpxdata_gin   ON public.courses USING GIN (gpx_data);
+
+-- 5) NOTES: align types and keep flags
+ALTER TABLE public.course_location_notes
+  ALTER COLUMN latitude  TYPE double precision USING latitude::double precision,
+  ALTER COLUMN longitude TYPE double precision USING longitude::double precision;
+
+-- 6) COMMENTS: ownership/edit/delete + avatar; plus photos 1:N
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema='public' AND table_name='course_comments' AND column_name='avatar_url') THEN
+    ALTER TABLE public.course_comments ADD COLUMN avatar_url text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema='public' AND table_name='course_comments' AND column_name='author_user_key') THEN
+    ALTER TABLE public.course_comments ADD COLUMN author_user_key text; -- kakao_user_id snapshot
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema='public' AND table_name='course_comments' AND column_name='edited_at') THEN
+    ALTER TABLE public.course_comments ADD COLUMN edited_at timestamptz;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema='public' AND table_name='course_comments' AND column_name='edit_count') THEN
+    ALTER TABLE public.course_comments ADD COLUMN edit_count int DEFAULT 0;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema='public' AND table_name='course_comments' AND column_name='is_deleted') THEN
+    ALTER TABLE public.course_comments ADD COLUMN is_deleted boolean DEFAULT false;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema='public' AND table_name='course_comments' AND column_name='deleted_at') THEN
+    ALTER TABLE public.course_comments ADD COLUMN deleted_at timestamptz;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema='public' AND table_name='course_comments' AND column_name='deleted_by') THEN
+    ALTER TABLE public.course_comments ADD COLUMN deleted_by text;
+  END IF;
+END$$;
+
+-- indexes for comments
+CREATE INDEX IF NOT EXISTS idx_comments_course       ON public.course_comments(course_id);
+CREATE INDEX IF NOT EXISTS idx_comments_created      ON public.course_comments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_comments_user_key     ON public.course_comments(author_user_key);
+CREATE INDEX IF NOT EXISTS idx_comments_not_deleted  ON public.course_comments(course_id, is_deleted, created_at DESC);
+
+-- comment photos table
+CREATE TABLE IF NOT EXISTS public.course_comment_photos (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  comment_id  uuid NOT NULL REFERENCES public.course_comments(id) ON DELETE CASCADE,
+  file_url    text NOT NULL,
+  width       int,
+  height      int,
+  sort_order  int DEFAULT 0,
+  created_at  timestamptz DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_comment_photos_comment ON public.course_comment_photos(comment_id);
+CREATE INDEX IF NOT EXISTS idx_comment_photos_sort    ON public.course_comment_photos(comment_id, sort_order);
+
+-- 7) (Optional) Assign default category for existing courses if NULL
+UPDATE public.courses
+SET category_id = (SELECT id FROM public.course_categories WHERE key='jingwan')
+WHERE category_id IS NULL;
+
+-- 8) Legacy tables you can safely drop AFTER app is switched to gpx_data only
+-- (Uncomment once confirmed no code path depends on them)
+-- DROP TABLE IF EXISTS public.course_points;
+-- DROP TABLE IF EXISTS public.courses_backup;
+-- DROP TABLE IF EXISTS public.spatial_ref_sys;
+
+COMMIT;
+
+-- ======================
+-- Post-migration notes:
+-- - Ensure GPX uploader computes points[].dist and stores in courses.gpx_data.
+-- - RLS/Policies for comments/photos should be added in a separate policy script
+--   once JWT claims contain kakao_user_id and admin role.
+-- - Consider removing legacy columns (gpx_url, gpx_coordinates) after code cutover.
+-- ======================
+
+이걸 실행하니 발생했던 에러였어
+나의 말:
+2025-10-15_gpx_view_safe_patch.sql 는 일단 실행했어
+
+그렇다면 
+
+너가 앞서 정리했던 프롬프트 내용은 (아래내용) 수정하지 않아도 돼? 수정하지 않고 🧭 이후 진행 순서 (안전 전환 가이드)
+
+앱 코드 전환
+
+쿼리/타입/파서에서 courses.gpx_data 대신 courses.gpx_data_v2 사용.
+
+1km 마커는 gpx_data_v2.points[].dist 기준.
+
+운영 안정화 확인
+
+새 코스 업로드/수정 시 gpx_data_v2에 정상 저장되는지 확인.
+
+상세·비행·마커·댓글 등 화면 정상 동작.
+
+최종 컷오버(뷰 정리 후 컬럼 리네임)
+
+레거시 뷰가 더 이상 필요 없을 때:를 하라는거야?
+____
+
+
+
+아래 프롬프트들은 “전체 리팩토링 브리핑 → 폴더/파일 단위 → 컴포넌트/훅 단위 → SQL/마이그레이션/정책 → 테스트/성능 → 리뷰 체크리스트” 흐름으로 구성되어 있고, **이번에 확정한 스키마와 기능 범위(PDF 기준)** 를 강하게 가드레일로 둡니다.
+
+---
+
+# 0) 공통 컨텍스트 (모든 프롬프트 맨 위에 붙이기)
+
+
+컨텍스트:
+- 프로젝트: GSRC81 MAPS (Next.js + TypeScript + Supabase/Postgres)
+- 지도 서비스: 러닝 코스, 비행 애니메이션, 1km 마커, 비행 중 노트, 사용자 댓글(편집/삭제/사진 첨부), 카카오 로그인
+- 단일 소스: courses.gpx_data(JSONB) points[].{lat,lng,ele,dist}, stats.totalDistance
+- 카테고리: course_categories (jingwan/track/trail/road …)
+- 핵심 테이블:
+  course_categories, courses, course_location_notes, course_comments, course_comment_photos, access_links, admin
+- 금지 사항: PDF에 있는 기능을 삭제/축소하지 말 것. 레거시 중복 소스(gpx_coordinates, course_points)는 참조만 허용, 신규코드에서 사용 금지.
+- 안전 기준: 타입 안정성, RLS/권한, XSS/주입 방어, 파일 업로드 보안(서명 URL)
+- 목표: 가독성↑, 중복↓, 성능↑, 일관성↑, 테스트 커버리지↑, 배포 리스크↓
+
+
+---
+
+# 1) 전체 리팩토링 브리핑 프롬프트
+
+
+목표:
+- GSRC81 MAPS 레포 전체를 모듈화/정리하고, 이번에 확정한 스키마에 맞게 데이터 접근을 일원화한다.
+- gpx_data 단일 소스, 1km 마커(dist), 댓글 편집/삭제/사진 첨부, 카카오 로그인 흐름을 보장한다.
+
+요구사항:
+1) 데이터 계층
+   - Supabase 쿼리 로직을 /lib/db 또는 /data-access 레이어로 모으고, 모든 화면에서 동일 함수만 사용.
+   - courses, course_categories, course_location_notes, course_comments(+photos), access_links, admin 외 테이블 의존 제거.
+   - gpx_coordinates, course_points, courses_backup 등 레거시 경로 사용 금지(읽기 전환기 제외).
+
+2) 도메인 타입/DTO
+   - /types/domain.ts에 Course, Category, GPXPoint, GPXData, CourseNote, Comment, CommentPhoto, AccessUser 정의.
+   - zod 스키마로 런타임 검증 추가, API/DB ↔ UI 변환은 mapper 함수로 분리.
+
+3) GPX 로더
+   - 업로드 시 points[].dist 계산(haversine), stats.totalDistance 산출.
+   - 1km 마커는 렌더 시 points.filter(p => Math.abs(p.dist % 1000) < 10)로 추출.
+
+4) 댓글/사진
+   - 댓글 CRUD + 사진 1:N 업로드(서명 URL) + 본인만 편집/삭제(RLS/권한).
+   - is_deleted 소프트 삭제 반영, edited_at/edit_count 업데이트.
+
+5) UI 구조
+   - /app/(public)/map, /app/(public)/courses/[id], /app/(admin)/... 로 라우팅 명확화.
+   - 컴포넌트는 dumb/presentational vs container/hooks 분리.
+   - 폴더별 index barrel 제거 또는 통일.
+
+6) 성능/품질
+   - React Server Components 우선, Client 컴포넌트 최소화.
+   - Suspense, streaming 사용. useMemo/useCallback/virtual list 검토.
+   - ESLint/Prettier/TS strict, 유닛/통합 테스트 도입.
+
+산출물:
+- 변경된 폴더 구조 제안, 마이그레이션 계획, 주요 API/훅/컴포넌트 설계도, 적용 PR 계획.
+- 리스크/롤백 전략, 커밋 단위, 릴리즈 노트 템플릿.
+
+
+---
+
+# 2) 폴더 구조/모듈화 프롬프트
+
+
+GSRC81 MAPS의 폴더 구조를 아래 원칙으로 재설계해줘:
+- /app: 라우팅. public(사용자)와 admin(관리자) 분리.
+- /components: dumb UI. shadcn/ui + map components
+- /features: 페이지 단위에 가까운 도메인 묶음(map, course-detail, comments, notes, auth)
+- /lib: db(client), auth, storage, gpx, distance, rls-helpers
+- /data-access: Supabase 쿼리 함수(코스/카테고리/노트/댓글/사진/로그인)
+- /types: 도메인 타입과 zod 스키마
+- /tests: unit/integration/e2e 구조 제안
+
+출력:
+- 제안 폴더 트리
+- 각 폴더/파일의 책임과 예시 함수 시그니처
+- 바꾸면 깨질 수 있는 import 경로와 대응 전략
+
+
+---
+
+# 3) 데이터 접근 레이어 리팩토링 프롬프트
+
+
+아래 스키마를 사용하여 Supabase DAO 함수를 제로부터 설계해줘.
+필수 DAO:
+- categories: listActive(), getByKey(key)
+- courses: list(params), getById(id), create(dto), update(id, dto), softDelete(id)
+- notes: listByCourse(courseId), create, update, remove
+- comments: listByCourse(courseId, {page,size}), create, update (owner only), softDelete (owner/admin)
+- commentPhotos: listByComment, addMany(commentId, filesMeta[]), remove(photoId)
+- access: getCurrentUser(), linkKakaoProfile(), requireAuth()
+요구:
+- 모두 TypeScript, strict 타입
+- 런타임 zod 검증
+- 에러 모델 통일(AppError)
+- 페이지네이션/정렬 대응
+- RLS 전제(서버 Σ 클라이언트 분기)
+
+
+---
+
+# 4) GPX 업로드/전처리 프롬프트
+
+
+GPX 업로드 파이프라인을 구현해줘:
+- 입력: GPX XML 혹은 이미 파싱된 좌표 배열(lat, lng, ele?, time?)
+- 처리: haversine으로 dist 누적(m), stats.totalDistance, stats.elevationGain
+- 출력: GPXData {version:"1.1", points[], stats{}}
+- 유효성: 좌표 2개 미만 오류, NaN/∞ 거부, 이상치 필터(점프 이동 시 스무딩)
+- 성능: O(n) 한 번 순회, GC 최소화
+- 테스트: 소수점 오차 허용 범위, 5km 예제 기준 ±1%
+- 결과: courses.gpx_data에 저장하는 순수 함수 + 업로드 훅
+
+
+---
+
+# 5) 코스 상세(비행) 리팩토링 프롬프트
+
+
+코스 상세 페이지를 아래로 리팩토링:
+- 서버 컴포넌트에서 course + notes 선로드
+- 클라이언트 컴포넌트에서 map 렌더, points 기반 비행 애니메이션
+- 1km 마커 추출: points.filter(p => Math.abs(p.dist % 1000) < 10)
+- 노트 렌더: show_during_animation=true만 타임라인/지도에 표시
+- 성능: requestAnimationFrame, offscreen calculations, memoization
+- 접근성: 키보드 컨트롤, 스크린리더 설명
+- 에러/로딩: Suspense/Skeleton/Boundary
+
+
+---
+
+# 6) 댓글 + 사진 첨부 프롬프트 (카카오 로그인/RLS)
+
+
+댓글/사진 기능을 다음 조건으로 구현해줘:
+- 권한: 카카오 로그인 사용자만 작성/수정/삭제 가능. 본인만 수정/삭제(RLS).
+- 작성: message + optional images[], images는 signed URL 업로드 후 file_url 저장
+- 수정: message 편집 시 edited_at, edit_count++
+- 삭제: is_deleted=true, deleted_at, deleted_by=owner or admin
+- 표시: is_deleted면 “삭제된 댓글입니다”
+- UI: 이미지 그리드(가로 스크롤 or masonry), 정사각 썸네일, 클릭 시 라이트박스
+- 보안: 파일 확장자/크기 제한, 이미지 MIME 확인, URL 서명 만료 처리
+- 테스트: 권한별 가드, 업로드 실패, 대용량 이미지
+
+
+---
+
+# 7) 관리자 페이지 프롬프트
+
+
+관리자 페이지를 아래 항목으로 구현/보강해줘:
+- /admin/courses: 목록(카테고리/활성 필터, 검색), 생성, 수정, 삭제
+- /admin/courses/[id]/manage:
+  - 기본: title/description/cover_image_url/difficulty/distance_km/active
+  - 좌표: start_latitude/longitude (지도에서 픽)
+  - GPX: 업로드 → preprocess → gpx_data 저장 미리보기
+  - 노트 탭: notes CRUD, 지도 클릭으로 좌표 채우기
+  - 댓글 탭(읽기/숨김)
+- /admin/categories: CRUD + sort_order
+- /admin/access: access_code 생성/비활성, 카카오 사용자 조회
+요구:
+- 폼은 react-hook-form + zod
+- 서버 액션(or route handlers)로 DB mutate
+- 토스트/다이얼로그 UX
+
+
+---
+
+# 8) SQL 마이그레이션/정책 프롬프트
+
+
+다음 스키마 차이를 기준으로 마이그레이션 스크립트를 작성해줘:
+- 신규 생성: course_comment_photos, 댓글 보강 컬럼(author_user_key, edited_at, edit_count, is_deleted, deleted_at, deleted_by)
+- 제거/미사용화: course_points, gpx_coordinates, courses_backup
+- 인덱스: GIN on courses.gpx_data, created_at DESC 인덱스
+- RLS: comments/photos 정책 (owner or admin)
+- 롤백 스크립트 포함
+- 안전장치: backup 스키마에 테이블 사본
+
+
+---
+
+# 9) 테스트/품질 프롬프트
+
+
+테스트 전략을 설계/구현해줘:
+- 유닛: gpx preprocess, distance 계산, 코멘트 권한 검사 헬퍼
+- 통합: DAO 함수(Supabase emulator), 코스 조회/등록/수정/삭제
+- E2E: 주요 사용자 플로우(로그인 → 코스 보기 → 비행 → 댓글/사진)
+- 커버리지 목표: lines 80%+, critical path 90%+
+- CI: lint/tsc/test, preview deploy
+- 성능: Lighthouse, TTI/INP, hydration minimization
+
+
+---
+
+# 10) 코드 리뷰 체크리스트 프롬프트
+
+
+PR 리뷰 체크리스트를 만들어줘:
+[스키마] 단일 소스(gpx_data)만 사용? dist 포함?
+[도메인] 타입/스키마(zod) 일치? any/unknown 제거?
+[보안] RLS/권한 가드, 입력 검증, XSS 방지?
+[업로드] signed URL 흐름, 파일 검증, 공개 범위?
+[접근성] 키보드 내비, 라벨/대체텍스트, 대비
+[성능] RSC 우선, 메모/가상화, 이미지 최적화
+[UX] 로딩/에러/빈상태, 토스트/다이얼로그, 되돌리기
+[테스트] 유닛/통합/E2E, 임계경로 커버리지
+[회귀] 레거시 코드 삭제 여부, 중복 제거, TODO 해소
+[문서] README/ENV/마이그레이션 노트 갱신
+
+
+---
+
+이건 변경하지 않아도돼?
+나의 말:
+전환기를 이해못했어
+나의 말:
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.access_links (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  access_code character varying NOT NULL UNIQUE,
+  password_hash character varying NOT NULL,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT access_links_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.admin (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  username character varying NOT NULL UNIQUE,
+  password_hash character varying NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT admin_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.app_settings (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  setting_key character varying NOT NULL UNIQUE,
+  setting_value jsonb,
+  description text,
+  CONSTRAINT app_settings_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.course_comments (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  course_id uuid NOT NULL,
+  author_nickname character varying NOT NULL,
+  message text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  likes_count integer NOT NULL DEFAULT 0,
+  CONSTRAINT course_comments_pkey PRIMARY KEY (id),
+  CONSTRAINT course_comments_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id)
+);
+CREATE TABLE public.course_location_notes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  course_id uuid NOT NULL,
+  latitude numeric NOT NULL,
+  longitude numeric NOT NULL,
+  title character varying NOT NULL,
+  content text,
+  memo_type character varying DEFAULT 'general'::character varying CHECK (memo_type::text = ANY (ARRAY['general'::character varying, 'warning'::character varying, 'highlight'::character varying, 'rest'::character varying]::text[])),
+  created_by character varying,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  is_active boolean DEFAULT true,
+  show_during_animation boolean DEFAULT true,
+  CONSTRAINT course_location_notes_pkey PRIMARY KEY (id),
+  CONSTRAINT course_location_notes_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id)
+);
+CREATE TABLE public.course_points (
+  id uuid,
+  course_id uuid,
+  seq integer,
+  latitude numeric,
+  longitude numeric,
+  elevation numeric,
+  timestamp timestamp with time zone,
+  created_at timestamp with time zone
+);
+CREATE TABLE public.courses (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  title character varying NOT NULL,
+  description text,
+  gpx_url character varying,
+  start_latitude numeric NOT NULL,
+  start_longitude numeric NOT NULL,
+  distance_km numeric NOT NULL,
+  avg_time_min integer,
+  difficulty character varying DEFAULT 'medium'::character varying,
+  nearest_station character varying,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  elevation_gain integer DEFAULT 0,
+  end_latitude numeric,
+  end_longitude numeric,
+  gpx_coordinates text,
+  gpx_data jsonb,
+  gpx_data_v2 jsonb DEFAULT '{}'::jsonb,
+  CONSTRAINT courses_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.courses_backup (
+  id uuid,
+  title character varying,
+  description text,
+  gpx_url character varying,
+  start_latitude numeric,
+  start_longitude numeric,
+  distance_km numeric,
+  avg_time_min integer,
+  difficulty character varying,
+  nearest_station character varying,
+  is_active boolean,
+  created_at timestamp with time zone,
+  gpx_coordinates text,
+  elevation_gain integer,
+  end_latitude numeric,
+  end_longitude numeric
+);
+CREATE TABLE public.spatial_ref_sys (
+  srid integer NOT NULL CHECK (srid > 0 AND srid <= 998999),
+  auth_name character varying,
+  auth_srid integer,
+  srtext character varying,
+  proj4text character varying,
+  CONSTRAINT spatial_ref_sys_pkey PRIMARY KEY (srid)
+);

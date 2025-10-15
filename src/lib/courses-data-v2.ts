@@ -1,9 +1,9 @@
-// GSRC81 Maps: 코스 데이터 서비스 (v2 - gpx_data 사용)
+// GSRC81 Maps: 코스 데이터 서비스 (v2 - gpx_data_v2 사용)
 import { supabase } from './supabase';
 import { CourseV2, UnifiedGPXData } from '@/types/unified';
 
 /**
- * 모든 활성 코스 가져오기 (gpx_data 사용)
+ * 모든 활성 코스 가져오기 (gpx_data_v2 사용)
  */
 export async function getActiveCoursesV2(): Promise<CourseV2[]> {
   try {
@@ -11,7 +11,7 @@ export async function getActiveCoursesV2(): Promise<CourseV2[]> {
       .from('courses')
       .select('*')
       .eq('is_active', true)
-      .not('gpx_data', 'is', null)
+      .not('gpx_data_v2', 'is', null)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -23,7 +23,7 @@ export async function getActiveCoursesV2(): Promise<CourseV2[]> {
       description: course.description,
       difficulty: course.difficulty,
       course_type: determineCourseType(course),
-      gpx_data: course.gpx_data as UnifiedGPXData,
+      gpx_data_v2: course.gpx_data_v2 as UnifiedGPXData,
       cover_image_url: course.cover_image_url,
       is_active: course.is_active,
       created_at: course.created_at,
@@ -38,7 +38,7 @@ export async function getActiveCoursesV2(): Promise<CourseV2[]> {
 }
 
 /**
- * 특정 코스 가져오기 (gpx_data 사용)
+ * 특정 코스 가져오기 (gpx_data_v2 사용)
  */
 export async function getCourseByIdV2(id: string): Promise<CourseV2 | null> {
   try {
@@ -56,7 +56,7 @@ export async function getCourseByIdV2(id: string): Promise<CourseV2 | null> {
       description: data.description,
       difficulty: data.difficulty,
       course_type: determineCourseType(data),
-      gpx_data: data.gpx_data as UnifiedGPXData,
+      gpx_data_v2: data.gpx_data_v2 as UnifiedGPXData,
       cover_image_url: data.cover_image_url,
       is_active: data.is_active,
       created_at: data.created_at,
@@ -73,9 +73,9 @@ export async function getCourseByIdV2(id: string): Promise<CourseV2 | null> {
 /**
  * 코스 타입 자동 결정
  */
-function determineCourseType(course: any): "track" | "trail" | "road" {
-  const title = course.title.toLowerCase();
-  const description = (course.description || '').toLowerCase();
+function determineCourseType(course: Record<string, unknown>): "track" | "trail" | "road" {
+  const title = String(course.title || '').toLowerCase();
+  const description = String(course.description || '').toLowerCase();
   
   if (title.includes('트랙') || description.includes('트랙')) {
     return 'track';
@@ -92,15 +92,15 @@ function determineCourseType(course: any): "track" | "trail" | "road" {
  */
 export function extractMapMarkers(courses: CourseV2[]) {
   return courses.map(course => {
-    const startPoint = course.gpx_data.metadata?.startPoint || 
-                      course.gpx_data.points[0];
+    const startPoint = course.gpx_data_v2.metadata?.startPoint || 
+                      course.gpx_data_v2.points[0];
     
     return {
       id: course.id,
       title: course.title,
       position: [startPoint.lng, startPoint.lat] as [number, number],
       difficulty: course.difficulty,
-      distance: course.gpx_data.stats.totalDistance,
+      distance: course.gpx_data_v2.stats.totalDistance,
       type: course.course_type || 'road'
     };
   });
@@ -110,14 +110,14 @@ export function extractMapMarkers(courses: CourseV2[]) {
  * GPX 경로 데이터 추출 (Mapbox 형식)
  */
 export function extractRouteCoordinates(course: CourseV2): [number, number][] {
-  return course.gpx_data.points.map(point => [point.lng, point.lat]);
+  return course.gpx_data_v2.points.map(point => [point.lng, point.lat]);
 }
 
 /**
  * 코스 경계 계산
  */
 export function getCourseBounds(course: CourseV2) {
-  const { bounds } = course.gpx_data;
+  const { bounds } = course.gpx_data_v2;
   return [
     [bounds.minLng, bounds.minLat],
     [bounds.maxLng, bounds.maxLat]
@@ -133,7 +133,7 @@ export function filterCoursesByDistance(
   maxKm: number
 ): CourseV2[] {
   return courses.filter(course => {
-    const distance = course.gpx_data.stats.totalDistance;
+    const distance = course.gpx_data_v2.stats.totalDistance;
     return distance >= minKm && distance <= maxKm;
   });
 }
@@ -203,14 +203,14 @@ export function subscribeToCourseChanges(
         table: 'courses'
       },
       async (payload) => {
-        if (payload.new && payload.new.gpx_data) {
+        if (payload.new && payload.new.gpx_data_v2) {
           const course: CourseV2 = {
             id: payload.new.id,
             title: payload.new.title,
             description: payload.new.description,
             difficulty: payload.new.difficulty,
             course_type: determineCourseType(payload.new),
-            gpx_data: payload.new.gpx_data as UnifiedGPXData,
+            gpx_data_v2: payload.new.gpx_data_v2 as UnifiedGPXData,
             cover_image_url: payload.new.cover_image_url,
             is_active: payload.new.is_active,
             created_at: payload.new.created_at,

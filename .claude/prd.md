@@ -1,233 +1,224 @@
-
-#  GSRC81 MAPS 통합 개선 기획서 (2025 Q4) — 프롬프트 버전
-
-**프롬프트 제목:**
-
-> 🔧 “GSRC81 Maps 2025 Q4 통합 기획서 기반으로 문서 / 코드 / DB 설계 생성”
+아래 프롬프트들은 “전체 리팩토링 브리핑 → 폴더/파일 단위 → 컴포넌트/훅 단위 → SQL/마이그레이션/정책 → 테스트/성능 → 리뷰 체크리스트” 흐름으로 구성되어 있고, **이번에 확정한 스키마와 기능 범위(PDF 기준)** 를 강하게 가드레일로 둡니다.
 
 ---
 
-## 🧭 프롬프트 내용
+# 0) 공통 컨텍스트 (모든 프롬프트 맨 위에 붙이기)
 
-너는 지금 **GSRC81 Maps 프로젝트의 기획/개발 담당자**야.
-아래 내용은 **2025 Q4 기준 최신 기획 및 설계 명세서**야.
-이 정보를 기반으로 문서, 설계, 코드, DB 스키마, UI 플로우 등을 생성해줘.
-
----
-
-### 📘 1. 프로젝트 개요
-
-**프로젝트명:** GSRC81 Maps
-**목표:**
-
-1. UI/UX 개선 및 GSRC81 브랜드 통일성 강화
-2. GPX 데이터 구조를 JSONB 기반으로 단일화
-3. 비행모드(Flight Mode)와 지점별 댓글(Comments by Waypoint) 추가
-
----
-
-### 🧭 2. 사용자 페이지
-
-#### 2.1 랜딩
-
-* GSRC81 브랜드 애니메이션(크루 모션) 적용
-* 첫 진입 시 브랜드 경험 중심 연출
-* 반응형 레이아웃, 협의형 애니메이션
-
-#### 2.2 로그인
-
-* 비밀번호 / 관리자 / 카카오톡 로그인 지원
-* 전체 그래픽 톤 통일
-* 프로필 이미지 표시
-
-#### 2.3 전체 맵
-
-* 지도 그래픽 유지
-* 스타트 포인트 그래픽 리디자인
-* 확대 시 클러스터링 적용
-* JSONB 데이터에서 좌표 직접 읽기
-
-#### 2.4 루트 리스트
-
-* 루트 수에 따른 카드형 자동 조정
-* 스크롤 암시 추가
-* 거리·시간 등은 gpx_data → STORED 컬럼 표시
-
-#### 2.5 루트 상세 (핵심 개선)
-
-**🛰 비행모드 (Flight Mode)**
-
-* GPX 경로 자동 재생 (points 배열 순차 이동)
-* 카메라 시점 자동 이동
-* 재생/일시정지/속도조절 UI
-* 하단 고정형 컨트롤 바
-
-**💬 지점별 댓글 (Waypoint Comments)**
-
-* 각 포인트 클릭 시 말풍선 팝업
-* 로그인 사용자 댓글 작성 가능
-* 관리자 댓글 관리 기능
-* 실시간 반영
-
-**데이터 예시**
-
-```json
-{
-  "points": [
-    { "lat": 37.544, "lng": 127.038, "ele": 14.2 },
-    {
-      "lat": 37.545, "lng": 127.041,
-      "comments": [
-        { "id": "c1", "user": "홍길동", "content": "전망이 좋아요", "createdAt": "2025-10-05T09:00:00Z" }
-      ]
-    }
-  ]
-}
+```
+컨텍스트:
+- 프로젝트: GSRC81 MAPS (Next.js + TypeScript + Supabase/Postgres)
+- 지도 서비스: 러닝 코스, 비행 애니메이션, 1km 마커, 비행 중 노트, 사용자 댓글(편집/삭제/사진 첨부), 카카오 로그인
+- 단일 소스: courses.gpx_data(JSONB) points[].{lat,lng,ele,dist}, stats.totalDistance
+- 카테고리: course_categories (jingwan/track/trail/road …)
+- 핵심 테이블:
+  course_categories, courses, course_location_notes, course_comments, course_comment_photos, access_links, admin
+- 금지 사항: PDF에 있는 기능을 삭제/축소하지 말 것. 레거시 중복 소스(gpx_coordinates, course_points)는 참조만 허용, 신규코드에서 사용 금지.
+- 안전 기준: 타입 안정성, RLS/권한, XSS/주입 방어, 파일 업로드 보안(서명 URL)
+- 목표: 가독성↑, 중복↓, 성능↑, 일관성↑, 테스트 커버리지↑, 배포 리스크↓
 ```
 
 ---
 
-### 🧑‍💼 3. 관리자 페이지
+# 1) 전체 리팩토링 브리핑 프롬프트
 
-* 시간: 90분 → “1시간 30분”
-* 거리: 소수점 셋째 자리 표시
-* 가까운 지하철역 필드 제거
-* 댓글 관리 기능 추가
-
----
-
-### 🗄️ 4. DB 구조
-
-| 테이블                 | 역할                         |
-| ------------------- | -------------------------- |
-| `courses_v2`        | GPX 경로 및 통계 데이터 (JSONB 통합) |
-| `course_comments`   | 지점별 댓글                     |
-| `users`             | 카카오 로그인 사용자                |
-| `course_likes` (선택) | 좋아요/북마크 확장                 |
-
----
-
-#### courses_v2
-
-```sql
-CREATE TABLE courses_v2 (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title VARCHAR(200) NOT NULL,
-  description TEXT,
-  difficulty VARCHAR(20) CHECK (difficulty IN ('easy', 'medium', 'hard')),
-  nearest_station VARCHAR(100),
-  gpx_data JSONB NOT NULL,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  distance_km DECIMAL(6,2) GENERATED ALWAYS AS 
-      ((gpx_data->'stats'->>'totalDistance')::DECIMAL) STORED,
-  elevation_gain DECIMAL(6,2) GENERATED ALWAYS AS 
-      ((gpx_data->'stats'->>'elevationGain')::DECIMAL) STORED
-);
-CREATE INDEX idx_gpx_data_gin ON courses_v2 USING GIN (gpx_data jsonb_path_ops);
 ```
+목표:
+- GSRC81 MAPS 레포 전체를 모듈화/정리하고, 이번에 확정한 스키마에 맞게 데이터 접근을 일원화한다.
+- gpx_data 단일 소스, 1km 마커(dist), 댓글 편집/삭제/사진 첨부, 카카오 로그인 흐름을 보장한다.
 
-#### course_comments
+요구사항:
+1) 데이터 계층
+   - Supabase 쿼리 로직을 /lib/db 또는 /data-access 레이어로 모으고, 모든 화면에서 동일 함수만 사용.
+   - courses, course_categories, course_location_notes, course_comments(+photos), access_links, admin 외 테이블 의존 제거.
+   - gpx_coordinates, course_points, courses_backup 등 레거시 경로 사용 금지(읽기 전환기 제외).
 
-```sql
-CREATE TABLE course_comments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  course_id UUID REFERENCES courses_v2(id) ON DELETE CASCADE,
-  point_index INT,
-  lat DECIMAL(9,6),
-  lng DECIMAL(9,6),
-  user_id UUID REFERENCES users(id),
-  username VARCHAR(100),
-  content TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-```
+2) 도메인 타입/DTO
+   - /types/domain.ts에 Course, Category, GPXPoint, GPXData, CourseNote, Comment, CommentPhoto, AccessUser 정의.
+   - zod 스키마로 런타임 검증 추가, API/DB ↔ UI 변환은 mapper 함수로 분리.
 
-#### users
+3) GPX 로더
+   - 업로드 시 points[].dist 계산(haversine), stats.totalDistance 산출.
+   - 1km 마커는 렌더 시 points.filter(p => Math.abs(p.dist % 1000) < 10)로 추출.
 
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  provider VARCHAR(50) DEFAULT 'kakao',
-  provider_id VARCHAR(200),
-  username VARCHAR(100),
-  email VARCHAR(200),
-  profile_image TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+4) 댓글/사진
+   - 댓글 CRUD + 사진 1:N 업로드(서명 URL) + 본인만 편집/삭제(RLS/권한).
+   - is_deleted 소프트 삭제 반영, edited_at/edit_count 업데이트.
+
+5) UI 구조
+   - /app/(public)/map, /app/(public)/courses/[id], /app/(admin)/... 로 라우팅 명확화.
+   - 컴포넌트는 dumb/presentational vs container/hooks 분리.
+   - 폴더별 index barrel 제거 또는 통일.
+
+6) 성능/품질
+   - React Server Components 우선, Client 컴포넌트 최소화.
+   - Suspense, streaming 사용. useMemo/useCallback/virtual list 검토.
+   - ESLint/Prettier/TS strict, 유닛/통합 테스트 도입.
+
+산출물:
+- 변경된 폴더 구조 제안, 마이그레이션 계획, 주요 API/훅/컴포넌트 설계도, 적용 PR 계획.
+- 리스크/롤백 전략, 커밋 단위, 릴리즈 노트 템플릿.
 ```
 
 ---
 
-### 🧱 UnifiedGPXData (v1.1)
+# 2) 폴더 구조/모듈화 프롬프트
 
-```typescript
-interface UnifiedGPXData {
-  version: "1.1";
-  points: Array<{
-    lat: number;
-    lng: number;
-    ele?: number;
-    dist?: number;
-    comments?: Array<{
-      id: string;
-      user_id: string;
-      username: string;
-      content: string;
-      createdAt: string;
-    }>;
-  }>;
-  bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number };
-  stats: {
-    totalDistance: number;
-    elevationGain: number;
-    elevationLoss: number;
-    estimatedDuration: number;
-  };
-  metadata?: {
-    originalFileName?: string;
-    uploadedAt?: string;
-    processedAt?: string;
-  };
-}
+```
+GSRC81 MAPS의 폴더 구조를 아래 원칙으로 재설계해줘:
+- /app: 라우팅. public(사용자)와 admin(관리자) 분리.
+- /components: dumb UI. shadcn/ui + map components
+- /features: 페이지 단위에 가까운 도메인 묶음(map, course-detail, comments, notes, auth)
+- /lib: db(client), auth, storage, gpx, distance, rls-helpers
+- /data-access: Supabase 쿼리 함수(코스/카테고리/노트/댓글/사진/로그인)
+- /types: 도메인 타입과 zod 스키마
+- /tests: unit/integration/e2e 구조 제안
+
+출력:
+- 제안 폴더 트리
+- 각 폴더/파일의 책임과 예시 함수 시그니처
+- 바꾸면 깨질 수 있는 import 경로와 대응 전략
 ```
 
 ---
 
-### ⚙️ 5. 마이그레이션 플랜
+# 3) 데이터 접근 레이어 리팩토링 프롬프트
 
-| 단계  | 작업 내용                                  |
-| --- | -------------------------------------- |
-| 1️⃣ | `courses_v2` 생성 및 백업                   |
-| 2️⃣ | `courses` / `course_points` → JSONB 변환 |
-| 3️⃣ | 병행 운영 (2주)                             |
-| 4️⃣ | 완전 전환 및 백업 테이블 삭제                      |
-| 5️⃣ | 댓글/비행모드 기능 점진적 배포                      |
+```
+아래 스키마를 사용하여 Supabase DAO 함수를 제로부터 설계해줘.
+필수 DAO:
+- categories: listActive(), getByKey(key)
+- courses: list(params), getById(id), create(dto), update(id, dto), softDelete(id)
+- notes: listByCourse(courseId), create, update, remove
+- comments: listByCourse(courseId, {page,size}), create, update (owner only), softDelete (owner/admin)
+- commentPhotos: listByComment, addMany(commentId, filesMeta[]), remove(photoId)
+- access: getCurrentUser(), linkKakaoProfile(), requireAuth()
+요구:
+- 모두 TypeScript, strict 타입
+- 런타임 zod 검증
+- 에러 모델 통일(AppError)
+- 페이지네이션/정렬 대응
+- RLS 전제(서버 Σ 클라이언트 분기)
+```
 
 ---
 
-### 📈 6. 기대 효과
+# 4) GPX 업로드/전처리 프롬프트
 
-* 중복 테이블 제거로 데이터 일원화
-* GIN 인덱스 기반 조회 속도 향상 (3~5배)
-* JSONB 확장성으로 향후 기능 추가 용이
-* UI/UX 일체감 강화
-* 사용자 참여형 인터랙션 (비행모드 + 댓글)
+```
+GPX 업로드 파이프라인을 구현해줘:
+- 입력: GPX XML 혹은 이미 파싱된 좌표 배열(lat, lng, ele?, time?)
+- 처리: haversine으로 dist 누적(m), stats.totalDistance, stats.elevationGain
+- 출력: GPXData {version:"1.1", points[], stats{}}
+- 유효성: 좌표 2개 미만 오류, NaN/∞ 거부, 이상치 필터(점프 이동 시 스무딩)
+- 성능: O(n) 한 번 순회, GC 최소화
+- 테스트: 소수점 오차 허용 범위, 5km 예제 기준 ±1%
+- 결과: courses.gpx_data에 저장하는 순수 함수 + 업로드 훅
+```
 
 ---
 
-### 📎 7. 참고
+# 5) 코스 상세(비행) 리팩토링 프롬프트
 
-* 적용 대상 파일:
-  `trail-map.tsx`, `trail-map-db.tsx`, `gpx-loader.ts`, `GPX-upload-form.tsx`
-* 테스트 항목:
+```
+코스 상세 페이지를 아래로 리팩토링:
+- 서버 컴포넌트에서 course + notes 선로드
+- 클라이언트 컴포넌트에서 map 렌더, points 기반 비행 애니메이션
+- 1km 마커 추출: points.filter(p => Math.abs(p.dist % 1000) < 10)
+- 노트 렌더: show_during_animation=true만 타임라인/지도에 표시
+- 성능: requestAnimationFrame, offscreen calculations, memoization
+- 접근성: 키보드 컨트롤, 스크린리더 설명
+- 에러/로딩: Suspense/Skeleton/Boundary
+```
 
-  * GPX 업로드
-  * 맵 렌더링
-  * 비행모드 경로 재생
-  * 댓글 CRUD
-  * DB 성능 비교
+---
 
+# 6) 댓글 + 사진 첨부 프롬프트 (카카오 로그인/RLS)
 
+```
+댓글/사진 기능을 다음 조건으로 구현해줘:
+- 권한: 카카오 로그인 사용자만 작성/수정/삭제 가능. 본인만 수정/삭제(RLS).
+- 작성: message + optional images[], images는 signed URL 업로드 후 file_url 저장
+- 수정: message 편집 시 edited_at, edit_count++
+- 삭제: is_deleted=true, deleted_at, deleted_by=owner or admin
+- 표시: is_deleted면 “삭제된 댓글입니다”
+- UI: 이미지 그리드(가로 스크롤 or masonry), 정사각 썸네일, 클릭 시 라이트박스
+- 보안: 파일 확장자/크기 제한, 이미지 MIME 확인, URL 서명 만료 처리
+- 테스트: 권한별 가드, 업로드 실패, 대용량 이미지
+```
 
+---
+
+# 7) 관리자 페이지 프롬프트
+
+```
+관리자 페이지를 아래 항목으로 구현/보강해줘:
+- /admin/courses: 목록(카테고리/활성 필터, 검색), 생성, 수정, 삭제
+- /admin/courses/[id]/manage:
+  - 기본: title/description/cover_image_url/difficulty/distance_km/active
+  - 좌표: start_latitude/longitude (지도에서 픽)
+  - GPX: 업로드 → preprocess → gpx_data 저장 미리보기
+  - 노트 탭: notes CRUD, 지도 클릭으로 좌표 채우기
+  - 댓글 탭(읽기/숨김)
+- /admin/categories: CRUD + sort_order
+- /admin/access: access_code 생성/비활성, 카카오 사용자 조회
+요구:
+- 폼은 react-hook-form + zod
+- 서버 액션(or route handlers)로 DB mutate
+- 토스트/다이얼로그 UX
+```
+
+---
+
+# 8) SQL 마이그레이션/정책 프롬프트
+
+```
+다음 스키마 차이를 기준으로 마이그레이션 스크립트를 작성해줘:
+- 신규 생성: course_comment_photos, 댓글 보강 컬럼(author_user_key, edited_at, edit_count, is_deleted, deleted_at, deleted_by)
+- 제거/미사용화: course_points, gpx_coordinates, courses_backup
+- 인덱스: GIN on courses.gpx_data, created_at DESC 인덱스
+- RLS: comments/photos 정책 (owner or admin)
+- 롤백 스크립트 포함
+- 안전장치: backup 스키마에 테이블 사본
+```
+
+---
+
+# 9) 테스트/품질 프롬프트
+
+```
+테스트 전략을 설계/구현해줘:
+- 유닛: gpx preprocess, distance 계산, 코멘트 권한 검사 헬퍼
+- 통합: DAO 함수(Supabase emulator), 코스 조회/등록/수정/삭제
+- E2E: 주요 사용자 플로우(로그인 → 코스 보기 → 비행 → 댓글/사진)
+- 커버리지 목표: lines 80%+, critical path 90%+
+- CI: lint/tsc/test, preview deploy
+- 성능: Lighthouse, TTI/INP, hydration minimization
+```
+
+---
+
+# 10) 코드 리뷰 체크리스트 프롬프트
+
+```
+PR 리뷰 체크리스트를 만들어줘:
+[스키마] 단일 소스(gpx_data)만 사용? dist 포함?
+[도메인] 타입/스키마(zod) 일치? any/unknown 제거?
+[보안] RLS/권한 가드, 입력 검증, XSS 방지?
+[업로드] signed URL 흐름, 파일 검증, 공개 범위?
+[접근성] 키보드 내비, 라벨/대체텍스트, 대비
+[성능] RSC 우선, 메모/가상화, 이미지 최적화
+[UX] 로딩/에러/빈상태, 토스트/다이얼로그, 되돌리기
+[테스트] 유닛/통합/E2E, 임계경로 커버리지
+[회귀] 레거시 코드 삭제 여부, 중복 제거, TODO 해소
+[문서] README/ENV/마이그레이션 노트 갱신
+```
+
+---
+
+## 사용 팁
+
+- 한 번에 모든 걸 바꾸지 말고 **PR 단위를 작게**: “데이터 레이어 → GPX → 상세/비행 → 댓글/사진 → 관리자” 순.
+- 각 프롬프트에 **레포의 실제 파일 경로**(예: `src/app/map/page.tsx`)와 **현행 코드 조각**을 포함하면 정확도가 크게 올라가.
+- “PDF 기능 삭제 금지” 문구를 항상 프롬프트 상단에 넣어 안전 장치를 유지해.
+
+필요하면 위 프롬프트들을 **레포 전용 README_DEV.md**로 묶어 드릴게.

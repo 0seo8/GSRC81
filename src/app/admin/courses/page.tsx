@@ -119,7 +119,7 @@ export default function CoursesManagePage() {
         difficulty: formData.get("difficulty") as string,
         nearest_station: formData.get("nearest_station") as string,
         elevation_gain: (gpx.elevationGain as number) || 0,
-        gpx_data: unifiedGpxData, // 새로운 JSONB 컬럼 사용
+        gpx_data_v2: unifiedGpxData, // 새로운 JSONB 컬럼 사용
         is_active: true,
       };
 
@@ -224,8 +224,8 @@ export default function CoursesManagePage() {
                           {course.title}
                         </CardTitle>
                         <CardDescription className="">
-                          {course.gpx_data.metadata?.nearestStation &&
-                            `${course.gpx_data.metadata.nearestStation} 인근`}
+                          {course.gpx_data_v2.metadata?.nearestStation &&
+                            `${course.gpx_data_v2.metadata.nearestStation} 인근`}
                         </CardDescription>
                       </div>
                       <span
