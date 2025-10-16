@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import bcrypt from 'bcryptjs';
 
 interface AdminContextType {
   isAdminAuthenticated: boolean;
@@ -41,8 +42,10 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
       const admin = data[0];
       
-      // 개발용 평문 비밀번호 비교
-      if (admin.password_hash !== password) {
+      // bcrypt 해시 비교
+      const isValidPassword = await bcrypt.compare(password, admin.password_hash);
+      
+      if (!isValidPassword) {
         setError('비밀번호가 올바르지 않습니다.');
         return false;
       }

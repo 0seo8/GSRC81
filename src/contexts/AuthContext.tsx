@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import bcrypt from 'bcryptjs';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -66,8 +67,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      // 데이터베이스에 저장된 비밀번호와 비교
-      if (password !== data[0].password_hash) {
+      // 비밀번호 검증 (해시된 값과 평문 모두 지원)
+      const storedHash = data[0].password_hash;
+      let isValidPassword = false;
+      
+      // bcrypt 해시인지 확인
+      if (storedHash.startsWith('$2b$')) {
+        isValidPassword = await bcrypt.compare(password, storedHash);
+      } else {
+        // 평문 비교
+        isValidPassword = password === storedHash;
+      }
+      
+      if (!isValidPassword) {
         setError('비밀번호가 올바르지 않습니다.');
         return false;
       }
