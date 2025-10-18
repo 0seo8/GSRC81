@@ -23,19 +23,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  const checkAuth = () => {
+  const checkAuth = async () => {
     try {
+      console.log('🔍 Checking authentication...');
+      
+      // 1. 로컬스토리지 체크
       const savedAuth = localStorage.getItem('gsrc81-auth');
+      console.log('📱 localStorage auth:', savedAuth);
+      
       if (savedAuth) {
         const authData = JSON.parse(savedAuth);
+        console.log('📱 Parsed auth data:', authData);
+        
         // 세션이 24시간 이내인지 확인
         const isValid = Date.now() - authData.timestamp < 24 * 60 * 60 * 1000;
+        console.log('⏰ Time check - current:', Date.now(), 'saved:', authData.timestamp, 'valid:', isValid);
+        
         if (isValid) {
+          console.log('✅ Valid auth found in localStorage');
           setIsAuthenticated(true);
+          setIsLoading(false);
+          return;
         } else {
+          console.log('⚠️ Auth expired, removing...');
           localStorage.removeItem('gsrc81-auth');
         }
+      } else {
+        console.log('❌ No auth in localStorage');
       }
+
+      // 2. 쿠키 체크 (서버사이드에서 설정된 경우)
+      const cookies = document.cookie.split(';');
+      const authCookie = cookies.find(cookie => cookie.trim().startsWith('gsrc81-auth='));
+      if (authCookie) {
+        try {
+          const cookieValue = authCookie.split('=')[1];
+          const authData = JSON.parse(decodeURIComponent(cookieValue));
+          const isValid = Date.now() - authData.timestamp < 24 * 60 * 60 * 1000;
+          if (isValid) {
+            console.log('✅ Valid auth found in cookie');
+            // 쿠키에서 로컬스토리지로 복사
+            localStorage.setItem('gsrc81-auth', JSON.stringify(authData));
+            setIsAuthenticated(true);
+            setIsLoading(false);
+            return;
+          }
+        } catch (cookieErr) {
+          console.error('Cookie parsing error:', cookieErr);
+        }
+      }
+
+      console.log('❌ No valid auth found');
     } catch (err) {
       console.error('Auth check error:', err);
       localStorage.removeItem('gsrc81-auth');

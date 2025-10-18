@@ -11,7 +11,7 @@ export async function getActiveCoursesV2(): Promise<CourseV2[]> {
       .from('courses')
       .select('*')
       .eq('is_active', true)
-      .not('gpx_data_v2', 'is', null)
+      .not('gpx_data', 'is', null)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -23,7 +23,7 @@ export async function getActiveCoursesV2(): Promise<CourseV2[]> {
       description: course.description,
       difficulty: course.difficulty,
       course_type: determineCourseType(course),
-      gpx_data_v2: course.gpx_data_v2 as UnifiedGPXData,
+      gpx_data_v2: course.gpx_data as UnifiedGPXData,
       cover_image_url: course.cover_image_url,
       is_active: course.is_active,
       created_at: course.created_at,
@@ -56,7 +56,7 @@ export async function getCourseByIdV2(id: string): Promise<CourseV2 | null> {
       description: data.description,
       difficulty: data.difficulty,
       course_type: determineCourseType(data),
-      gpx_data_v2: data.gpx_data_v2 as UnifiedGPXData,
+      gpx_data_v2: data.gpx_data as UnifiedGPXData,
       cover_image_url: data.cover_image_url,
       is_active: data.is_active,
       created_at: data.created_at,
@@ -203,14 +203,14 @@ export function subscribeToCourseChanges(
         table: 'courses'
       },
       async (payload) => {
-        if (payload.new && payload.new.gpx_data_v2) {
+        if (payload.new && payload.new.gpx_data) {
           const course: CourseV2 = {
             id: payload.new.id,
             title: payload.new.title,
             description: payload.new.description,
             difficulty: payload.new.difficulty,
             course_type: determineCourseType(payload.new),
-            gpx_data_v2: payload.new.gpx_data_v2 as UnifiedGPXData,
+            gpx_data_v2: payload.new.gpx_data as UnifiedGPXData,
             cover_image_url: payload.new.cover_image_url,
             is_active: payload.new.is_active,
             created_at: payload.new.created_at,

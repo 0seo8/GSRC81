@@ -50,7 +50,6 @@ export function GPXUploadForm({
     description: "",
     detail_description: "",
     difficulty: "medium" as "easy" | "medium" | "hard",
-    nearest_station: "",
     category_id: "",
     tags: [] as string[],
     cover_image_url: "",
@@ -210,7 +209,6 @@ export function GPXUploadForm({
     submitData.append("description", formData.description);
     submitData.append("detail_description", formData.detail_description);
     submitData.append("difficulty", formData.difficulty);
-    submitData.append("nearest_station", formData.nearest_station);
     submitData.append("category_id", formData.category_id);
     submitData.append("cover_image_url", formData.cover_image_url);
     submitData.append("tags", JSON.stringify(formData.tags));
@@ -409,17 +407,6 @@ export function GPXUploadForm({
           </div>
         </div>
 
-        <div>
-          <Label htmlFor="nearest_station">가까운 지하철역</Label>
-          <Input
-            id="nearest_station"
-            value={formData.nearest_station}
-            onChange={(e) =>
-              setFormData({ ...formData, nearest_station: e.target.value })
-            }
-            placeholder="예: 구파발역"
-          />
-        </div>
 
         <div>
           <Label htmlFor="tags">태그</Label>

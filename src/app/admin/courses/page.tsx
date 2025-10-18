@@ -76,7 +76,6 @@ export default function CoursesManagePage() {
       // GPX 데이터에서 코스 정보 추출
       const gpx = gpxData as Record<string, unknown>;
       const startPoint = gpx.startPoint as Record<string, number>;
-      const endPoint = gpx.endPoint as Record<string, number>;
       const coordinates = gpx.coordinates as Array<{
         lat: number;
         lng: number;
@@ -121,7 +120,7 @@ export default function CoursesManagePage() {
         cover_image_url: formData.get("cover_image_url") as string || null,
         elevation_gain: (gpx.elevationGain as number) || 0,
         sort_order: 0,
-        gpx_data: unifiedGpxData, // 기존 컬럼 사용
+        gpx_data: unifiedGpxData, // 실제 DB 컬럼명
         is_active: true,
       };
 
