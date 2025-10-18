@@ -110,32 +110,30 @@ export default function CoursesManagePage() {
       const courseData = {
         title: formData.get("title") as string,
         description: formData.get("description") as string,
+        detail_description: formData.get("detail_description") as string || null,
         start_latitude: startPoint.lat,
         start_longitude: startPoint.lng,
-        end_latitude: endPoint.lat,
-        end_longitude: endPoint.lng,
         distance_km: gpx.distance as number,
         avg_time_min: gpx.duration as number,
         difficulty: formData.get("difficulty") as string,
-        nearest_station: formData.get("nearest_station") as string,
+        category_id: formData.get("category_id") as string || null,
+        tags: JSON.parse(formData.get("tags") as string || "[]"),
+        cover_image_url: formData.get("cover_image_url") as string || null,
         elevation_gain: (gpx.elevationGain as number) || 0,
-        gpx_data_v2: unifiedGpxData, // 새로운 JSONB 컬럼 사용
+        sort_order: 0,
+        gpx_data: unifiedGpxData, // 기존 컬럼 사용
         is_active: true,
       };
 
-      // 실제 DB 저장 부분을 주석 처리
-
-      const { data: course, error: courseError } = await supabase
+      const { error: courseError } = await supabase
         .from("courses")
-        .insert([courseData])
-        .select()
-        .single();
+        .insert([courseData]);
 
       if (courseError) throw courseError;
 
-      // 폼은 리셋하지만 페이지는 새로고침하지 않음
+      alert("코스가 성공적으로 등록되었습니다.");
       setIsGPXFormExpanded(false);
-      // loadCourses(); // 실제 저장하지 않았으므로 리로드 불필요
+      loadCourses(); // 새로운 코스를 반영하기 위해 리로드
     } catch (error) {
       console.error("Failed to save course from GPX:", error);
       alert("코스 등록 중 오류가 발생했습니다.");

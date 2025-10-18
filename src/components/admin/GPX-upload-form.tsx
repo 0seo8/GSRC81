@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload, FileText, MapPin } from "lucide-react";
+import { Upload, FileText, MapPin, Tag } from "lucide-react";
+import ImageUploader from "@/components/common/ImageUploader";
+import { supabase } from "@/lib/supabase";
 
 interface GPXData {
   name: string;
@@ -22,6 +24,13 @@ interface GPXData {
   duration: number;
   elevationGain: number;
   coordinates: Array<{ lat: number; lng: number; ele?: number }>;
+}
+
+interface Category {
+  id: string;
+  key: string;
+  name: string;
+  sort_order: number;
 }
 
 interface GPXUploadFormProps {
@@ -35,13 +44,38 @@ export function GPXUploadForm({
 }: GPXUploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [gpxData, setGpxData] = useState<GPXData | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    detail_description: "",
     difficulty: "medium" as "easy" | "medium" | "hard",
     nearest_station: "",
+    category_id: "",
+    tags: [] as string[],
+    cover_image_url: "",
   });
   const [parsing, setParsing] = useState(false);
+
+  // 카테고리 목록 로드
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('course_categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+    }
+  };
 
   const parseGPX = async (file: File): Promise<GPXData | null> => {
     return new Promise((resolve) => {
@@ -174,8 +208,12 @@ export function GPXUploadForm({
     submitData.append("gpx_file", file);
     submitData.append("title", formData.title);
     submitData.append("description", formData.description);
+    submitData.append("detail_description", formData.detail_description);
     submitData.append("difficulty", formData.difficulty);
     submitData.append("nearest_station", formData.nearest_station);
+    submitData.append("category_id", formData.category_id);
+    submitData.append("cover_image_url", formData.cover_image_url);
+    submitData.append("tags", JSON.stringify(formData.tags));
 
     await onSubmit(submitData, gpxData);
   };
@@ -303,15 +341,29 @@ export function GPXUploadForm({
         </div>
 
         <div>
-          <Label htmlFor="description">코스 설명</Label>
+          <Label htmlFor="description">코스 설명 (요약) *</Label>
           <Textarea
             id="description"
             value={formData.description}
             onChange={(e) =>
               setFormData({ ...formData, description: e.target.value })
             }
-            placeholder="코스에 대한 간단한 설명을 입력하세요"
-            rows={3}
+            placeholder="코스에 대한 간단한 설명을 입력하세요 (카드용)"
+            rows={2}
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="detail_description">코스 상세 설명</Label>
+          <Textarea
+            id="detail_description"
+            value={formData.detail_description}
+            onChange={(e) =>
+              setFormData({ ...formData, detail_description: e.target.value })
+            }
+            placeholder="상세 페이지 본문 내용을 입력하세요"
+            rows={4}
           />
         </div>
 
@@ -336,16 +388,69 @@ export function GPXUploadForm({
           </div>
 
           <div>
-            <Label htmlFor="nearest_station">가까운 지하철역</Label>
-            <Input
-              id="nearest_station"
-              value={formData.nearest_station}
-              onChange={(e) =>
-                setFormData({ ...formData, nearest_station: e.target.value })
+            <Label htmlFor="category">카테고리</Label>
+            <Select
+              value={formData.category_id}
+              onValueChange={(value) =>
+                setFormData({ ...formData, category_id: value })
               }
-              placeholder="예: 구파발역"
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="nearest_station">가까운 지하철역</Label>
+          <Input
+            id="nearest_station"
+            value={formData.nearest_station}
+            onChange={(e) =>
+              setFormData({ ...formData, nearest_station: e.target.value })
+            }
+            placeholder="예: 구파발역"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="tags">태그</Label>
+          <div className="flex items-center space-x-2">
+            <Tag className="w-4 h-4 text-gray-500" />
+            <Input
+              id="tags"
+              value={formData.tags.join(' ')}
+              onChange={(e) => {
+                const tagString = e.target.value;
+                const tags = tagString
+                  .split(' ')
+                  .map(tag => tag.trim())
+                  .filter(tag => tag.length > 0);
+                setFormData({ ...formData, tags });
+              }}
+              placeholder="태그1 태그2 태그3 (스페이스로 구분)"
             />
           </div>
+          <p className="text-xs text-gray-500 mt-1">
+            예: 벚꽃 강변 야경 (스페이스로 구분)
+          </p>
+        </div>
+
+        <div>
+          <Label>대표 이미지</Label>
+          <ImageUploader 
+            onUpload={(url) => setFormData({ ...formData, cover_image_url: url })}
+            currentUrl={formData.cover_image_url}
+            bucket="course-photos"
+          />
         </div>
       </div>
 
