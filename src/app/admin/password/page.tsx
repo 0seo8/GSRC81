@@ -24,6 +24,9 @@ interface AccessLink {
   password_hash: string;
   created_at: string;
   updated_at: string;
+  kakao_user_id?: string;
+  kakao_nickname?: string;
+  kakao_profile_url?: string;
 }
 
 export default function PasswordManagePage() {

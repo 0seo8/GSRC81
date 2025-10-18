@@ -118,14 +118,6 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   
-  /* Figma 기반 간격 시스템 */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --spacing-2xl: 48px;
-  --spacing-3xl: 92px;
   
   /* Figma 기반 폰트 시스템 */
   --font-poppins: 'Poppins', sans-serif;
@@ -302,24 +294,10 @@
     line-height: 1.4;
   }
   
-  /* Figma 기반 간격 유틸리티 */
-  .space-figma-xs { gap: var(--spacing-xs); }
-  .space-figma-sm { gap: var(--spacing-sm); }
-  .space-figma-md { gap: var(--spacing-md); }
-  .space-figma-lg { gap: var(--spacing-lg); }
-  .space-figma-xl { gap: var(--spacing-xl); }
-  .space-figma-2xl { gap: var(--spacing-2xl); }
-  .space-figma-3xl { gap: var(--spacing-3xl); }
   
-  /* Figma 기반 컴포넌트 스타일 */
+  /* Figma 기반 컴포넌트 스타일 (레이아웃 영향 최소화) */
   .course-card {
-    width: 375px;
-    height: 180px;
     border-radius: 45px 45px 0px 0px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
   }
   
   .course-card-last {
@@ -327,9 +305,7 @@
   }
   
   .comment-bubble {
-    padding: 8px 16px;
     border-radius: 18px;
-    max-width: 221px;
     background: var(--color-text-white);
   }
   
@@ -342,14 +318,9 @@
   }
   
   .button-figma {
-    width: 327px;
-    height: 40px;
     background: var(--color-button-bg);
     border-radius: 10px;
     border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     font-family: var(--font-inter);
     font-weight: 500;
     font-size: 10px;

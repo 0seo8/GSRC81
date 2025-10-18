@@ -49,6 +49,9 @@ export interface AccessLink {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  kakao_user_id?: string;
+  kakao_nickname?: string;
+  kakao_profile_url?: string;
 }
 
 export interface Admin {
@@ -56,15 +59,13 @@ export interface Admin {
   username: string;
   password_hash: string;
   created_at: string;
-  updated_at: string;
+  last_login_at?: string;
 }
 
 export interface AppSetting {
   id: string;
   setting_key: string;
-  setting_value: unknown;
-  description?: string;
-  updated_at: string;
+  setting_value: Record<string, unknown> | string | number | boolean | null; // jsonb 타입에 대응
 }
 
 // Geometric Types (PostGIS compatible)

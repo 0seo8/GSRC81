@@ -50,6 +50,12 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
+      // last_login_at 업데이트
+      await supabase
+        .from('admin')
+        .update({ last_login_at: new Date().toISOString() })
+        .eq('id', admin.id);
+
       // 관리자 인증 성공
       const adminAuth = {
         authenticated: true,
