@@ -85,11 +85,11 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     }
   }, [trailData, showFullRoute, isAnimating]);
 
-  // 애니메이션 진행률에 따른 부분 GeoJSON 생성 (gpx_data_v2 기반)
+  // 애니메이션 진행률에 따른 부분 GeoJSON 생성 (gpx_data 기반)
   const getAnimatedGeoJSON = useCallback(() => {
-    if (!trailData?.course?.gpx_data_v2?.points) return null;
+    if (!trailData?.course?.gpx_data?.points) return null;
 
-    const coordinates = trailData.course.gpx_data_v2.points;
+    const coordinates = trailData.course.gpx_data.points;
 
     if (!isAnimating || animationProgress === 1) {
       return {
@@ -157,7 +157,7 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
       throw new Error("코스를 찾을 수 없습니다.");
     }
 
-    if (!courseV2.gpx_data_v2?.points || courseV2.gpx_data_v2.points.length === 0) {
+    if (!courseV2.gpx_data?.points || courseV2.gpx_data.points.length === 0) {
       throw new Error("코스 경로 데이터가 없습니다.");
     }
 
@@ -173,7 +173,7 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
           properties: {},
           geometry: {
             type: "LineString",
-            coordinates: courseV2.gpx_data_v2.points.map((p) => [
+            coordinates: courseV2.gpx_data.points.map((p) => [
               p.lng,
               p.lat,
               p.ele || 0,
@@ -185,14 +185,14 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
     // TrailData.stats 형식에 맞게 변환
     const stats = {
-      totalDistance: courseV2.gpx_data_v2.stats.totalDistance,
-      elevationGain: courseV2.gpx_data_v2.stats.elevationGain,
-      estimatedTime: courseV2.gpx_data_v2.stats.estimatedDuration,
+      totalDistance: courseV2.gpx_data.stats.totalDistance,
+      elevationGain: courseV2.gpx_data.stats.elevationGain,
+      estimatedTime: courseV2.gpx_data.stats.estimatedDuration,
       maxElevation: 0, // TODO: 계산하거나 기본값
       minElevation: 0, // TODO: 계산하거나 기본값
       elevationLoss: 0, // TODO: 계산하거나 기본값
       difficulty: courseV2.difficulty,
-      bounds: courseV2.gpx_data_v2.bounds,
+      bounds: courseV2.gpx_data.bounds,
     };
 
     return {

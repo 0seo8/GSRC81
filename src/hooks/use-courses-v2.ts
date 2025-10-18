@@ -1,4 +1,4 @@
-// GSRC81 Maps: 코스 데이터 훅 (v2 - gpx_data_v2 사용)
+// GSRC81 Maps: 코스 데이터 훅 (v2 - gpx_data 사용)
 import { useState, useEffect, useCallback } from 'react';
 import { CourseV2 } from '@/types/unified';
 import { 
@@ -118,7 +118,7 @@ export function useFilteredCoursesV2(
     // 거리 필터
     if (filters.minDistance !== undefined || filters.maxDistance !== undefined) {
       filtered = filtered.filter(c => {
-        const distance = c.gpx_data_v2.stats.totalDistance;
+        const distance = c.gpx_data.stats.totalDistance;
         const minOk = filters.minDistance === undefined || distance >= filters.minDistance;
         const maxOk = filters.maxDistance === undefined || distance <= filters.maxDistance;
         return minOk && maxOk;
@@ -139,8 +139,8 @@ export function useCourseStatsV2() {
   
   const stats = {
     totalCourses: courses.length,
-    totalDistance: courses.reduce((sum, c) => sum + c.gpx_data_v2.stats.totalDistance, 0),
-    totalPoints: courses.reduce((sum, c) => sum + c.gpx_data_v2.points.length, 0),
+    totalDistance: courses.reduce((sum, c) => sum + c.gpx_data.stats.totalDistance, 0),
+    totalPoints: courses.reduce((sum, c) => sum + c.gpx_data.points.length, 0),
     byDifficulty: {
       easy: courses.filter(c => c.difficulty === 'easy').length,
       medium: courses.filter(c => c.difficulty === 'medium').length,
@@ -152,10 +152,10 @@ export function useCourseStatsV2() {
       road: courses.filter(c => c.course_type === 'road').length
     },
     averageDistance: courses.length > 0 
-      ? courses.reduce((sum, c) => sum + c.gpx_data_v2.stats.totalDistance, 0) / courses.length
+      ? courses.reduce((sum, c) => sum + c.gpx_data.stats.totalDistance, 0) / courses.length
       : 0,
     averageElevation: courses.length > 0
-      ? courses.reduce((sum, c) => sum + c.gpx_data_v2.stats.elevationGain, 0) / courses.length
+      ? courses.reduce((sum, c) => sum + c.gpx_data.stats.elevationGain, 0) / courses.length
       : 0
   };
 

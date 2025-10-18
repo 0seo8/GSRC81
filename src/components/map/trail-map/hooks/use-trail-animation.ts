@@ -56,14 +56,14 @@ export const useTrailAnimation = (
       }));
       console.log('📍 Using geoJSON coordinates for animation');
     } 
-    // 2순위: 원본 gpx_data_v2.points에서 직접 추출
-    else if (trailData.course.gpx_data_v2?.points) {
-      points = trailData.course.gpx_data_v2.points.map(point => ({
+    // 2순위: 원본 gpx_data.points에서 직접 추출
+    else if (trailData.course.gpx_data?.points) {
+      points = trailData.course.gpx_data.points.map(point => ({
         lng: point.lng,
         lat: point.lat,
         ele: point.ele || 0
       }));
-      console.log('📍 Using gpx_data_v2.points for animation');
+      console.log('📍 Using gpx_data.points for animation');
     }
     // 3순위 (레거시): gpx_coordinates 파싱
     else if (trailData.course.gpx_coordinates) {

@@ -221,8 +221,8 @@ export default function CoursesManagePage() {
                           {course.title}
                         </CardTitle>
                         <CardDescription className="">
-                          {course.gpx_data_v2.metadata?.nearestStation &&
-                            `${course.gpx_data_v2.metadata.nearestStation} 인근`}
+                          {course.gpx_data.metadata?.nearestStation &&
+                            `${course.gpx_data.metadata.nearestStation} 인근`}
                         </CardDescription>
                       </div>
                       <span
