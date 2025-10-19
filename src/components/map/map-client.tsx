@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { MapboxMap } from "./mapbox-map";
@@ -10,7 +10,7 @@ import { MapTokenError } from "./map-token-error";
 import { MapEmptyState } from "./map-empty-state";
 import { useMapState } from "@/hooks/use-map-state";
 import { useMapBounds } from "@/hooks/use-map-bounds";
-import { type CourseWithComments } from "@/lib/courses-data";
+import { type CourseWithComments, getCourses } from "@/lib/courses-data";
 
 interface MapClientProps {
   courses: CourseWithComments[];
@@ -22,6 +22,30 @@ export function MapClient({ courses }: MapClientProps) {
   const [clickedCourseCategory, setClickedCourseCategory] = useState<
     string | null
   >(null);
+  const [allCourses, setAllCourses] = useState<CourseWithComments[]>(courses);
+  const [currentMapCategory, setCurrentMapCategory] = useState<string>("jingwan");
+
+  // 카테고리가 변경될 때 모든 코스 로드
+  useEffect(() => {
+    const loadAllCourses = async () => {
+      try {
+        const allCategories = ["jingwan", "track", "trail", "road"];
+        const allCoursesPromises = allCategories.map(category => getCourses(category));
+        const allCoursesResults = await Promise.all(allCoursesPromises);
+        const flatCourses = allCoursesResults.flat();
+        setAllCourses(flatCourses);
+      } catch (error) {
+        console.error("Failed to load all courses:", error);
+      }
+    };
+
+    loadAllCourses();
+  }, []);
+
+  // 지도에 표시할 코스를 현재 카테고리로 필터링
+  const mapCourses = allCourses.filter(course => 
+    (course.category_key || "jingwan") === currentMapCategory
+  );
 
   const {
     map,
@@ -30,7 +54,7 @@ export function MapClient({ courses }: MapClientProps) {
     handleCourseClick: originalHandleCourseClick,
     handleClusterClick: originalHandleClusterClick,
     handleCloseDrawer,
-  } = useMapState(courses); // 모든 코스를 지도에 표시
+  } = useMapState(mapCourses); // 현재 카테고리 코스만 지도에 표시
 
   useMapBounds(map, optimisticCourses);
 
@@ -38,14 +62,18 @@ export function MapClient({ courses }: MapClientProps) {
 
   // 새로운 클릭 핸들러들
   const handleCourseClick = (course: CourseWithComments) => {
-    setClickedCourseCategory(course.category_key || "jingwan");
+    const categoryKey = course.category_key || "jingwan";
+    setClickedCourseCategory(categoryKey);
+    setCurrentMapCategory(categoryKey); // 지도의 마커도 해당 카테고리로 필터링
     originalHandleCourseClick(course);
   };
 
   const handleClusterClick = (coursesInCluster: CourseWithComments[]) => {
     // 클러스터의 첫 번째 코스 카테고리를 사용
     const firstCourse = coursesInCluster[0];
-    setClickedCourseCategory(firstCourse.category_key || "jingwan");
+    const categoryKey = firstCourse.category_key || "jingwan";
+    setClickedCourseCategory(categoryKey);
+    setCurrentMapCategory(categoryKey); // 지도의 마커도 해당 카테고리로 필터링
     originalHandleClusterClick(coursesInCluster);
   };
 
@@ -59,7 +87,13 @@ export function MapClient({ courses }: MapClientProps) {
 
   const handleCloseCategoryView = () => {
     setClickedCourseCategory(null);
+    setCurrentMapCategory("jingwan"); // 기본 카테고리로 복원
     handleCloseDrawer();
+  };
+
+  // 카테고리 변경 시 지도 마커 업데이트
+  const handleCategoryChange = (categoryKey: string) => {
+    setCurrentMapCategory(categoryKey);
   };
 
   // Mapbox 토큰이 없는 경우
@@ -113,9 +147,10 @@ export function MapClient({ courses }: MapClientProps) {
         <CategoryFullScreen
           isOpen={clickedCourseCategory !== null}
           onClose={handleCloseCategoryView}
-          courses={courses}
+          courses={allCourses}
           initialCategory={clickedCourseCategory || "jingwan"}
           onCourseClick={handleCourseCardClick}
+          onCategoryChange={handleCategoryChange}
         />
       </div>
     </div>

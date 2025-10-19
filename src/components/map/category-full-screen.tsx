@@ -12,6 +12,7 @@ interface CategoryFullScreenProps {
   courses: CourseWithComments[];
   initialCategory?: string;
   onCourseClick: (courseId: string) => void;
+  onCategoryChange?: (categoryKey: string) => void; // 카테고리 변경 콜백 추가
 }
 
 // 카테고리 정보 (PDF 기반)
@@ -52,6 +53,7 @@ export function CategoryFullScreen({
   courses,
   initialCategory = "jingwan",
   onCourseClick,
+  onCategoryChange,
 }: CategoryFullScreenProps) {
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(
     CATEGORIES.findIndex((cat) => cat.key === initialCategory) || 0
@@ -85,23 +87,31 @@ export function CategoryFullScreen({
     const isRightSwipe = distance < -50;
 
     if (isLeftSwipe && currentCategoryIndex < CATEGORIES.length - 1) {
-      setCurrentCategoryIndex(currentCategoryIndex + 1);
+      const newIndex = currentCategoryIndex + 1;
+      setCurrentCategoryIndex(newIndex);
+      onCategoryChange?.(CATEGORIES[newIndex].key); // 지도에 카테고리 변경 알림
     }
     if (isRightSwipe && currentCategoryIndex > 0) {
-      setCurrentCategoryIndex(currentCategoryIndex - 1);
+      const newIndex = currentCategoryIndex - 1;
+      setCurrentCategoryIndex(newIndex);
+      onCategoryChange?.(CATEGORIES[newIndex].key); // 지도에 카테고리 변경 알림
     }
   };
 
   // 카테고리 변경 함수
   const goToPrevCategory = () => {
     if (currentCategoryIndex > 0) {
-      setCurrentCategoryIndex(currentCategoryIndex - 1);
+      const newIndex = currentCategoryIndex - 1;
+      setCurrentCategoryIndex(newIndex);
+      onCategoryChange?.(CATEGORIES[newIndex].key); // 지도에 카테고리 변경 알림
     }
   };
 
   const goToNextCategory = () => {
     if (currentCategoryIndex < CATEGORIES.length - 1) {
-      setCurrentCategoryIndex(currentCategoryIndex + 1);
+      const newIndex = currentCategoryIndex + 1;
+      setCurrentCategoryIndex(newIndex);
+      onCategoryChange?.(CATEGORIES[newIndex].key); // 지도에 카테고리 변경 알림
     }
   };
 
@@ -109,22 +119,15 @@ export function CategoryFullScreen({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* 백드롭 - 20% 투명도로 지도가 보이도록 */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.2 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black z-40"
-            onClick={onClose}
-          />
+          {/* 백드롭 제거 - 지도가 완전히 보이도록 */}
 
-          {/* 메인 컨테이너 */}
+          {/* 메인 컨테이너 - 하단에서 올라오는 드로어 스타일 */}
           <motion.div
             initial={{ opacity: 0, y: "100%" }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed inset-0 z-50 flex flex-col"
+            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col max-h-[80vh]"
             style={{ backgroundColor: currentCategory.backgroundColor }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -132,6 +135,11 @@ export function CategoryFullScreen({
           >
             {/* 헤더 */}
             <div className="p-4 pb-0">
+              {/* 드래그 핸들 */}
+              <div className="flex justify-center mb-3">
+                <div className="w-10 h-1 bg-white bg-opacity-50 rounded-full"></div>
+              </div>
+              
               <div className="flex items-center justify-end mb-4">
                 <button
                   onClick={onClose}
