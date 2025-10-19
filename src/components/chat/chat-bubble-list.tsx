@@ -66,7 +66,6 @@ export function ChatBubbleList({
           filter: `course_id=eq.${courseId}`,
         },
         (payload) => {
-          console.log("Real-time update received:", payload);
           loadComments();
           onCommentUpdate?.();
         }

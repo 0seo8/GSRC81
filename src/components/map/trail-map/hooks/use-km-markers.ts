@@ -16,9 +16,6 @@ export const useKmMarkers = () => {
   const showKmMarker = useCallback((km: number) => {
     setLastShownKm(km);
     setVisibleKmMarkers((prev) => new Set([...prev, km]));
-    console.log(
-      `🏃 ${km}km 지점 통과!`
-    );
 
     // 3초 후 해당 km 마커 제거
     setTimeout(() => {

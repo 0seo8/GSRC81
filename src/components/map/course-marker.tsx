@@ -144,14 +144,14 @@ const CourseMarkerComponent = function CourseMarker({
       };
 
       used.add(course.id);
-      const courseCategory = course.category_key || 'jingwan';
+      const courseCategory = course.category_key || "jingwan";
 
       // 같은 카테고리의 다른 코스들과 거리 비교하여 클러스터에 추가
       courses.forEach((otherCourse) => {
         if (used.has(otherCourse.id)) return;
-        
-        const otherCategory = otherCourse.category_key || 'jingwan';
-        
+
+        const otherCategory = otherCourse.category_key || "jingwan";
+
         // 같은 카테고리인지 확인
         if (courseCategory !== otherCategory) return;
 
@@ -204,7 +204,6 @@ const CourseMarkerComponent = function CourseMarker({
 
       // 지도가 완전히 준비되었는지 한번 더 확인
       if (!map.isStyleLoaded()) {
-        console.log("Map style not loaded yet, waiting...");
         return;
       }
 
@@ -235,17 +234,22 @@ const CourseMarkerComponent = function CourseMarker({
           const count = cluster.count;
           const size = count >= 10 ? 40 : count >= 5 ? 36 : 32;
           const fontSize = count >= 10 ? 16 : count >= 5 ? 14 : 12;
-          
+
           // 클러스터의 첫 번째 코스 카테고리로 색상 결정
           const firstCourse = cluster.courses[0];
-          const categoryKey = firstCourse.category_key || 'jingwan';
+          const categoryKey = firstCourse.category_key || "jingwan";
           const getCategoryColor = (categoryKey: string) => {
             switch (categoryKey) {
-              case 'jingwan': return '#000000'; // 진관동러닝 - 검정
-              case 'track': return '#D04836';   // 트랙러닝 - 빨간색
-              case 'trail': return '#78A893';   // 트레일러닝 - 초록색
-              case 'road': return '#7A7A7A';    // 로드러닝 - 회색
-              default: return '#6b7280';        // 기본값
+              case "jingwan":
+                return "#000000"; // 진관동러닝 - 검정
+              case "track":
+                return "#D04836"; // 트랙러닝 - 빨간색
+              case "trail":
+                return "#78A893"; // 트레일러닝 - 초록색
+              case "road":
+                return "#7A7A7A"; // 로드러닝 - 회색
+              default:
+                return "#6b7280"; // 기본값
             }
           };
           const bgColor = getCategoryColor(categoryKey);
@@ -260,7 +264,7 @@ const CourseMarkerComponent = function CourseMarker({
                        C2 ${(size + 4) / 8} 
                        ${(size + 4) / 8} 2 
                        ${(size + 4) / 2} 2
-                       C${(size + 4) * 7 / 8} 2 
+                       C${((size + 4) * 7) / 8} 2 
                        ${size + 2} ${(size + 4) / 8} 
                        ${size + 2} ${(size + 4) / 4}
                        C${size + 2} ${(size + 4) / 2} 
@@ -278,7 +282,7 @@ const CourseMarkerComponent = function CourseMarker({
                     font-size="${fontSize}px">${count}</text>
             </svg>
           `;
-          
+
           markerElement.style.cssText = `
             cursor: pointer;
             position: absolute;
@@ -291,23 +295,28 @@ const CourseMarkerComponent = function CourseMarker({
           const course = cluster.courses[0];
           const getCategoryColor = (categoryKey: string) => {
             switch (categoryKey) {
-              case 'jingwan': return '#000000'; // 진관동러닝 - 검정
-              case 'track': return '#D04836';   // 트랙러닝 - 빨간색
-              case 'trail': return '#78A893';   // 트레일러닝 - 초록색
-              case 'road': return '#7A7A7A';    // 로드러닝 - 회색
-              default: return '#6b7280';        // 기본값
+              case "jingwan":
+                return "#000000"; // 진관동러닝 - 검정
+              case "track":
+                return "#D04836"; // 트랙러닝 - 빨간색
+              case "trail":
+                return "#78A893"; // 트레일러닝 - 초록색
+              case "road":
+                return "#7A7A7A"; // 로드러닝 - 회색
+              default:
+                return "#6b7280"; // 기본값
             }
           };
-          
+
           // categoryKey가 없는 경우 기본값으로 진관동러닝 처리
-          const categoryKey = course.category_key || 'jingwan';
+          const categoryKey = course.category_key || "jingwan";
           const markerColor = getCategoryColor(categoryKey);
-          
+
           // PDF에서 보이는 것처럼 마커에 번호 표시
           // 임시로 courses 배열에서의 인덱스를 번호로 사용
-          const courseIndex = courses.findIndex(c => c.id === course.id);
+          const courseIndex = courses.findIndex((c) => c.id === course.id);
           const markerNumber = courseIndex >= 0 ? courseIndex + 1 : 1;
-          
+
           // PDF 스타일 핀 마커 (개별) - 번호 포함
           markerElement.innerHTML = `
             <svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
@@ -336,7 +345,7 @@ const CourseMarkerComponent = function CourseMarker({
                     font-size="14px">${markerNumber}</text>
             </svg>
           `;
-          
+
           markerElement.style.cssText = `
             cursor: pointer;
             position: absolute;

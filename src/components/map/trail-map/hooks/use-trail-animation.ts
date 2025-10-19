@@ -30,54 +30,41 @@ export const useTrailAnimation = (
   const startTrailAnimation = useCallback(() => {
     if (!trailData || isAnimating || !mapRef.current) return;
 
-    console.log('🚁 Starting trail animation...');
-    console.log('📊 Trail data:', {
-      course: trailData.course.title,
-      hasGpxCoordinates: !!trailData.course.gpx_coordinates,
-      pointsLength: trailData.points.length,
-      geoJSONFeatures: trailData.geoJSON.features.length,
-      geoJSONCoordinates: trailData.geoJSON.features[0]?.geometry.coordinates.length
-    });
-
     setIsAnimating(true);
     setIsFullRouteView(false);
     onResetKmMarkers();
 
     // V2 구조에서 포인트 추출 - trailData.course.gpx_data.points 사용
     let points: GpxCoordinate[] = [];
-    
+
     // 1순위: TrailMapV2에서 전달된 geoJSON 좌표
     const coordinates = trailData.geoJSON.features[0]?.geometry.coordinates;
     if (coordinates && coordinates.length > 0) {
-      points = coordinates.map(coord => ({
+      points = coordinates.map((coord) => ({
         lng: coord[0],
         lat: coord[1],
-        ele: coord[2] || 0
+        ele: coord[2] || 0,
       }));
-      console.log('📍 Using geoJSON coordinates for animation');
-    } 
+    }
     // 2순위: 원본 gpx_data.points에서 직접 추출
     else if (trailData.course.gpx_data?.points) {
-      points = trailData.course.gpx_data.points.map(point => ({
+      points = trailData.course.gpx_data.points.map((point) => ({
         lng: point.lng,
         lat: point.lat,
-        ele: point.ele || 0
+        ele: point.ele || 0,
       }));
-      console.log('📍 Using gpx_data.points for animation');
     }
     // 3순위 (레거시): gpx_coordinates 파싱
     else if (trailData.course.gpx_coordinates) {
       try {
         points = JSON.parse(trailData.course.gpx_coordinates);
-        console.log('📍 Using legacy gpx_coordinates for animation');
       } catch {
-        console.error('❌ Failed to parse gpx_coordinates');
+        console.error("❌ Failed to parse gpx_coordinates");
       }
     }
 
-    console.log(`📍 Extracted ${points.length} points for animation`);
     if (points.length === 0) {
-      console.error('❌ No points available for animation');
+      console.error("❌ No points available for animation");
       return;
     }
 
@@ -85,34 +72,33 @@ export const useTrailAnimation = (
     const kmMarkerPositions: KmMarker[] = [];
     let cumulativeDistance = 0;
     let nextKmTarget = 1;
-    
+
     for (let i = 1; i < points.length; i++) {
       const prevPt = points[i - 1];
       const currPt = points[i];
-      
+
       const segmentDistance = calculateDistance(
         prevPt.lat,
         prevPt.lng,
         currPt.lat,
         currPt.lng
       );
-      
+
       cumulativeDistance += segmentDistance;
-      
+
       // 1km 지점마다 마커 위치 저장
       if (cumulativeDistance >= nextKmTarget * 1000) {
         kmMarkerPositions.push({
           km: nextKmTarget,
-          position: { lat: currPt.lat, lng: currPt.lng }
+          position: { lat: currPt.lat, lng: currPt.lng },
         });
-        console.log(`📍 ${nextKmTarget}km 마커 위치 설정: ${currPt.lat}, ${currPt.lng}`);
+
         nextKmTarget++;
       }
     }
-    
+
     // km 마커들을 useKmMarkers에 설정
     setKmMarkers(kmMarkerPositions);
-    console.log(`📍 총 ${kmMarkerPositions.length}개의 km 마커 설정 완료`);
 
     const map = mapRef.current.getMap();
 
@@ -126,24 +112,15 @@ export const useTrailAnimation = (
       FLIGHT_CONFIG.MAX_TOTAL_DURATION
     );
 
-    console.log(`⏱️ Animation settings:`, {
-      pointCount,
-      totalDuration: `${totalDuration}ms`,
-      baseDurationPerPoint: FLIGHT_CONFIG.BASE_DURATION_PER_POINT,
-      minDuration: FLIGHT_CONFIG.MIN_TOTAL_DURATION,
-      maxDuration: FLIGHT_CONFIG.MAX_TOTAL_DURATION
-    });
-
     // 저장된 진행률부터 시작 (새로운 애니메이션은 항상 0부터 시작)
     const startProgress = 0; // savedProgress를 사용하지 않고 항상 처음부터 시작
     const startTime = Date.now();
-    
-    console.log(`🚀 Animation starting from progress: ${startProgress}, startTime: ${startTime}`);
+
     let currentIndex = Math.min(
       Math.floor(startProgress * (pointCount - 1)),
       pointCount - 1
     );
-    
+
     // km 마커 표시를 위한 변수들
     const shownKmMarkers = new Set<number>();
     let lastCalculatedIndex = 0;
@@ -152,11 +129,6 @@ export const useTrailAnimation = (
     const animate = () => {
       const elapsed = Date.now() - startTime;
       const timeProgress = Math.min(elapsed / totalDuration, 1);
-      
-      // 첫 번째 animate 호출 확인
-      if (elapsed < 1000) {
-        console.log(`🎯 Animate function called! elapsed=${elapsed}ms, timeProgress=${timeProgress.toFixed(3)}`);
-      }
 
       currentIndex = Math.min(
         Math.floor(timeProgress * (pointCount - 1)),
@@ -165,11 +137,6 @@ export const useTrailAnimation = (
 
       const actualProgress = currentIndex / (pointCount - 1);
       setAnimationProgress(actualProgress);
-
-      // 디버깅: 애니메이션 진행 상황 로깅
-      if (currentIndex % 100 === 0) { // 100포인트마다 로그
-        console.log(`✈️ Animation progress: ${(timeProgress * 100).toFixed(1)}%, Point: ${currentIndex}/${pointCount - 1}, elapsed: ${elapsed}ms`);
-      }
 
       if (timeProgress < 1 && currentIndex < pointCount - 1) {
         const point = points[currentIndex];
@@ -180,7 +147,7 @@ export const useTrailAnimation = (
           for (let i = lastCalculatedIndex + 1; i <= currentIndex; i++) {
             const prevPt = points[i - 1];
             const currPt = points[i];
-            
+
             lastCumulativeDistance += calculateDistance(
               prevPt.lat,
               prevPt.lng,
@@ -190,14 +157,13 @@ export const useTrailAnimation = (
           }
           lastCalculatedIndex = currentIndex;
         }
-        
+
         const currentKmMark = Math.floor(lastCumulativeDistance / 1000);
-        
+
         // 새로운 km 지점을 지났는지 확인 (이미 표시되지 않은 것만)
         if (currentKmMark > 0 && !shownKmMarkers.has(currentKmMark)) {
           onKmMarkerShow(currentKmMark);
           shownKmMarkers.add(currentKmMark);
-          console.log(`🏃 ${currentKmMark}km 지점 통과! (실제 거리: ${(lastCumulativeDistance/1000).toFixed(2)}km, 포인트: ${currentIndex})`);
         }
 
         const pointLat = point.lat;
@@ -215,12 +181,7 @@ export const useTrailAnimation = (
         animationRef.current = requestAnimationFrame(animate);
       } else {
         // 애니메이션 완료 - 왜 종료되었는지 분석
-        console.log(`🏁 Animation STOPPED! Progress: ${(timeProgress * 100).toFixed(1)}%, Point: ${currentIndex}/${pointCount - 1}, elapsed: ${elapsed}ms`);
-        console.log(`🔍 Termination conditions:`);
-        console.log(`   - timeProgress >= 1? ${timeProgress >= 1} (${timeProgress.toFixed(6)})`);
-        console.log(`   - currentIndex >= pointCount-1? ${currentIndex >= pointCount - 1} (${currentIndex} >= ${pointCount - 1})`);
-        console.log(`   - totalDuration: ${totalDuration}ms`);
-        console.log(`   - Should continue? ${timeProgress < 1 && currentIndex < pointCount - 1}`);
+
         const lastPoint = points[pointCount - 1];
         const lastPointLat = lastPoint.lat;
         const lastPointLng = lastPoint.lng;
@@ -264,25 +225,25 @@ export const useTrailAnimation = (
     });
 
     const delay = 500; // 항상 500ms 지연
-    console.log(`⏰ Starting animation in ${delay}ms...`);
-    
-    setTimeout(
-      () => {
-        console.log(`🎬 Starting animation loop now...`);
-        animationRef.current = requestAnimationFrame(animate);
-      },
-      delay
-    );
-  }, [trailData, isAnimating, savedProgress, mapRef, onKmMarkerShow, onResetKmMarkers, setKmMarkers]);
+
+    setTimeout(() => {
+      animationRef.current = requestAnimationFrame(animate);
+    }, delay);
+  }, [
+    trailData,
+    isAnimating,
+    savedProgress,
+    mapRef,
+    onKmMarkerShow,
+    onResetKmMarkers,
+    setKmMarkers,
+  ]);
 
   const showFullRoute = useCallback(() => {
     if (!trailData || !mapRef.current) return;
 
-    console.log(`🔄 showFullRoute called! Current animation state: isAnimating=${isAnimating}, progress=${animationProgress}`);
-
     // 진행 중인 애니메이션 중단하고 현재 진행률 저장
     if (animationRef.current) {
-      console.log(`🛑 Cancelling animation...`);
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
 
@@ -296,7 +257,7 @@ export const useTrailAnimation = (
     setAnimationProgress(1);
 
     const bounds = trailData.stats.bounds;
-    
+
     // 전체 경로가 잘 보이도록 fitBounds 사용
     mapRef.current.getMap().fitBounds(
       [

@@ -5,12 +5,7 @@ import { MapClient } from "./map-client";
 export async function CoursesProvider() {
   try {
     const courses = await getCourses();
-    
-    // 데이터베이스에서 불러온 데이터 콘솔 출력
-    console.log("📍 Map page - Loaded courses from database:");
-    console.log("Total courses:", courses.length);
-    console.log("Courses data:", courses);
-    
+
     return <MapClient courses={courses} />;
   } catch (error) {
     console.error("Failed to load courses in CoursesProvider:", error);

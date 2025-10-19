@@ -2,15 +2,12 @@ import { useState, useCallback } from "react";
 import { MapRef } from "react-map-gl/mapbox";
 import { UserLocation, LocationButtonState } from "../types";
 
-export const useLocationTracking = (
-  mapRef: React.RefObject<MapRef>
-) => {
+export const useLocationTracking = (mapRef: React.RefObject<MapRef>) => {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationButtonState, setLocationButtonState] =
     useState<LocationButtonState>("location");
 
   const findMyLocation = useCallback(() => {
-    console.log("findMyLocation클릭");
     if (!navigator.geolocation) {
       alert("이 브라우저에서는 위치 서비스를 지원하지 않습니다.");
       return;

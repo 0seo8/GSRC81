@@ -936,9 +936,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
       // 즉시 실행하고, 스타일 로드 완료 후에도 한 번 더 실행
       setKoreanLabels();
       map.on("styledata", setKoreanLabels);
-    } catch {
-      console.log("Korean label setting failed, using default labels");
-    }
+    } catch {}
 
     // 3D 지형을 위한 DEM 소스 추가
     if (!map.getSource("mapbox-dem")) {

@@ -21,7 +21,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { GPXUploadForm } from "@/components/admin/GPX-upload-form";
-import { CourseV2, getDistance, getDuration, UnifiedGPXData } from "@/types/unified";
+import {
+  CourseV2,
+  getDistance,
+  getDuration,
+  UnifiedGPXData,
+} from "@/types/unified";
 
 export default function CoursesManagePage() {
   const [courses, setCourses] = useState<CourseV2[]>([]);
@@ -71,11 +76,9 @@ export default function CoursesManagePage() {
 
   const handleGPXSubmit = async (formData: FormData, gpxData: unknown) => {
     let courseData: any = null;
-    
+
     try {
       setSubmitting(true);
-
-      console.log("🔍 GPX Submit started:", { formData, gpxData });
 
       // GPX 데이터에서 코스 정보 추출 (GPXData 타입 구조에 맞게)
       const gpx = gpxData as {
@@ -87,32 +90,35 @@ export default function CoursesManagePage() {
         elevationGain: number;
         coordinates: Array<{ lat: number; lng: number; ele?: number }>;
       };
-      
+
       // 필수 데이터 검증
-      if (!gpx || typeof gpx !== 'object') {
-        throw new Error('GPX 데이터가 유효하지 않습니다.');
+      if (!gpx || typeof gpx !== "object") {
+        throw new Error("GPX 데이터가 유효하지 않습니다.");
       }
-      
-      const { startPoint, coordinates, distance, duration, elevationGain } = gpx;
+
+      const { startPoint, coordinates, distance, duration, elevationGain } =
+        gpx;
 
       // 필수 필드 검증
-      if (!startPoint || typeof startPoint.lat !== 'number' || typeof startPoint.lng !== 'number') {
-        throw new Error('시작점 좌표가 유효하지 않습니다.');
-      }
-      
-      if (!Array.isArray(coordinates) || coordinates.length === 0) {
-        throw new Error('GPS 좌표 데이터가 없습니다.');
-      }
-      
-      if (typeof distance !== 'number' || distance <= 0) {
-        throw new Error('거리 정보가 유효하지 않습니다.');
-      }
-      
-      if (typeof duration !== 'number' || duration <= 0) {
-        throw new Error('소요시간 정보가 유효하지 않습니다.');
+      if (
+        !startPoint ||
+        typeof startPoint.lat !== "number" ||
+        typeof startPoint.lng !== "number"
+      ) {
+        throw new Error("시작점 좌표가 유효하지 않습니다.");
       }
 
-      console.log("📊 Extracted GPX data:", { gpx, startPoint, coordinates: coordinates?.length });
+      if (!Array.isArray(coordinates) || coordinates.length === 0) {
+        throw new Error("GPS 좌표 데이터가 없습니다.");
+      }
+
+      if (typeof distance !== "number" || distance <= 0) {
+        throw new Error("거리 정보가 유효하지 않습니다.");
+      }
+
+      if (typeof duration !== "number" || duration <= 0) {
+        throw new Error("소요시간 정보가 유효하지 않습니다.");
+      }
 
       // 통계 계산
       const bounds = {
@@ -144,35 +150,24 @@ export default function CoursesManagePage() {
         },
       };
 
-      console.log("📝 Normalized GPX data:", normalizedGpxData);
-
       courseData = {
         title: formData.get("title") as string,
         description: formData.get("description") as string,
-        detail_description: formData.get("detail_description") as string || null,
+        detail_description:
+          (formData.get("detail_description") as string) || null,
         start_latitude: startPoint.lat,
         start_longitude: startPoint.lng,
         distance_km: distance,
         avg_time_min: duration,
         difficulty: formData.get("difficulty") as string,
-        category_id: formData.get("category_id") as string || null,
-        tags: JSON.parse(formData.get("tags") as string || "[]"),
-        cover_image_url: formData.get("cover_image_url") as string || null,
+        category_id: (formData.get("category_id") as string) || null,
+        tags: JSON.parse((formData.get("tags") as string) || "[]"),
+        cover_image_url: (formData.get("cover_image_url") as string) || null,
         elevation_gain: elevationGain || 0,
         sort_order: 0,
         gpx_data: normalizedGpxData, // 기존 구조와 호환되는 데이터
         is_active: true,
       };
-
-      console.log("🚀 Course data to insert:", courseData);
-      console.log("📋 GPX data structure check:", {
-        hasPoints: normalizedGpxData.points && Array.isArray(normalizedGpxData.points),
-        pointsCount: normalizedGpxData.points?.length,
-        hasStats: normalizedGpxData.stats !== undefined,
-        hasBounds: normalizedGpxData.bounds !== undefined,
-        firstPoint: normalizedGpxData.points?.[0],
-        statsStructure: normalizedGpxData.stats
-      });
 
       const { error: courseError } = await supabase
         .from("courses")
@@ -183,7 +178,6 @@ export default function CoursesManagePage() {
         throw courseError;
       }
 
-      console.log("✅ Course inserted successfully");
       alert("코스가 성공적으로 등록되었습니다.");
       setIsGPXFormExpanded(false);
       loadCourses(); // 새로운 코스를 반영하기 위해 리로드
@@ -197,11 +191,14 @@ export default function CoursesManagePage() {
           title: formData.get("title"),
           description: formData.get("description"),
           difficulty: formData.get("difficulty"),
-        }
+        },
       });
-      const errorMessage = error instanceof Error ? error.message : 
-                       typeof error === 'object' ? JSON.stringify(error, null, 2) : 
-                       String(error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object"
+            ? JSON.stringify(error, null, 2)
+            : String(error);
       alert(`코스 등록 중 오류가 발생했습니다: ${errorMessage}`);
     } finally {
       setSubmitting(false);

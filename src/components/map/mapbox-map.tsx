@@ -25,10 +25,6 @@ const MapboxMapComponent = function MapboxMap({
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    console.log("MapboxMap - style:", style);
-  }, [style]);
-
-  useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
     // Mapbox 액세스 토큰 설정
@@ -62,22 +58,14 @@ const MapboxMapComponent = function MapboxMap({
         const mapInstance = map.current;
 
         const setKoreanLabels = () => {
-          console.log("Setting Korean labels...");
-
           // 현재 지도 스타일의 모든 레이어 확인
           const style = mapInstance.getStyle();
           if (!style || !style.layers) return;
-
-          console.log("Total layers found:", style.layers.length);
 
           style.layers.forEach((layer: mapboxgl.Layer) => {
             if (layer.layout && "text-field" in layer.layout) {
               try {
                 const currentTextField = layer.layout["text-field"];
-                console.log(
-                  `Layer ${layer.id} has text-field:`,
-                  currentTextField
-                );
 
                 // 더 넓은 범위로 체크 - 문자열이거나 배열 형태의 텍스트 필드
                 let shouldUpdate = false;
@@ -110,14 +98,8 @@ const MapboxMapComponent = function MapboxMap({
                     ["get", "name_kr"],
                     ["get", "name"],
                   ]);
-                  console.log(`✅ Set Korean labels for layer: ${layer.id}`);
                 }
-              } catch (error) {
-                console.log(
-                  `❌ Could not set Korean labels for layer: ${layer.id}`,
-                  error
-                );
-              }
+              } catch (error) {}
             }
           });
         };

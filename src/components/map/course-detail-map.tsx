@@ -105,7 +105,6 @@ export function CourseDetailMap({
             coord.lng,
             coord.lat,
           ]);
-          console.log(`Found ${coordinates.length} GPX coordinates`);
         } catch (parseError) {
           console.error("GPX 좌표 파싱 오류:", parseError);
           // 파싱 실패 시 시작점만 사용
@@ -116,7 +115,6 @@ export function CourseDetailMap({
       } else {
         // GPX 데이터가 없으면 시작점만 표시
         coordinates = [[courseData.start_longitude, courseData.start_latitude]];
-        console.log("GPX 좌표가 없어 시작점만 표시합니다.");
       }
 
       // 애니메이션을 위해 좌표 저장
@@ -234,8 +232,6 @@ export function CourseDetailMap({
           [minLng, minLat], // 남서쪽 모서리
           [maxLng, maxLat], // 북동쪽 모서리
         ]);
-
-        console.log("🎯 카메라 범위 제한 설정 완료 (타일 절약)");
       }
 
       setLoading(false);
@@ -363,13 +359,6 @@ export function CourseDetailMap({
     );
 
     map.current.on("load", () => {
-      console.log("💰 저비용 최적화 모드 활성화");
-
-      // ✅ 추가 최적화 설정들
-      if (map.current) {
-        console.log("🎯 타일 페치 최적화 준비 완료");
-      }
-
       // 3D 지형 활성화 (강화된 최적화 설정)
       map.current!.addSource("mapbox-dem", {
         type: "raster-dem",
@@ -416,11 +405,8 @@ export function CourseDetailMap({
   // wholsee-dev 방식: 노선 그리기 → 드론 비행
   const drawRouteThenFly = () => {
     if (!map.current || routeCoordinates.length === 0) {
-      console.log("지도나 경로 데이터가 없습니다.");
       return;
     }
-
-    console.log("=== wholsee-dev 방식 애니메이션 시작 ===");
 
     // GeoJSON Feature 생성
     const fullFeature: GeoJSON.Feature<GeoJSON.LineString> = {
@@ -434,7 +420,6 @@ export function CourseDetailMap({
 
     // 전체 경로 길이 계산
     const routeLenKm = turf.length(fullFeature, { units: "kilometers" });
-    console.log(`총 경로 길이: ${routeLenKm.toFixed(2)}km`);
 
     // ─── 1) 경로 Source를 두 개로 분리 ───
     // 회색 배경 라인 (전체 경로)
@@ -513,7 +498,6 @@ export function CourseDetailMap({
 
     const draw = (now: number) => {
       if (!map.current) {
-        console.log("맵이 없어서 애니메이션 중단됨");
         return;
       }
 
@@ -545,7 +529,6 @@ export function CourseDetailMap({
         animationRef.current = requestAnimationFrame(draw);
       } else {
         // 라인 그리기 완료 → 드론 비행 시작
-        console.log("노선 그리기 완료! 드론 비행 시작");
         setTimeout(() => {
           startDroneFlight(fullFeature, routeLenKm);
         }, 500);
@@ -565,7 +548,6 @@ export function CourseDetailMap({
 
     // 1.5초 후 노선 그리기 시작
     setTimeout(() => {
-      console.log("노선 그리기 시작!");
       animationRef.current = requestAnimationFrame(draw);
     }, 1500);
   };
@@ -575,8 +557,6 @@ export function CourseDetailMap({
     lineFeature: GeoJSON.Feature<GeoJSON.LineString>,
     routeLength: number
   ) => {
-    console.log("드론 비행 모드 시작!");
-
     // 3D 지형만 활성화 (라이트 스타일 유지)
     if (map.current && map.current.getSource("mapbox-dem")) {
       map.current.setTerrain({ source: "mapbox-dem", exaggeration: 1.5 });
@@ -595,7 +575,6 @@ export function CourseDetailMap({
 
     const flyAnimate = (currentTime: number) => {
       if (!animationRef.current || !map.current) {
-        console.log("드론 비행 중단됨 - animationRef 또는 map 없음");
         return;
       }
 
@@ -604,7 +583,6 @@ export function CourseDetailMap({
       progressKm += speedKmPerSecond * deltaTime;
 
       if (progressKm >= routeLength) {
-        console.log("드론 비행 완료!");
         setIsAnimating(false);
         setAnimationProgress(100);
 
@@ -631,7 +609,7 @@ export function CourseDetailMap({
       });
       const currentCoords = currentPoint.geometry.coordinates as [
         number,
-        number
+        number,
       ];
 
       const nextProgressKm = Math.min(progressKm + 0.1, routeLength);
@@ -702,13 +680,8 @@ export function CourseDetailMap({
 
   // 애니메이션 시작/정지 (wholsee-dev 방식)
   const toggleAnimation = () => {
-    console.log("=== toggleAnimation 호출 ===");
-    console.log("현재 isAnimating:", isAnimating);
-    console.log("경로 좌표 수:", routeCoordinates.length);
-
     if (isAnimating) {
       // 애니메이션 정지
-      console.log("애니메이션 정지");
       if (animationRef.current) {
         if (typeof animationRef.current === "number") {
           cancelAnimationFrame(animationRef.current);
@@ -724,7 +697,6 @@ export function CourseDetailMap({
       }
     } else {
       // 애니메이션 시작
-      console.log("wholsee-dev 방식 애니메이션 시작!");
       setIsAnimating(true);
       setAnimationProgress(0);
 
@@ -735,7 +707,6 @@ export function CourseDetailMap({
 
   // 애니메이션 리셋
   const resetAnimation = () => {
-    console.log("애니메이션 리셋 중...");
     if (animationRef.current) {
       if (typeof animationRef.current === "number") {
         cancelAnimationFrame(animationRef.current);
