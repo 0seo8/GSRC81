@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { type CourseWithComments, type CourseCategory } from "@/lib/courses-data";
 
@@ -47,6 +47,7 @@ export function CategoryFullScreen({
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(
     categories.findIndex((cat) => cat.key === initialCategory) || 0
   );
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
 
   const currentCategory = categories[currentCategoryIndex];
   const currentDesign = CATEGORY_DESIGNS[currentCategory?.key as keyof typeof CATEGORY_DESIGNS] || CATEGORY_DESIGNS.jingwan;
@@ -66,6 +67,7 @@ export function CategoryFullScreen({
     if (currentCategoryIndex > 0) {
       const newIndex = currentCategoryIndex - 1;
       setCurrentCategoryIndex(newIndex);
+      setCurrentCardIndex(0); // 카테고리 변경 시 첫 번째 카드로 리셋
       onCategoryChange?.(categories[newIndex].key); // 지도에 카테고리 변경 알림
     }
   };
@@ -74,7 +76,33 @@ export function CategoryFullScreen({
     if (currentCategoryIndex < categories.length - 1) {
       const newIndex = currentCategoryIndex + 1;
       setCurrentCategoryIndex(newIndex);
+      setCurrentCardIndex(0); // 카테고리 변경 시 첫 번째 카드로 리셋
       onCategoryChange?.(categories[newIndex].key); // 지도에 카테고리 변경 알림
+    }
+  };
+
+  // 카드 네비게이션 함수
+  const goToPrevCard = () => {
+    if (currentCardIndex > 0) {
+      setCurrentCardIndex(currentCardIndex - 1);
+    }
+  };
+
+  const goToNextCard = () => {
+    if (currentCardIndex < filteredCourses.length - 1) {
+      setCurrentCardIndex(currentCardIndex + 1);
+    }
+  };
+
+  // 카드 스와이프 핸들러
+  const handleCardSwipe = (event: any, info: PanInfo) => {
+    const swipeThreshold = 50;
+    if (info.offset.y < -swipeThreshold) {
+      // 위로 스와이프 - 다음 카드
+      goToNextCard();
+    } else if (info.offset.y > swipeThreshold) {
+      // 아래로 스와이프 - 이전 카드
+      goToPrevCard();
     }
   };
 
@@ -97,18 +125,18 @@ export function CategoryFullScreen({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col max-h-[80vh]"
+            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col max-h-[85vh]"
             style={{ backgroundColor: currentDesign.backgroundColor }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* 헤더 */}
-            <div className="p-4 pb-0">
+            <div className="p-4 pb-2">
               {/* 드래그 핸들 */}
-              <div className="flex justify-center mb-3">
+              <div className="flex justify-center mb-2">
                 <div className="w-10 h-1 bg-white bg-opacity-50 rounded-full"></div>
               </div>
               
-              <div className="flex items-center justify-end mb-4">
+              <div className="flex items-center justify-end mb-3">
                 <button
                   onClick={onClose}
                   className="p-2 bg-white rounded-full shadow-lg"
@@ -118,7 +146,7 @@ export function CategoryFullScreen({
               </div>
 
               {/* 카테고리 네비게이션 */}
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <button
                   onClick={goToPrevCategory}
                   disabled={currentCategoryIndex === 0}
@@ -144,6 +172,22 @@ export function CategoryFullScreen({
                       />
                     ))}
                   </div>
+                  
+                  {/* 카드 인디케이터 (카드가 2개 이상일 때만 표시) */}
+                  {filteredCourses.length > 1 && (
+                    <div className="flex space-x-1 justify-center mt-2">
+                      {filteredCourses.map((_, index) => (
+                        <div
+                          key={index}
+                          className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                            index === currentCardIndex
+                              ? "bg-white"
+                              : "bg-white opacity-30"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -156,24 +200,71 @@ export function CategoryFullScreen({
               </div>
             </div>
 
-            {/* 코스 카드들 */}
-            <div className="flex-1 px-4 pb-4 overflow-hidden">
-              <div className="space-y-4 h-full overflow-y-auto">
+            {/* 코스 카드들 - PDF 10페이지 스타일 스택 */}
+            <div className="flex-1 px-4 pb-4 overflow-hidden min-h-0">
+              <div className="relative w-full" style={{
+                height: filteredCourses.length === 1 ? '160px' : 
+                       filteredCourses.length === 2 ? '270px' : 
+                       `${160 + (filteredCourses.length - 1) * 110}px`
+              }}>
                 {filteredCourses.map((course, index) => {
                   const cardColor =
                     currentDesign.cardColors[
                       index % currentDesign.cardColors.length
                     ];
-
+                  
+                  // 현재 카드 기준으로 상대적 인덱스 계산
+                  const relativeIndex = index - currentCardIndex;
+                  const maxVisible = Math.min(5, filteredCourses.length); // PDF 규칙: 최대 5개까지
+                  const isVisible = relativeIndex >= 0 && relativeIndex < maxVisible;
+                  
+                  if (!isVisible) return null;
+                  
+                  // 카드 개수에 따른 조건부 스타일링
+                  const isSingleCard = filteredCourses.length === 1;
+                  const stackOffset = isSingleCard ? 0 : relativeIndex * 110; // 1개면 스택 없음
+                  const scale = isSingleCard ? 1 : 1 - relativeIndex * 0.03; // 1개면 축소 없음
+                  const zIndex = relativeIndex + 1;
+                  
+                  // PDF 10페이지 기반: 뒤 카드도 선명하게 보이도록
+                  let opacity = 1;
+                  if (relativeIndex === 1) opacity = 0.95;
+                  else if (relativeIndex === 2) opacity = 0.9;
+                  else if (relativeIndex >= 3) opacity = 0.85;
+                  
                   return (
                     <motion.div
                       key={course.id}
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="rounded-3xl p-6 shadow-lg cursor-pointer"
-                      style={{ backgroundColor: cardColor }}
-                      onClick={() => onCourseClick(course.id)}
+                      animate={{ 
+                        opacity: opacity, 
+                        y: 0,
+                        scale: scale,
+                      }}
+                      transition={{ 
+                        duration: 0.3,
+                        ease: "easeOut"
+                      }}
+                      drag={relativeIndex === 0 ? "y" : false} // 맨 앞 카드만 드래그 가능
+                      dragConstraints={{ top: -100, bottom: 100 }}
+                      onDragEnd={handleCardSwipe}
+                      className="absolute left-0 right-0 rounded-3xl p-6 cursor-pointer"
+                      style={{ 
+                        backgroundColor: cardColor,
+                        top: `${stackOffset}px`, // 다시 top 기준으로
+                        zIndex: zIndex,
+                        height: '160px',
+                        boxShadow: `0 ${4 + relativeIndex * 2}px ${12 + relativeIndex * 4}px rgba(0,0,0,0.15)`,
+                        transform: `scale(${scale})`
+                      }}
+                      onClick={() => {
+                        if (relativeIndex === 0) {
+                          onCourseClick(course.id);
+                        } else {
+                          // 뒤의 카드를 클릭하면 앞으로 가져오기
+                          setCurrentCardIndex(index);
+                        }
+                      }}
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
