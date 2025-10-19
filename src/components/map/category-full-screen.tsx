@@ -66,37 +66,6 @@ export function CategoryFullScreen({
     (course) => (course.category_key || "jingwan") === currentCategory.key
   );
 
-  // 터치 스와이프 처리
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe && currentCategoryIndex < CATEGORIES.length - 1) {
-      const newIndex = currentCategoryIndex + 1;
-      setCurrentCategoryIndex(newIndex);
-      onCategoryChange?.(CATEGORIES[newIndex].key); // 지도에 카테고리 변경 알림
-    }
-    if (isRightSwipe && currentCategoryIndex > 0) {
-      const newIndex = currentCategoryIndex - 1;
-      setCurrentCategoryIndex(newIndex);
-      onCategoryChange?.(CATEGORIES[newIndex].key); // 지도에 카테고리 변경 알림
-    }
-  };
 
   // 카테고리 변경 함수
   const goToPrevCategory = () => {
@@ -119,7 +88,14 @@ export function CategoryFullScreen({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* 백드롭 제거 - 지도가 완전히 보이도록 */}
+          {/* 백드롭 - 어두운 오버레이로 클릭 시 닫기 */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.2 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black z-40"
+            onClick={onClose}
+          />
 
           {/* 메인 컨테이너 - 하단에서 올라오는 드로어 스타일 */}
           <motion.div
@@ -129,9 +105,7 @@ export function CategoryFullScreen({
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed bottom-0 left-0 right-0 z-50 flex flex-col max-h-[80vh]"
             style={{ backgroundColor: currentCategory.backgroundColor }}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* 헤더 */}
             <div className="p-4 pb-0">
