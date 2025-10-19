@@ -132,17 +132,13 @@ export function CategoryFullScreen({
           >
             {/* 헤더 */}
             <div className="p-4 pb-0">
-              <div className="flex items-center justify-between mb-4">
-                <h1 className="text-xl font-bold text-white">GSRC81 MAPS</h1>
-                <div className="flex items-center space-x-4">
-                  <span className="text-white text-sm">MENU</span>
-                  <button
-                    onClick={onClose}
-                    className="p-2 bg-white rounded-full shadow-lg"
-                  >
-                    <X className="w-5 h-5 text-gray-700" />
-                  </button>
-                </div>
+              <div className="flex items-center justify-end mb-4">
+                <button
+                  onClick={onClose}
+                  className="p-2 bg-white rounded-full shadow-lg"
+                >
+                  <X className="w-5 h-5 text-gray-700" />
+                </button>
               </div>
 
               {/* 카테고리 네비게이션 */}

@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // 인증이 필요한 페이지들
-  const protectedPaths = ['/map', '/admin'];
+  const protectedPaths = ['/map', '/courses', '/admin'];
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
   
   // 인증이 필요하지 않은 페이지는 그대로 진행
@@ -30,9 +30,9 @@ export function middleware(request: NextRequest) {
     }
   }
   
-  // 인증이 없거나 유효하지 않으면 홈으로 리다이렉트
-  console.log('❌ Middleware: No valid auth, redirecting to home');
-  return NextResponse.redirect(new URL('/', request.url));
+  // 인증이 없거나 유효하지 않으면 로그인 페이지로 리다이렉트
+  console.log('❌ Middleware: No valid auth, redirecting to login');
+  return NextResponse.redirect(new URL('/login', request.url));
 }
 
 export const config = {
