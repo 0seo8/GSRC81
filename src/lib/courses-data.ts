@@ -20,10 +20,13 @@ export interface CourseWithComments extends Course {
   comment_count: number;
   start_latitude: number;
   start_longitude: number;
+  category_key?: string;
 }
 
 export async function getCourses(): Promise<CourseWithComments[]> {
   try {
+    console.log("🔍 Fetching courses from database...");
+    
     const { data, error } = await supabaseServer
       .from(TABLES.COURSES)
       .select(
@@ -34,6 +37,8 @@ export async function getCourses(): Promise<CourseWithComments[]> {
       )
       .eq("is_active", true)
       .order("created_at", { ascending: false });
+      
+    console.log("📊 Raw data from database:", { data, error });
 
     if (error) {
       console.error("Failed to fetch courses:", error);
@@ -45,11 +50,14 @@ export async function getCourses(): Promise<CourseWithComments[]> {
     }
 
     const coursesWithCommentCount: CourseWithComments[] = data.map(
-      (course) => ({
+      (course: any) => ({
         ...course,
         comment_count: course.course_comments?.[0]?.count || 0,
+        category_key: 'jingwan', // 임시로 모든 코스를 진관동러닝으로 설정
       })
     );
+    
+    console.log("✅ Processed courses:", coursesWithCommentCount.length);
 
     return coursesWithCommentCount;
   } catch (error) {

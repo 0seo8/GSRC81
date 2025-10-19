@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import { ProtectedRoute } from "@/components/protected-route";
 import { ChatBubbleList } from "@/components/chat/chat-bubble-list";
 import { CourseDetailMapClient } from "@/components/course-detail-map-client";
-import { CourseV2 } from "@/types/unified";
-import { getCourseByIdV2 } from "@/lib/courses-data-v2";
+import { Course } from "@/types";
+import { getCourseById } from "@/lib/courses-data";
 
 interface CourseDetailPageProps {
   params: Promise<{
@@ -11,9 +11,9 @@ interface CourseDetailPageProps {
   }>;
 }
 
-async function getCourse(courseId: string): Promise<CourseV2 | null> {
+async function getCourse(courseId: string): Promise<Course | null> {
   try {
-    return await getCourseByIdV2(courseId);
+    return await getCourseById(courseId);
   } catch (error) {
     console.error("Failed to load course:", error);
     return null;

@@ -9,7 +9,13 @@ export async function getActiveCoursesV2(): Promise<CourseV2[]> {
   try {
     const { data, error } = await supabase
       .from('courses')
-      .select('*')
+      .select(`
+        *,
+        course_categories (
+          key,
+          name
+        )
+      `)
       .eq('is_active', true)
       .not('gpx_data', 'is', null)
       .order('created_at', { ascending: false });

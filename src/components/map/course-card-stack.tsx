@@ -57,22 +57,45 @@ const CourseCardStackComponent = function CourseCardStack({
       {/* Stacked Cards Container */}
       <div className="">
         {courses.map((course, index) => {
-          const cardColors = [
-            "bg-gray-900", // 첫 번째 카드
-            "bg-gray-700", // 두 번째 카드
-            "bg-gray-600", // 세 번째 카드
-            "bg-gray-500", // 네 번째 카드
-            "bg-gray-400", // 다섯 번째 카드
-            "bg-gray-300", // 여섯 번째 카드
-          ];
+          // 카테고리별 색상 팔레트
+          const getCategoryColors = (categoryKey: string) => {
+            switch (categoryKey) {
+              case "jingwan":
+                return ["#78A893", "#FCFC60", "#8F806E", "#EBE7E4"];
+              case "track":
+                return ["#957E74", "#D04836", "#8F806E", "#FCFEF2"];
+              case "trail":
+                return ["#697064", "#758169", "#78A893", "#E5E4D4"];
+              case "road":
+                return ["#78A893", "#8F806E", "#BBBBBB", "#FCFC60"];
+              default:
+                return ["#78A893", "#FCFC60", "#8F806E", "#EBE7E4"]; // 기본값 (진관동러닝)
+            }
+          };
 
-          const cardColor = cardColors[index % cardColors.length];
+          const categoryKey = course.category_key || "jingwan";
+          const categoryColors = getCategoryColors(categoryKey);
+          const cardColor = categoryColors[index % categoryColors.length];
 
-          // 텍스트 색상: 밝은 카드에는 검정 텍스트, 어두운 카드에는 흰 텍스트
-          const textColor =
-            index % cardColors.length >= 3 ? "text-gray-900" : "text-white";
-          const textOpacity =
-            index % cardColors.length >= 3 ? "opacity-60" : "opacity-70";
+          // 색상 밝기에 따른 텍스트 색상 결정
+          const isLightColor = (color: string) => {
+            // 밝은 색상들 (노란색, 밝은 회색 등)
+            const lightColors = [
+              "#FCFC60",
+              "#EBE7E4",
+              "#FCFEF2",
+              "#E5E4D4",
+              "#BBBBBB",
+            ];
+            return lightColors.includes(color);
+          };
+
+          const textColor = isLightColor(cardColor)
+            ? "text-gray-900"
+            : "text-white";
+          const textOpacity = isLightColor(cardColor)
+            ? "opacity-60"
+            : "opacity-70";
 
           // 스택 효과
           const baseZIndex = courses.length - index;
@@ -86,10 +109,11 @@ const CourseCardStackComponent = function CourseCardStack({
           return (
             <div
               key={course.id}
-              className={`absolute ${cardColor} rounded-3xl p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg ${
+              className={`absolute rounded-3xl p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg ${
                 isHovered ? "shadow-2xl" : ""
               }`}
               style={{
+                backgroundColor: cardColor,
                 zIndex: zIndex,
                 bottom: bottomOffset,
                 left: leftOffset,

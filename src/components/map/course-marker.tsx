@@ -113,7 +113,7 @@ const CourseMarkerComponent = function CourseMarker({
     };
   }, [map]);
 
-  // 코스들을 클러스터링하는 함수
+  // 코스들을 클러스터링하는 함수 (카테고리별로 클러스터링)
   function clusterCourses(
     courses: Course[],
     maxDistance: number
@@ -144,10 +144,16 @@ const CourseMarkerComponent = function CourseMarker({
       };
 
       used.add(course.id);
+      const courseCategory = course.category_key || 'jingwan';
 
-      // 다른 코스들과 거리 비교하여 클러스터에 추가
+      // 같은 카테고리의 다른 코스들과 거리 비교하여 클러스터에 추가
       courses.forEach((otherCourse) => {
         if (used.has(otherCourse.id)) return;
+        
+        const otherCategory = otherCourse.category_key || 'jingwan';
+        
+        // 같은 카테고리인지 확인
+        if (courseCategory !== otherCategory) return;
 
         const distance = getDistanceInMeters(
           course.start_latitude,
@@ -225,52 +231,118 @@ const CourseMarkerComponent = function CourseMarker({
           : "course-marker";
 
         if (isCluster) {
-          // 클러스터 크기와 색상을 개수에 따라 조정
+          // 클러스터 색상과 크기를 카테고리와 개수에 따라 조정
           const count = cluster.count;
-          const size = count >= 10 ? 60 : count >= 5 ? 55 : 50;
-          const bgColor =
-            count >= 10 ? "#dc2626" : count >= 5 ? "#ea580c" : "#1f2937";
-          const fontSize = count >= 10 ? 20 : count >= 5 ? 19 : 18;
-
-          // 클러스터 마커 스타일
-          markerElement.style.cssText = `
-            width: ${size}px;
-            height: ${size}px;
-            background-color: ${bgColor};
-            border: 4px solid white;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: ${fontSize}px;
-            color: white;
-            position: absolute;
-            transform: translate(-50%, -50%);
-          `;
-
-          markerElement.textContent = cluster.count.toString();
-        } else {
-          // 개별 마커 스타일
-          const colors = {
-            easy: "#6b7280", // 그레이
-            medium: "#4b5563", // 다크 그레이
-            hard: "#374151", // 더 다크 그레이
+          const size = count >= 10 ? 40 : count >= 5 ? 36 : 32;
+          const fontSize = count >= 10 ? 16 : count >= 5 ? 14 : 12;
+          
+          // 클러스터의 첫 번째 코스 카테고리로 색상 결정
+          const firstCourse = cluster.courses[0];
+          const categoryKey = firstCourse.category_key || 'jingwan';
+          const getCategoryColor = (categoryKey: string) => {
+            switch (categoryKey) {
+              case 'jingwan': return '#000000'; // 진관동러닝 - 검정
+              case 'track': return '#D04836';   // 트랙러닝 - 빨간색
+              case 'trail': return '#78A893';   // 트레일러닝 - 초록색
+              case 'road': return '#7A7A7A';    // 로드러닝 - 회색
+              default: return '#6b7280';        // 기본값
+            }
           };
-          const course = cluster.courses[0];
+          const bgColor = getCategoryColor(categoryKey);
 
+          // PDF 스타일 핀 마커 (클러스터)
+          markerElement.innerHTML = `
+            <svg width="${size + 4}" height="${size + 8}" viewBox="0 0 ${size + 4} ${size + 8}" xmlns="http://www.w3.org/2000/svg">
+              <path d="M${(size + 4) / 2} ${size + 6} 
+                       C${(size + 4) / 2 - 4} ${size + 2} 
+                       2 ${(size + 4) / 2} 
+                       2 ${(size + 4) / 4}
+                       C2 ${(size + 4) / 8} 
+                       ${(size + 4) / 8} 2 
+                       ${(size + 4) / 2} 2
+                       C${(size + 4) * 7 / 8} 2 
+                       ${size + 2} ${(size + 4) / 8} 
+                       ${size + 2} ${(size + 4) / 4}
+                       C${size + 2} ${(size + 4) / 2} 
+                       ${(size + 4) / 2 + 4} ${size + 2} 
+                       ${(size + 4) / 2} ${size + 6} Z" 
+                    fill="${bgColor}" 
+                    stroke="white" 
+                    stroke-width="2"/>
+              <text x="${(size + 4) / 2}" y="${(size + 4) / 3}" 
+                    text-anchor="middle" 
+                    dominant-baseline="central" 
+                    fill="white" 
+                    font-family="system-ui, -apple-system, sans-serif"
+                    font-weight="bold" 
+                    font-size="${fontSize}px">${count}</text>
+            </svg>
+          `;
+          
           markerElement.style.cssText = `
-            width: 40px;
-            height: 40px;
-            background-color: ${colors[course.difficulty]};
-            border: 4px solid white;
-            border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
             position: absolute;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -100%);
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+            z-index: 10;
+          `;
+        } else {
+          // 개별 마커 스타일 - 카테고리별 색상
+          const course = cluster.courses[0];
+          const getCategoryColor = (categoryKey: string) => {
+            switch (categoryKey) {
+              case 'jingwan': return '#000000'; // 진관동러닝 - 검정
+              case 'track': return '#D04836';   // 트랙러닝 - 빨간색
+              case 'trail': return '#78A893';   // 트레일러닝 - 초록색
+              case 'road': return '#7A7A7A';    // 로드러닝 - 회색
+              default: return '#6b7280';        // 기본값
+            }
+          };
+          
+          // categoryKey가 없는 경우 기본값으로 진관동러닝 처리
+          const categoryKey = course.category_key || 'jingwan';
+          const markerColor = getCategoryColor(categoryKey);
+          
+          // PDF에서 보이는 것처럼 마커에 번호 표시
+          // 임시로 courses 배열에서의 인덱스를 번호로 사용
+          const courseIndex = courses.findIndex(c => c.id === course.id);
+          const markerNumber = courseIndex >= 0 ? courseIndex + 1 : 1;
+          
+          // PDF 스타일 핀 마커 (개별) - 번호 포함
+          markerElement.innerHTML = `
+            <svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 38 
+                       C12 34 
+                       2 24 
+                       2 16
+                       C2 8 
+                       8 2 
+                       16 2
+                       C24 2 
+                       30 8 
+                       30 16
+                       C30 24 
+                       20 34 
+                       16 38 Z" 
+                    fill="${markerColor}" 
+                    stroke="white" 
+                    stroke-width="2"/>
+              <text x="16" y="18" 
+                    text-anchor="middle" 
+                    dominant-baseline="central" 
+                    fill="white" 
+                    font-family="system-ui, -apple-system, sans-serif"
+                    font-weight="bold" 
+                    font-size="14px">${markerNumber}</text>
+            </svg>
+          `;
+          
+          markerElement.style.cssText = `
+            cursor: pointer;
+            position: absolute;
+            transform: translate(-50%, -100%);
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+            z-index: 5;
             display: block !important;
             visibility: visible !important;
           `;

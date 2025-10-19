@@ -8,6 +8,7 @@ export interface CourseV2WithComments extends CourseV2 {
   start_latitude: number;
   start_longitude: number;
   distance_km: number;
+  category_key?: string;
 }
 
 /**

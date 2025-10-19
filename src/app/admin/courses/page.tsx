@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { GPXUploadForm } from "@/components/admin/GPX-upload-form";
-import { CourseV2, getDistance, getDuration } from "@/types/unified";
+import { CourseV2, getDistance, getDuration, UnifiedGPXData } from "@/types/unified";
 
 export default function CoursesManagePage() {
   const [courses, setCourses] = useState<CourseV2[]>([]);
@@ -70,17 +70,49 @@ export default function CoursesManagePage() {
   };
 
   const handleGPXSubmit = async (formData: FormData, gpxData: unknown) => {
+    let courseData: any = null;
+    
     try {
       setSubmitting(true);
 
-      // GPX 데이터에서 코스 정보 추출
-      const gpx = gpxData as Record<string, unknown>;
-      const startPoint = gpx.startPoint as Record<string, number>;
-      const coordinates = gpx.coordinates as Array<{
-        lat: number;
-        lng: number;
-        ele?: number;
-      }>;
+      console.log("🔍 GPX Submit started:", { formData, gpxData });
+
+      // GPX 데이터에서 코스 정보 추출 (GPXData 타입 구조에 맞게)
+      const gpx = gpxData as {
+        name: string;
+        distance: number;
+        startPoint: { lat: number; lng: number };
+        endPoint: { lat: number; lng: number };
+        duration: number;
+        elevationGain: number;
+        coordinates: Array<{ lat: number; lng: number; ele?: number }>;
+      };
+      
+      // 필수 데이터 검증
+      if (!gpx || typeof gpx !== 'object') {
+        throw new Error('GPX 데이터가 유효하지 않습니다.');
+      }
+      
+      const { startPoint, coordinates, distance, duration, elevationGain } = gpx;
+
+      // 필수 필드 검증
+      if (!startPoint || typeof startPoint.lat !== 'number' || typeof startPoint.lng !== 'number') {
+        throw new Error('시작점 좌표가 유효하지 않습니다.');
+      }
+      
+      if (!Array.isArray(coordinates) || coordinates.length === 0) {
+        throw new Error('GPS 좌표 데이터가 없습니다.');
+      }
+      
+      if (typeof distance !== 'number' || distance <= 0) {
+        throw new Error('거리 정보가 유효하지 않습니다.');
+      }
+      
+      if (typeof duration !== 'number' || duration <= 0) {
+        throw new Error('소요시간 정보가 유효하지 않습니다.');
+      }
+
+      console.log("📊 Extracted GPX data:", { gpx, startPoint, coordinates: coordinates?.length });
 
       // 통계 계산
       const bounds = {
@@ -90,52 +122,87 @@ export default function CoursesManagePage() {
         maxLng: Math.max(...coordinates.map((c) => c.lng)),
       };
 
-      // 새로운 통합 GPX 데이터 구조 (v1.1)
-      const unifiedGpxData = {
-        version: "1.1",
+      // vFinal 표준화된 GPX 데이터 구조 (UnifiedGPXData 타입 호환)
+      const normalizedGpxData: UnifiedGPXData = {
+        version: "1.1" as const,
         points: coordinates,
         bounds,
         stats: {
-          totalDistance: gpx.distance as number,
-          elevationGain: (gpx.elevationGain as number) || 0,
-          estimatedDuration: gpx.duration as number,
+          totalDistance: distance,
+          elevationGain: elevationGain || 0,
+          estimatedDuration: duration,
         },
         metadata: {
-          importedAt: new Date().toISOString(),
-          source: "gpx_upload",
+          startPoint: {
+            lat: startPoint.lat,
+            lng: startPoint.lng,
+          },
+          endPoint: {
+            lat: coordinates[coordinates.length - 1].lat,
+            lng: coordinates[coordinates.length - 1].lng,
+          },
         },
       };
 
-      const courseData = {
+      console.log("📝 Normalized GPX data:", normalizedGpxData);
+
+      courseData = {
         title: formData.get("title") as string,
         description: formData.get("description") as string,
         detail_description: formData.get("detail_description") as string || null,
         start_latitude: startPoint.lat,
         start_longitude: startPoint.lng,
-        distance_km: gpx.distance as number,
-        avg_time_min: gpx.duration as number,
+        distance_km: distance,
+        avg_time_min: duration,
         difficulty: formData.get("difficulty") as string,
         category_id: formData.get("category_id") as string || null,
         tags: JSON.parse(formData.get("tags") as string || "[]"),
         cover_image_url: formData.get("cover_image_url") as string || null,
-        elevation_gain: (gpx.elevationGain as number) || 0,
+        elevation_gain: elevationGain || 0,
         sort_order: 0,
-        gpx_data: unifiedGpxData, // 실제 DB 컬럼명
+        gpx_data: normalizedGpxData, // 기존 구조와 호환되는 데이터
         is_active: true,
       };
+
+      console.log("🚀 Course data to insert:", courseData);
+      console.log("📋 GPX data structure check:", {
+        hasPoints: normalizedGpxData.points && Array.isArray(normalizedGpxData.points),
+        pointsCount: normalizedGpxData.points?.length,
+        hasStats: normalizedGpxData.stats !== undefined,
+        hasBounds: normalizedGpxData.bounds !== undefined,
+        firstPoint: normalizedGpxData.points?.[0],
+        statsStructure: normalizedGpxData.stats
+      });
 
       const { error: courseError } = await supabase
         .from("courses")
         .insert([courseData]);
 
-      if (courseError) throw courseError;
+      if (courseError) {
+        console.error("❌ Supabase insert error:", courseError);
+        throw courseError;
+      }
 
+      console.log("✅ Course inserted successfully");
       alert("코스가 성공적으로 등록되었습니다.");
       setIsGPXFormExpanded(false);
       loadCourses(); // 새로운 코스를 반영하기 위해 리로드
     } catch (error) {
       console.error("Failed to save course from GPX:", error);
-      alert("코스 등록 중 오류가 발생했습니다.");
+      console.error("Error details:", {
+        error,
+        gpxData,
+        courseData,
+        formDataValues: {
+          title: formData.get("title"),
+          description: formData.get("description"),
+          difficulty: formData.get("difficulty"),
+        }
+      });
+      const errorMessage = error instanceof Error ? error.message : 
+                       typeof error === 'object' ? JSON.stringify(error, null, 2) : 
+                       String(error);
+      alert(`코스 등록 중 오류가 발생했습니다: ${errorMessage}`);
     } finally {
       setSubmitting(false);
     }

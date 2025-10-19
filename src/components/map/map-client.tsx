@@ -1,46 +1,65 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { MapboxMap } from "./mapbox-map";
 import { CourseMarker } from "./course-marker";
-import { CourseDrawer } from "./course-drawer";
+import { CategoryFullScreen } from "./category-full-screen";
 import { MapTokenError } from "./map-token-error";
 import { MapEmptyState } from "./map-empty-state";
 import { useMapState } from "@/hooks/use-map-state";
 import { useMapBounds } from "@/hooks/use-map-bounds";
-import { type CourseV2WithComments } from "@/lib/courses-data-v2-extended";
+import { type CourseWithComments } from "@/lib/courses-data";
 
 interface MapClientProps {
-  courses: CourseV2WithComments[];
+  courses: CourseWithComments[];
 }
 
 export function MapClient({ courses }: MapClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [clickedCourseCategory, setClickedCourseCategory] = useState<
+    string | null
+  >(null);
 
   const {
     map,
-    selectedCourse,
-    selectedCourses,
     optimisticCourses,
     handleMapLoad,
-    handleCourseClick,
-    handleClusterClick,
+    handleCourseClick: originalHandleCourseClick,
+    handleClusterClick: originalHandleClusterClick,
     handleCloseDrawer,
-  } = useMapState(courses);
+  } = useMapState(courses); // 모든 코스를 지도에 표시
 
   useMapBounds(map, optimisticCourses);
 
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
 
+  // 새로운 클릭 핸들러들
+  const handleCourseClick = (course: CourseWithComments) => {
+    setClickedCourseCategory(course.category_key || "jingwan");
+    originalHandleCourseClick(course);
+  };
+
+  const handleClusterClick = (coursesInCluster: CourseWithComments[]) => {
+    // 클러스터의 첫 번째 코스 카테고리를 사용
+    const firstCourse = coursesInCluster[0];
+    setClickedCourseCategory(firstCourse.category_key || "jingwan");
+    originalHandleClusterClick(coursesInCluster);
+  };
+
   const handleCourseCardClick = (courseId: string) => {
     // React 19의 startTransition을 사용하여 네비게이션을 낮은 우선순위로 처리
     startTransition(() => {
       router.push(`/courses/${courseId}`);
-      handleCloseDrawer();
+      handleCloseCategoryView();
     });
+  };
+
+  const handleCloseCategoryView = () => {
+    setClickedCourseCategory(null);
+    handleCloseDrawer();
   };
 
   // Mapbox 토큰이 없는 경우
@@ -58,6 +77,33 @@ export function MapClient({ courses }: MapClientProps) {
   return (
     <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
       <div className="flex-1 relative overflow-hidden">
+        {/* PDF 기반 헤더 */}
+        <div className="absolute top-4 left-4 right-4 z-30">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-black">GSRC81 MAPS</h1>
+            <div className="flex items-center space-x-4">
+              <span className="text-black text-sm">MENU</span>
+              <button className="p-2 bg-white rounded-full shadow-lg">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M7 10L12 15L17 10"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* 지도 */}
         <MapboxMap
           accessToken={mapboxToken}
@@ -88,11 +134,12 @@ export function MapClient({ courses }: MapClientProps) {
           </div>
         )}
 
-        {/* 코스 카드 드로어 */}
-        <CourseDrawer
-          selectedCourses={selectedCourses}
-          selectedCourse={selectedCourse}
-          onClose={handleCloseDrawer}
+        {/* 카테고리 풀스크린 */}
+        <CategoryFullScreen
+          isOpen={clickedCourseCategory !== null}
+          onClose={handleCloseCategoryView}
+          courses={courses}
+          initialCategory={clickedCourseCategory || "jingwan"}
           onCourseClick={handleCourseCardClick}
         />
       </div>
