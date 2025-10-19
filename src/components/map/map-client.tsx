@@ -10,13 +10,14 @@ import { MapTokenError } from "./map-token-error";
 import { MapEmptyState } from "./map-empty-state";
 import { useMapState } from "@/hooks/use-map-state";
 import { useMapBounds } from "@/hooks/use-map-bounds";
-import { type CourseWithComments, getCourses } from "@/lib/courses-data";
+import { type CourseWithComments, type CourseCategory, getCourses } from "@/lib/courses-data";
 
 interface MapClientProps {
   courses: CourseWithComments[];
+  categories: CourseCategory[];
 }
 
-export function MapClient({ courses }: MapClientProps) {
+export function MapClient({ courses, categories }: MapClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [clickedCourseCategory, setClickedCourseCategory] = useState<
@@ -101,8 +102,8 @@ export function MapClient({ courses }: MapClientProps) {
     return <MapTokenError />;
   }
 
-  // 코스가 없는 경우
-  if (optimisticCourses.length === 0) {
+  // 초기 로드 시에만 빈 상태를 보여줌 (카테고리 전환 중에는 지도 유지)
+  if (optimisticCourses.length === 0 && allCourses.length === 0) {
     return (
       <MapEmptyState mapboxToken={mapboxToken} onMapLoad={handleMapLoad} />
     );
@@ -116,8 +117,8 @@ export function MapClient({ courses }: MapClientProps) {
         {/* 지도 */}
         <MapboxMap
           accessToken={mapboxToken}
-          center={[127.5, 36.5]}
-          zoom={10.5} // 줌 범위 10-12.85 내에서 시작
+          center={[126.9285, 37.6176]} // 은평구 중심 좌표로 고정
+          zoom={11.5} // 줌 범위 10-12.85 내에서 시작
           onMapLoad={handleMapLoad}
           className="w-full h-full"
           style="mapbox://styles/mapbox/light-v11"
@@ -131,6 +132,23 @@ export function MapClient({ courses }: MapClientProps) {
             onCourseClick={handleCourseClick}
             onClusterClick={handleClusterClick}
           />
+        )}
+
+        {/* 빈 카테고리일 때 중심 안내 */}
+        {map && optimisticCourses.length === 0 && allCourses.length > 0 && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+            <div className="bg-white rounded-full p-4 shadow-lg border border-gray-200">
+              <div className="text-center">
+                <div className="text-2xl mb-2">🏃‍♂️</div>
+                <p className="text-sm text-gray-600 whitespace-nowrap">
+                  이 지역에 코스가 없습니다
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  다른 카테고리를 확인해보세요
+                </p>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* 로딩 인디케이터 (transition 중일 때) */}
@@ -148,6 +166,7 @@ export function MapClient({ courses }: MapClientProps) {
           isOpen={clickedCourseCategory !== null}
           onClose={handleCloseCategoryView}
           courses={allCourses}
+          categories={categories}
           initialCategory={clickedCourseCategory || "jingwan"}
           onCourseClick={handleCourseCardClick}
           onCategoryChange={handleCategoryChange}

@@ -74,6 +74,37 @@ export async function getCourses(categoryKey?: string): Promise<CourseWithCommen
   }
 }
 
+export interface CourseCategory {
+  id: string;
+  key: string;
+  name: string;
+  description?: string;
+  cover_image_url?: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export async function getCourseCategories(): Promise<CourseCategory[]> {
+  try {
+    const { data, error } = await supabaseServer
+      .from(TABLES.COURSE_CATEGORIES)
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      console.error("Failed to fetch course categories:", error);
+      throw new Error(`Failed to fetch course categories: ${error.message}`);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Error in getCourseCategories:", error);
+    throw error;
+  }
+}
+
 export async function getCourseById(id: string): Promise<Course | null> {
   try {
     const { data, error } = await supabaseServer

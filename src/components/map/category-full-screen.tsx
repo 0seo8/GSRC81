@@ -3,84 +3,78 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
-import { type CourseWithComments } from "@/lib/courses-data";
-// v2 전용 유틸 제거: 레거시 코스 타입 사용
+import { type CourseWithComments, type CourseCategory } from "@/lib/courses-data";
 
 interface CategoryFullScreenProps {
   isOpen: boolean;
   onClose: () => void;
   courses: CourseWithComments[];
+  categories: CourseCategory[];
   initialCategory?: string;
   onCourseClick: (courseId: string) => void;
-  onCategoryChange?: (categoryKey: string) => void; // 카테고리 변경 콜백 추가
+  onCategoryChange?: (categoryKey: string) => void;
 }
 
-// 카테고리 정보 (PDF 기반)
-const CATEGORIES = [
-  {
-    key: "jingwan",
-    name: "진관동",
-    subName: "러닝",
+// 카테고리별 디자인 매핑 (PDF 기반)
+const CATEGORY_DESIGNS = {
+  jingwan: {
     backgroundColor: "#F5F5F0", // 연한 베이지
-    cardColors: ["#FCFC60", "#78A893", "#D04836", "#F5F5F0", "#8F806E"], // PDF 페이지 9-11 색상들
+    cardColors: ["#FCFC60", "#78A893", "#D04836", "#F5F5F0", "#8F806E"],
   },
-  {
-    key: "track",
-    name: "트랙",
-    subName: "러닝",
+  track: {
     backgroundColor: "#957E74", // 브라운
-    cardColors: ["#D04836", "#F5F5F0", "#957E74", "#8F806E"], // PDF 페이지 12 색상들
+    cardColors: ["#D04836", "#F5F5F0", "#957E74", "#8F806E"],
   },
-  {
-    key: "trail",
-    name: "트레일",
-    subName: "러닝",
+  trail: {
     backgroundColor: "#758169", // 다크 그린
-    cardColors: ["#78A893", "#F5F5F0", "#758169", "#E5E4D4"], // PDF 페이지 13 색상들
+    cardColors: ["#78A893", "#F5F5F0", "#758169", "#E5E4D4"],
   },
-  {
-    key: "road",
-    name: "로드",
-    subName: "러닝",
+  road: {
     backgroundColor: "#BBBBBB", // 그레이
-    cardColors: ["#FCFC60", "#78A893", "#8F806E", "#BBBBBB"], // PDF 페이지 14 색상들
+    cardColors: ["#FCFC60", "#78A893", "#8F806E", "#BBBBBB"],
   },
-];
+} as const;
 
 export function CategoryFullScreen({
   isOpen,
   onClose,
   courses,
+  categories,
   initialCategory = "jingwan",
   onCourseClick,
   onCategoryChange,
 }: CategoryFullScreenProps) {
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(
-    CATEGORIES.findIndex((cat) => cat.key === initialCategory) || 0
+    categories.findIndex((cat) => cat.key === initialCategory) || 0
   );
 
-  const currentCategory = CATEGORIES[currentCategoryIndex];
+  const currentCategory = categories[currentCategoryIndex];
+  const currentDesign = CATEGORY_DESIGNS[currentCategory?.key as keyof typeof CATEGORY_DESIGNS] || CATEGORY_DESIGNS.jingwan;
+
+  // 카테고리가 없을 때 안전 장치
+  if (!categories || categories.length === 0) {
+    return null;
+  }
 
   // 현재 카테고리의 코스들 필터링
   const filteredCourses = courses.filter(
-    (course) => (course.category_key || "jingwan") === currentCategory.key
+    (course) => (course.category_key || "jingwan") === currentCategory?.key
   );
-
 
   // 카테고리 변경 함수
   const goToPrevCategory = () => {
     if (currentCategoryIndex > 0) {
       const newIndex = currentCategoryIndex - 1;
       setCurrentCategoryIndex(newIndex);
-      onCategoryChange?.(CATEGORIES[newIndex].key); // 지도에 카테고리 변경 알림
+      onCategoryChange?.(categories[newIndex].key); // 지도에 카테고리 변경 알림
     }
   };
 
   const goToNextCategory = () => {
-    if (currentCategoryIndex < CATEGORIES.length - 1) {
+    if (currentCategoryIndex < categories.length - 1) {
       const newIndex = currentCategoryIndex + 1;
       setCurrentCategoryIndex(newIndex);
-      onCategoryChange?.(CATEGORIES[newIndex].key); // 지도에 카테고리 변경 알림
+      onCategoryChange?.(categories[newIndex].key); // 지도에 카테고리 변경 알림
     }
   };
 
@@ -104,7 +98,7 @@ export function CategoryFullScreen({
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed bottom-0 left-0 right-0 z-50 flex flex-col max-h-[80vh]"
-            style={{ backgroundColor: currentCategory.backgroundColor }}
+            style={{ backgroundColor: currentDesign.backgroundColor }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* 헤더 */}
@@ -135,11 +129,11 @@ export function CategoryFullScreen({
 
                 <div className="text-center">
                   <h2 className="text-3xl font-bold text-white whitespace-pre-line">
-                    {`${currentCategory.name}\n${currentCategory.subName}`}
+                    {`${currentCategory?.name || "카테고리"}\n러닝`}
                   </h2>
                   {/* 페이지 인디케이터 */}
                   <div className="flex space-x-2 justify-center mt-3">
-                    {CATEGORIES.map((_, index) => (
+                    {categories.map((_, index) => (
                       <div
                         key={index}
                         className={`w-3 h-1 rounded-full ${
@@ -154,7 +148,7 @@ export function CategoryFullScreen({
 
                 <button
                   onClick={goToNextCategory}
-                  disabled={currentCategoryIndex === CATEGORIES.length - 1}
+                  disabled={currentCategoryIndex === categories.length - 1}
                   className="p-2 disabled:opacity-30"
                 >
                   <ChevronRight className="w-6 h-6 text-white" />
@@ -167,8 +161,8 @@ export function CategoryFullScreen({
               <div className="space-y-4 h-full overflow-y-auto">
                 {filteredCourses.map((course, index) => {
                   const cardColor =
-                    currentCategory.cardColors[
-                      index % currentCategory.cardColors.length
+                    currentDesign.cardColors[
+                      index % currentDesign.cardColors.length
                     ];
 
                   return (
@@ -206,12 +200,23 @@ export function CategoryFullScreen({
                   );
                 })}
 
-                {/* 코스가 없을 때 */}
+                {/* 코스가 없을 때 - 빈 상태이지만 카테고리 네비게이션은 유지 */}
                 {filteredCourses.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-white text-lg">
-                      이 카테고리에는 아직 코스가 없습니다.
-                    </p>
+                  <div className="text-center py-16">
+                    <div className="mb-8">
+                      <div className="w-16 h-16 mx-auto mb-4 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <span className="text-2xl">🏃‍♂️</span>
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-2">
+                        {currentCategory?.name || "카테고리"} 러닝 코스
+                      </h3>
+                      <p className="text-white text-opacity-80">
+                        이 카테고리에는 아직 등록된 코스가 없습니다.
+                      </p>
+                      <p className="text-white text-opacity-60 text-sm mt-2">
+                        다른 카테고리를 확인해보세요!
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>

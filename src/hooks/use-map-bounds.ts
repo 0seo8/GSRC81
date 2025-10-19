@@ -9,7 +9,17 @@ export function useMapBounds(
 ) {
   // 코스들의 좌표 범위에 맞춰 지도 범위 설정
   const fitMapToCourses = useCallback(() => {
-    if (!map || courses.length === 0) return;
+    if (!map) return;
+    
+    // 코스가 없을 때는 기본 위치(은평구)로 이동
+    if (courses.length === 0) {
+      map.flyTo({
+        center: [126.9285, 37.6176], // 은평구 중심 좌표
+        zoom: 11.5,
+        duration: 1000,
+      });
+      return;
+    }
 
     const coordinates: [number, number][] = courses.map((course) => [
       course.start_longitude,
@@ -55,9 +65,9 @@ export function useMapBounds(
     }
   }, [map, courses]);
 
-  // 지도가 로드되고 코스 데이터가 있으면 범위 조정
+  // 지도가 로드되면 코스 데이터에 따라 범위 조정 (빈 카테고리 포함)
   useEffect(() => {
-    if (map && courses.length > 0) {
+    if (map) {
       fitMapToCourses();
     }
   }, [map, courses, fitMapToCourses]);

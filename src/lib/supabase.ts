@@ -23,6 +23,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Database Tables
 export const TABLES = {
   COURSES: 'courses',
+  COURSE_CATEGORIES: 'course_categories',
   COURSE_COMMENTS: 'course_comments', 
   ACCESS_LINKS: 'access_links',
   ADMIN: 'admin',
