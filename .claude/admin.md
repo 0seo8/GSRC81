@@ -121,7 +121,7 @@ export default function CourseForm({ onSubmit }) {
         onChange={(e) =>
           handleChange(
             "tags",
-            e.target.value.split(" ").filter((t) => t.trim() !== "")
+            e.target.value.split(" ").filter((t) => t.trim() !== ""),
           )
         }
       />

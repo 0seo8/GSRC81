@@ -91,7 +91,7 @@ export function Drawer({ isOpen, onClose, children, className }: DrawerProps) {
       <div
         className={cn(
           "fixed inset-0 bg-black transition-opacity duration-300 z-[9998]",
-          isOpen ? "bg-opacity-50" : "bg-opacity-0"
+          isOpen ? "bg-opacity-50" : "bg-opacity-0",
         )}
         onClick={onClose}
       />
@@ -103,7 +103,7 @@ export function Drawer({ isOpen, onClose, children, className }: DrawerProps) {
           isMobile
             ? "bottom-0 left-0 right-0 rounded-t-2xl transform"
             : "inset-0 m-auto rounded-2xl max-w-2xl w-fit h-fit max-h-[90vh]",
-          className
+          className,
         )}
         style={
           isMobile

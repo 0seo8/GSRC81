@@ -42,7 +42,7 @@ export function CourseDrawer({
       .map((category) => ({
         ...category,
         courses: courses.filter(
-          (course) => (course.category_key || "jingwan") === category.key
+          (course) => (course.category_key || "jingwan") === category.key,
         ),
       }))
       .filter((category) => category.courses.length > 0); // 코스가 있는 카테고리만

@@ -104,16 +104,12 @@ const MapboxMapComponent = function MapboxMap({
           });
         };
 
-        // 지도 로드 완료 후 여러 번 시도
+        // 초기 로드 후 한 번만 시도
         setTimeout(() => {
           setKoreanLabels();
         }, 1000);
 
-        setTimeout(() => {
-          setKoreanLabels();
-        }, 3000);
-
-        // 스타일 변경 시에도 다시 적용
+        // 스타일 변경 시에도 다시 적용 (이미 충분함)
         mapInstance.on("styledata", () => {
           setTimeout(setKoreanLabels, 500);
         });
@@ -130,17 +126,7 @@ const MapboxMapComponent = function MapboxMap({
       console.error("MapboxMap - error:", e);
     });
 
-    // 위치 컨트롤 추가
-    map.current.addControl(
-      new mapboxgl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true,
-        },
-        trackUserLocation: true,
-        showUserHeading: true,
-      }),
-      "top-right"
-    );
+    // 기본 위치 컨트롤 제거 - 커스텀 버튼으로 대체
 
     // 윈도우 크기 변경 시 지도 크기 조정
     const handleResize = () => {
@@ -189,52 +175,6 @@ const MapboxMapComponent = function MapboxMap({
           </div>
         </div>
       )}
-
-      {/* 지도 스타일 선택 버튼
-      <div className="absolute top-4 left-4 bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="flex flex-col">
-          <button
-            onClick={() =>
-              map.current?.setStyle("mapbox://styles/mapbox/streets-v12")
-            }
-            className="px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
-          >
-            일반
-          </button>
-          <button
-            onClick={() =>
-              map.current?.setStyle("mapbox://styles/mapbox/satellite-v9")
-            }
-            className="px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
-          >
-            위성
-          </button>
-          <button
-            onClick={() =>
-              map.current?.setStyle("mapbox://styles/mapbox/outdoors-v12")
-            }
-            className="px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
-          >
-            아웃도어
-          </button>
-          <button
-            onClick={() =>
-              map.current?.setStyle("mapbox://styles/mapbox/light-v11")
-            }
-            className="px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
-          >
-            라이트
-          </button>
-          <button
-            onClick={() =>
-              map.current?.setStyle("mapbox://styles/mapbox/dark-v11")
-            }
-            className="px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            다크
-          </button>
-        </div>
-      </div> */}
     </div>
   );
 };

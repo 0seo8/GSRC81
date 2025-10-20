@@ -5,12 +5,12 @@ import { type CourseWithComments } from "@/lib/courses-data";
 
 export function useMapBounds(
   map: mapboxgl.Map | null,
-  courses: CourseWithComments[]
+  courses: CourseWithComments[],
 ) {
   // 코스들의 좌표 범위에 맞춰 지도 범위 설정
   const fitMapToCourses = useCallback(() => {
     if (!map) return;
-    
+
     // 코스가 없을 때는 기본 위치(은평구)로 이동
     if (courses.length === 0) {
       map.flyTo({

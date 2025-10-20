@@ -87,7 +87,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
     elevation_gain: "",
     is_active: true,
   });
-  
+
   const [hasGpxData, setHasGpxData] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -126,14 +126,20 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
       const courseData = courseResult.data;
       setCourse(courseData);
       setComments(commentsResult.data || []);
-      
+
       // GPX 데이터 존재 여부 확인
       setHasGpxData(!!courseData.gpx_data);
 
       // gpx_data가 있으면 그 데이터를 우선 사용
-      const distance = courseData.gpx_data?.stats?.totalDistance || courseData.distance_km;
-      const duration = courseData.gpx_data?.stats?.estimatedDuration || courseData.avg_time_min;
-      const elevation = courseData.gpx_data?.stats?.elevationGain || courseData.elevation_gain || 0;
+      const distance =
+        courseData.gpx_data?.stats?.totalDistance || courseData.distance_km;
+      const duration =
+        courseData.gpx_data?.stats?.estimatedDuration ||
+        courseData.avg_time_min;
+      const elevation =
+        courseData.gpx_data?.stats?.elevationGain ||
+        courseData.elevation_gain ||
+        0;
 
       // 폼 데이터 초기화
       setFormData({
@@ -145,8 +151,12 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
         nearest_station: courseData.nearest_station || "",
         start_latitude: courseData.start_latitude.toString(),
         start_longitude: courseData.start_longitude.toString(),
-        end_latitude: (courseData.end_latitude || courseData.start_latitude).toString(),
-        end_longitude: (courseData.end_longitude || courseData.start_longitude).toString(),
+        end_latitude: (
+          courseData.end_latitude || courseData.start_latitude
+        ).toString(),
+        end_longitude: (
+          courseData.end_longitude || courseData.start_longitude
+        ).toString(),
         elevation_gain: elevation.toString(),
         is_active: courseData.is_active,
       });
@@ -199,8 +209,12 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
         nearest_station: formData.nearest_station.trim(),
         start_latitude: parseFloat(formData.start_latitude),
         start_longitude: parseFloat(formData.start_longitude),
-        end_latitude: parseFloat(formData.end_latitude) || parseFloat(formData.start_latitude),
-        end_longitude: parseFloat(formData.end_longitude) || parseFloat(formData.start_longitude),
+        end_latitude:
+          parseFloat(formData.end_latitude) ||
+          parseFloat(formData.start_latitude),
+        end_longitude:
+          parseFloat(formData.end_longitude) ||
+          parseFloat(formData.start_longitude),
         elevation_gain: parseInt(formData.elevation_gain) || 0,
         is_active: formData.is_active,
       };
@@ -224,7 +238,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
 
   const handleDeleteComment = async (
     commentId: string,
-    authorNickname: string
+    authorNickname: string,
   ) => {
     if (!confirm(`${authorNickname}님의 댓글을 삭제하시겠습니까?`)) return;
 
@@ -320,14 +334,24 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                           ✅ GPX 데이터 (v{course.gpx_data.version})
                         </h3>
                         <div className="text-sm text-green-700 space-y-1">
-                          <p>• 총 {course.gpx_data.points.length}개의 GPS 포인트</p>
-                          <p>• 거리: {course.gpx_data.stats.totalDistance.toFixed(3)}km</p>
-                          <p>• 고도상승: {course.gpx_data.stats.elevationGain}m</p>
-                          <p>• 예상시간: {course.gpx_data.stats.estimatedDuration}분</p>
+                          <p>
+                            • 총 {course.gpx_data.points.length}개의 GPS 포인트
+                          </p>
+                          <p>
+                            • 거리:{" "}
+                            {course.gpx_data.stats.totalDistance.toFixed(3)}km
+                          </p>
+                          <p>
+                            • 고도상승: {course.gpx_data.stats.elevationGain}m
+                          </p>
+                          <p>
+                            • 예상시간:{" "}
+                            {course.gpx_data.stats.estimatedDuration}분
+                          </p>
                         </div>
                       </div>
                     )}
-                    
+
                     {/* 기본 정보 */}
                     <div className="space-y-4">
                       <div>
@@ -501,7 +525,9 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                       <div className="space-y-4">
                         {/* 시작점 */}
                         <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">시작점</h4>
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">
+                            시작점
+                          </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <label className="block text-sm font-medium text-gray-600 mb-1">
@@ -549,7 +575,9 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
 
                         {/* 종료점 */}
                         <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">종료점</h4>
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">
+                            종료점
+                          </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <label className="block text-sm font-medium text-gray-600 mb-1">
@@ -589,7 +617,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                           </div>
                         </div>
                       </div>
-                      
+
                       {errors.coordinates && (
                         <p className="text-gray-600 text-xs">
                           {errors.coordinates}
@@ -672,7 +700,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                                 </span>
                                 <span className="text-xs text-gray-500">
                                   {new Date(
-                                    comment.created_at
+                                    comment.created_at,
                                   ).toLocaleString()}
                                 </span>
                               </div>
@@ -684,7 +712,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                               onClick={() =>
                                 handleDeleteComment(
                                   comment.id,
-                                  comment.author_nickname
+                                  comment.author_nickname,
                                 )
                               }
                               className="text-gray-600 hover:text-gray-700 hover:border-gray-300 ml-4"

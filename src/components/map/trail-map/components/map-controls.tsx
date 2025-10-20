@@ -1,10 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  Square,
-  Eye,
-  Navigation,
-  MapPin,
-} from "lucide-react";
+import { Square, Eye, Navigation, MapPin } from "lucide-react";
 import { LocationButtonState } from "../types";
 
 interface MapControlsProps {

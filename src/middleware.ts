@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   // 인증이 필요한 페이지들
   const protectedPaths = ["/map", "/courses", "/admin"];
   const isProtectedPath = protectedPaths.some((path) =>
-    pathname.startsWith(path)
+    pathname.startsWith(path),
   );
 
   // 인증이 필요하지 않은 페이지는 그대로 진행

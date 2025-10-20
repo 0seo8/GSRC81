@@ -7,11 +7,8 @@ export async function CoursesProvider() {
     // 카테고리와 초기 코스를 병렬로 로드
     const [categories, courses] = await Promise.all([
       getCourseCategories(),
-      getCourses("jingwan") // 초기 로드시 진관동러닝 카테고리만 표시
+      getCourses("jingwan"), // 초기 로드시 진관동러닝 카테고리만 표시
     ]);
-
-    console.log("📂 카테고리 로드됨:", categories.length, "개");
-    console.log("📍 진관동러닝 코스 로드됨:", courses.length, "개");
 
     return <MapClient courses={courses} categories={categories} />;
   } catch (error) {

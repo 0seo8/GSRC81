@@ -35,9 +35,11 @@ export function useDeviceDetection(): DeviceInfo {
     // CSS environment variables로 safe area 값 가져오기
     const getSafeAreaInset = (side: string): number => {
       if (typeof window === "undefined" || !window.CSS?.supports) return 0;
-      
+
       // CSS env() 함수를 지원하는지 확인
-      if (window.CSS.supports("padding-bottom", "env(safe-area-inset-bottom)")) {
+      if (
+        window.CSS.supports("padding-bottom", "env(safe-area-inset-bottom)")
+      ) {
         const testElement = document.createElement("div");
         testElement.style.cssText = `
           position: fixed;
@@ -45,11 +47,11 @@ export function useDeviceDetection(): DeviceInfo {
           padding-${side}: env(safe-area-inset-${side});
         `;
         document.body.appendChild(testElement);
-        
+
         const computed = window.getComputedStyle(testElement);
         const value = computed.getPropertyValue(`padding-${side}`);
         const pixels = parseInt(value, 10) || 0;
-        
+
         document.body.removeChild(testElement);
         return pixels;
       }
@@ -57,12 +59,12 @@ export function useDeviceDetection(): DeviceInfo {
     };
 
     // iOS 디바이스에서 notch 여부 감지
-    const hasNotch = isIOS && (
+    const hasNotch =
+      isIOS &&
       // iPhone X 이후 모델들의 safe area 체크
-      getSafeAreaInset("bottom") > 0 ||
-      // Viewport height vs screen height 비교로 notch 감지
-      (window.screen.height - window.innerHeight > 100)
-    );
+      (getSafeAreaInset("bottom") > 0 ||
+        // Viewport height vs screen height 비교로 notch 감지
+        window.screen.height - window.innerHeight > 100);
 
     const safeAreaInsets = {
       top: getSafeAreaInset("top"),

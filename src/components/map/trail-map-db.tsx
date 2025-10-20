@@ -120,12 +120,12 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     const totalPoints = coordinates.length;
     const currentPointIndex = Math.min(
       Math.floor(animationProgress * (totalPoints - 1)),
-      totalPoints - 1
+      totalPoints - 1,
     );
 
     const currentCoordinates = coordinates.slice(
       0,
-      Math.max(2, currentPointIndex + 1)
+      Math.max(2, currentPointIndex + 1),
     );
 
     return {
@@ -187,7 +187,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
       try {
         const coordinates = JSON.parse(course.gpx_coordinates);
         console.warn(
-          `⚠️ Using incomplete gpx_coordinates fallback: ${coordinates.length} points vs expected full route`
+          `⚠️ Using incomplete gpx_coordinates fallback: ${coordinates.length} points vs expected full route`,
         );
         finalPoints = coordinates.map(
           (coord: GpxCoordinate, index: number) => ({
@@ -198,7 +198,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
             longitude: coord.lng,
             elevation: coord.ele || null,
             created_at: course.created_at,
-          })
+          }),
         );
       } catch (e) {
         console.error("GPX coordinates parsing error:", e);
@@ -277,7 +277,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
         setError(
           err instanceof Error
             ? err.message
-            : "트레일 데이터를 불러올 수 없습니다."
+            : "트레일 데이터를 불러올 수 없습니다.",
         );
       } finally {
         setLoading(false);
@@ -377,7 +377,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                   (() => {
                     try {
                       const coords = JSON.parse(
-                        trailData.course.gpx_coordinates
+                        trailData.course.gpx_coordinates,
                       );
                       if (coords.length > 0) {
                         return (
@@ -395,7 +395,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                     } catch (e) {
                       console.error(
                         "Failed to parse start point from gpx_coordinates:",
-                        e
+                        e,
                       );
                     }
                     return null;
@@ -406,7 +406,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                   (() => {
                     try {
                       const coords = JSON.parse(
-                        trailData.course.gpx_coordinates
+                        trailData.course.gpx_coordinates,
                       );
                       if (coords.length > 1) {
                         const lastCoord = coords[coords.length - 1];
@@ -425,7 +425,7 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                     } catch (e) {
                       console.error(
                         "Failed to parse end point from gpx_coordinates:",
-                        e
+                        e,
                       );
                     }
                     return null;

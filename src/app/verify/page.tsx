@@ -43,16 +43,16 @@ export default function VerifyPage() {
     const authData = {
       authenticated: true,
       timestamp: Date.now(),
-      type: 'kakao'
+      type: "kakao",
     };
-    
+
     // 쿠키에 저장 (24시간)
     const expires = new Date();
     expires.setTime(expires.getTime() + 24 * 60 * 60 * 1000); // 24시간
     document.cookie = `gsrc81-auth=${JSON.stringify(authData)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
-    
+
     // 로컬스토리지에도 저장 (클라이언트 사이드 체크용)
-    localStorage.setItem('gsrc81-auth', JSON.stringify(authData));
+    localStorage.setItem("gsrc81-auth", JSON.stringify(authData));
 
     router.push("/map");
   };
@@ -71,7 +71,9 @@ export default function VerifyPage() {
         {/* Verification Form */}
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <h2 className="text-black text-2xl font-bold mb-4">접근 코드 인증</h2>
+            <h2 className="text-black text-2xl font-bold mb-4">
+              접근 코드 인증
+            </h2>
             <p className="text-gray-600 text-sm leading-relaxed mb-2">
               관리자에게 발급받은 코드를 입력하세요.
             </p>
@@ -111,7 +113,8 @@ export default function VerifyPage() {
           {/* Help Text */}
           <div className="mt-6 text-center">
             <p className="text-gray-500 text-xs leading-relaxed">
-              코드를 받지 못하셨나요?<br />
+              코드를 받지 못하셨나요?
+              <br />
               관리자에게 문의해 주세요.
             </p>
           </div>

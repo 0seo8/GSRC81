@@ -1,26 +1,28 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { CourseCard } from "@/components/ui/course-card"
-import { CommentBubble } from "@/components/ui/comment-bubble"
-import { FigmaButton } from "@/components/ui/figma-button"
-import { StatusBar } from "@/components/ui/status-bar"
-import { BottomSheet } from "@/components/ui/bottom-sheet"
+import * as React from "react";
+import { CourseCard } from "@/components/ui/course-card";
+import { CommentBubble } from "@/components/ui/comment-bubble";
+import { FigmaButton } from "@/components/ui/figma-button";
+import { StatusBar } from "@/components/ui/status-bar";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 
 export function FigmaShowcase() {
   return (
     <div className="min-h-screen bg-figma-primary">
       {/* 상태바 */}
       <StatusBar />
-      
+
       {/* 메인 콘텐츠 */}
       <div className="p-6 space-y-6">
         {/* 헤더 */}
         <div className="text-center space-y-2">
           <h1 className="text-header text-figma-primary">GSRC81 MAPS</h1>
-          <p className="text-slogan text-figma-primary">RUN OUR ROUTE, MAKE YOUR STORY.</p>
+          <p className="text-slogan text-figma-primary">
+            RUN OUR ROUTE, MAKE YOUR STORY.
+          </p>
         </div>
-        
+
         {/* 코스 카드들 */}
         <div className="space-y-0">
           <CourseCard
@@ -56,11 +58,11 @@ export function FigmaShowcase() {
             isLast={true}
           />
         </div>
-        
+
         {/* 댓글 섹션 */}
         <div className="space-y-4">
           <h3 className="text-title text-figma-primary">댓글</h3>
-          
+
           <div className="space-y-3">
             <CommentBubble
               variant="sent"
@@ -69,7 +71,7 @@ export function FigmaShowcase() {
               message="모닝런도 비슷한 경로로 뛰어요! 아침에 만나요!"
               avatar="/avatars/kim.jpg"
             />
-            
+
             <CommentBubble
               variant="received"
               user="이재형"
@@ -77,7 +79,7 @@ export function FigmaShowcase() {
               message="비가 많이와서 바닥이 꺼져있어요. 공사하는 중인데 오래걸릴 듯!"
               avatar="/avatars/lee.jpg"
             />
-            
+
             <CommentBubble
               variant="sent"
               user="박창균"
@@ -87,13 +89,13 @@ export function FigmaShowcase() {
             />
           </div>
         </div>
-        
+
         {/* 버튼들 */}
         <div className="space-y-4">
           <FigmaButton variant="default">
             카카오톡 계정으로 계속하기
           </FigmaButton>
-          
+
           <div className="flex space-x-2">
             <FigmaButton variant="track" size="sm">
               트랙 러닝
@@ -110,7 +112,7 @@ export function FigmaShowcase() {
           </div>
         </div>
       </div>
-      
+
       {/* 바텀시트 */}
       <BottomSheet isOpen={true}>
         <div className="text-center">
@@ -126,5 +128,5 @@ export function FigmaShowcase() {
         </div>
       </BottomSheet>
     </div>
-  )
+  );
 }

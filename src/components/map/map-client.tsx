@@ -2,6 +2,7 @@
 
 import { useTransition, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Navigation } from "lucide-react";
 
 import { MapboxMap } from "./mapbox-map";
 import { CourseMarker } from "./course-marker";
@@ -10,7 +11,11 @@ import { MapTokenError } from "./map-token-error";
 import { MapEmptyState } from "./map-empty-state";
 import { useMapState } from "@/hooks/use-map-state";
 import { useMapBounds } from "@/hooks/use-map-bounds";
-import { type CourseWithComments, type CourseCategory, getCourses } from "@/lib/courses-data";
+import {
+  type CourseWithComments,
+  type CourseCategory,
+  getCourses,
+} from "@/lib/courses-data";
 
 interface MapClientProps {
   courses: CourseWithComments[];
@@ -24,14 +29,17 @@ export function MapClient({ courses, categories }: MapClientProps) {
     string | null
   >(null);
   const [allCourses, setAllCourses] = useState<CourseWithComments[]>(courses);
-  const [currentMapCategory, setCurrentMapCategory] = useState<string>("jingwan");
+  const [currentMapCategory, setCurrentMapCategory] =
+    useState<string>("jingwan");
 
   // 카테고리가 변경될 때 모든 코스 로드
   useEffect(() => {
     const loadAllCourses = async () => {
       try {
         const allCategories = ["jingwan", "track", "trail", "road"];
-        const allCoursesPromises = allCategories.map(category => getCourses(category));
+        const allCoursesPromises = allCategories.map((category) =>
+          getCourses(category),
+        );
         const allCoursesResults = await Promise.all(allCoursesPromises);
         const flatCourses = allCoursesResults.flat();
         setAllCourses(flatCourses);
@@ -44,8 +52,8 @@ export function MapClient({ courses, categories }: MapClientProps) {
   }, []);
 
   // 지도에 표시할 코스를 현재 카테고리로 필터링
-  const mapCourses = allCourses.filter(course => 
-    (course.category_key || "jingwan") === currentMapCategory
+  const mapCourses = allCourses.filter(
+    (course) => (course.category_key || "jingwan") === currentMapCategory,
   );
 
   const {
@@ -97,6 +105,32 @@ export function MapClient({ courses, categories }: MapClientProps) {
     setCurrentMapCategory(categoryKey);
   };
 
+  // 현재 위치로 이동
+  const handleCurrentLocation = () => {
+    if (!map) return;
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          map.flyTo({
+            center: [longitude, latitude],
+            zoom: 12,
+            duration: 1000,
+          });
+        },
+        (error) => {
+          console.error("위치 정보를 가져올 수 없습니다:", error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000,
+        },
+      );
+    }
+  };
+
   // Mapbox 토큰이 없는 경우
   if (!mapboxToken) {
     return <MapTokenError />;
@@ -111,7 +145,10 @@ export function MapClient({ courses, categories }: MapClientProps) {
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
-      <div className="flex-1 relative overflow-hidden" style={{ paddingTop: '4rem' }}>
+      <div
+        className="flex-1 relative overflow-hidden"
+        style={{ paddingTop: "4rem" }}
+      >
         {/* 헤더 공간 확보 */}
 
         {/* 지도 */}
@@ -133,6 +170,15 @@ export function MapClient({ courses, categories }: MapClientProps) {
             onClusterClick={handleClusterClick}
           />
         )}
+
+        {/* PDF 스타일 현재 위치 버튼 - 화살표 모양, 사각형 */}
+        <button
+          onClick={handleCurrentLocation}
+          className="absolute top-20 right-4 z-20 bg-white rounded-lg p-3 shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+          aria-label="현재 위치로 이동"
+        >
+          <Navigation className="w-5 h-5 text-black" />
+        </button>
 
         {/* 빈 카테고리일 때 중심 안내 */}
         {map && optimisticCourses.length === 0 && allCourses.length > 0 && (

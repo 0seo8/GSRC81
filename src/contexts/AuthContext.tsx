@@ -21,26 +21,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkAuth = () => {
     try {
       const authCookie = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('gsrc81-auth='));
-      
+        .split("; ")
+        .find((row) => row.startsWith("gsrc81-auth="));
+
       if (authCookie) {
-        const authData = JSON.parse(decodeURIComponent(authCookie.split('=')[1]));
+        const authData = JSON.parse(
+          decodeURIComponent(authCookie.split("=")[1]),
+        );
         const isValid = Date.now() - authData.timestamp < 24 * 60 * 60 * 1000;
-        
+
         if (isValid && authData.authenticated) {
           setIsAuthenticated(true);
         }
       }
     } catch (error) {
-      console.error('Auth check error:', error);
+      console.error("Auth check error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const logout = () => {
-    document.cookie = 'gsrc81-auth=; Max-Age=0; path=/';
+    document.cookie = "gsrc81-auth=; Max-Age=0; path=/";
     setIsAuthenticated(false);
   };
 

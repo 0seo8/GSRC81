@@ -1,11 +1,11 @@
 // GSRC81 Maps: 코스 데이터 훅 (v2 - gpx_data 사용)
-import { useState, useEffect, useCallback } from 'react';
-import { CourseV2 } from '@/types/unified';
-import { 
-  getActiveCoursesV2, 
+import { useState, useEffect, useCallback } from "react";
+import { CourseV2 } from "@/types/unified";
+import {
+  getActiveCoursesV2,
   getCourseByIdV2,
-  subscribeToCourseChanges 
-} from '@/lib/courses-data-v2';
+  subscribeToCourseChanges,
+} from "@/lib/courses-data-v2";
 
 /**
  * 모든 코스 가져오기 훅
@@ -22,7 +22,7 @@ export function useCoursesV2() {
       setCourses(data);
     } catch (err) {
       setError(err as Error);
-      console.error('Failed to fetch courses:', err);
+      console.error("Failed to fetch courses:", err);
     } finally {
       setLoading(false);
     }
@@ -33,8 +33,8 @@ export function useCoursesV2() {
 
     // 실시간 구독
     const subscription = subscribeToCourseChanges((course) => {
-      setCourses(prev => {
-        const index = prev.findIndex(c => c.id === course.id);
+      setCourses((prev) => {
+        const index = prev.findIndex((c) => c.id === course.id);
         if (index >= 0) {
           // 업데이트
           const updated = [...prev];
@@ -76,7 +76,7 @@ export function useCourseV2(courseId: string) {
         setCourse(data);
       } catch (err) {
         setError(err as Error);
-        console.error('Failed to fetch course:', err);
+        console.error("Failed to fetch course:", err);
       } finally {
         setLoading(false);
       }
@@ -93,11 +93,11 @@ export function useCourseV2(courseId: string) {
  */
 export function useFilteredCoursesV2(
   filters: {
-    difficulty?: 'easy' | 'medium' | 'hard';
-    type?: 'track' | 'trail' | 'road';
+    difficulty?: "easy" | "medium" | "hard";
+    type?: "track" | "trail" | "road";
     minDistance?: number;
     maxDistance?: number;
-  } = {}
+  } = {},
 ) {
   const { courses, loading, error } = useCoursesV2();
   const [filteredCourses, setFilteredCourses] = useState<CourseV2[]>([]);
@@ -107,20 +107,25 @@ export function useFilteredCoursesV2(
 
     // 난이도 필터
     if (filters.difficulty) {
-      filtered = filtered.filter(c => c.difficulty === filters.difficulty);
+      filtered = filtered.filter((c) => c.difficulty === filters.difficulty);
     }
 
     // 타입 필터
     if (filters.type) {
-      filtered = filtered.filter(c => c.course_type === filters.type);
+      filtered = filtered.filter((c) => c.course_type === filters.type);
     }
 
     // 거리 필터
-    if (filters.minDistance !== undefined || filters.maxDistance !== undefined) {
-      filtered = filtered.filter(c => {
+    if (
+      filters.minDistance !== undefined ||
+      filters.maxDistance !== undefined
+    ) {
+      filtered = filtered.filter((c) => {
         const distance = c.gpx_data.stats.totalDistance;
-        const minOk = filters.minDistance === undefined || distance >= filters.minDistance;
-        const maxOk = filters.maxDistance === undefined || distance <= filters.maxDistance;
+        const minOk =
+          filters.minDistance === undefined || distance >= filters.minDistance;
+        const maxOk =
+          filters.maxDistance === undefined || distance <= filters.maxDistance;
         return minOk && maxOk;
       });
     }
@@ -136,27 +141,34 @@ export function useFilteredCoursesV2(
  */
 export function useCourseStatsV2() {
   const { courses } = useCoursesV2();
-  
+
   const stats = {
     totalCourses: courses.length,
-    totalDistance: courses.reduce((sum, c) => sum + c.gpx_data.stats.totalDistance, 0),
+    totalDistance: courses.reduce(
+      (sum, c) => sum + c.gpx_data.stats.totalDistance,
+      0,
+    ),
     totalPoints: courses.reduce((sum, c) => sum + c.gpx_data.points.length, 0),
     byDifficulty: {
-      easy: courses.filter(c => c.difficulty === 'easy').length,
-      medium: courses.filter(c => c.difficulty === 'medium').length,
-      hard: courses.filter(c => c.difficulty === 'hard').length
+      easy: courses.filter((c) => c.difficulty === "easy").length,
+      medium: courses.filter((c) => c.difficulty === "medium").length,
+      hard: courses.filter((c) => c.difficulty === "hard").length,
     },
     byType: {
-      track: courses.filter(c => c.course_type === 'track').length,
-      trail: courses.filter(c => c.course_type === 'trail').length,
-      road: courses.filter(c => c.course_type === 'road').length
+      track: courses.filter((c) => c.course_type === "track").length,
+      trail: courses.filter((c) => c.course_type === "trail").length,
+      road: courses.filter((c) => c.course_type === "road").length,
     },
-    averageDistance: courses.length > 0 
-      ? courses.reduce((sum, c) => sum + c.gpx_data.stats.totalDistance, 0) / courses.length
-      : 0,
-    averageElevation: courses.length > 0
-      ? courses.reduce((sum, c) => sum + c.gpx_data.stats.elevationGain, 0) / courses.length
-      : 0
+    averageDistance:
+      courses.length > 0
+        ? courses.reduce((sum, c) => sum + c.gpx_data.stats.totalDistance, 0) /
+          courses.length
+        : 0,
+    averageElevation:
+      courses.length > 0
+        ? courses.reduce((sum, c) => sum + c.gpx_data.stats.elevationGain, 0) /
+          courses.length
+        : 0,
   };
 
   return stats;

@@ -11,7 +11,7 @@ erDiagram
         timestamptz created_at
         timestamptz last_login_at
     }
-    
+
     ACCESS_LINKS {
         uuid id PK
         varchar access_code UK
@@ -22,7 +22,7 @@ erDiagram
         timestamptz created_at
         timestamptz updated_at
     }
-    
+
     COURSE_CATEGORIES {
         uuid id PK
         varchar key UK
@@ -33,7 +33,7 @@ erDiagram
         text cover_image_url
         timestamptz created_at
     }
-    
+
     COURSES {
         uuid id PK
         uuid category_id FK
@@ -53,7 +53,7 @@ erDiagram
         timestamptz created_at
         timestamptz updated_at
     }
-    
+
     COURSE_LOCATION_NOTES {
         uuid id PK
         uuid course_id FK
@@ -67,7 +67,7 @@ erDiagram
         boolean is_active
         timestamptz created_at
     }
-    
+
     COURSE_COMMENTS {
         uuid id PK
         uuid course_id FK
@@ -83,7 +83,7 @@ erDiagram
         timestamptz created_at
         timestamptz updated_at
     }
-    
+
     COURSE_COMMENT_PHOTOS {
         uuid id PK
         uuid comment_id FK
@@ -91,14 +91,14 @@ erDiagram
         int sort_order
         timestamptz created_at
     }
-    
+
     APP_SETTINGS {
         uuid id PK
         varchar setting_key UK
         text setting_value
         timestamptz updated_at
     }
-    
+
     COURSE_STATISTICS {
         uuid course_id PK
         varchar title
@@ -106,7 +106,7 @@ erDiagram
         int visible_comments
         int point_count
     }
-    
+
     %% 관계 정의
     COURSE_CATEGORIES ||--o{ COURSES : "has many"
     COURSES ||--o{ COURSE_LOCATION_NOTES : "has many"
@@ -118,6 +118,7 @@ erDiagram
 ## 🏗️ 테이블 구조 상세
 
 ### 1️⃣ **ADMIN** (관리자) - 최종 정리
+
 ```
 ┌─────────────────┬──────────────┬─────────────────┐
 │ 필드명            │ 타입         │ 설명            │
@@ -131,6 +132,7 @@ erDiagram
 ```
 
 ### 2️⃣ **ACCESS_LINKS** (사용자 접근) - 최종 정리
+
 ```
 ┌─────────────────┬──────────────┬─────────────────┐
 │ 필드명            │ 타입         │ 설명            │
@@ -147,6 +149,7 @@ erDiagram
 ```
 
 ### 3️⃣ **COURSE_CATEGORIES** (코스 카테고리) - 최종 정리
+
 ```
 ┌─────────────────┬──────────────┬─────────────────┐
 │ 필드명            │ 타입         │ 설명            │
@@ -163,6 +166,7 @@ erDiagram
 ```
 
 ### 4️⃣ **COURSES** (러닝 코스) - 최종 정리
+
 ```
 ┌─────────────────┬──────────────┬─────────────────┐
 │ 필드명            │ 타입         │ 설명            │
@@ -188,6 +192,7 @@ erDiagram
 ```
 
 ### 5️⃣ **COURSE_LOCATION_NOTES** (비행 노트) - 최종 정리
+
 ```
 ┌─────────────────┬──────────────┬─────────────────┐
 │ 필드명            │ 타입         │ 설명            │
@@ -207,6 +212,7 @@ erDiagram
 ```
 
 ### 6️⃣ **COURSE_COMMENTS** (코스 댓글) - 최종 정리
+
 ```
 ┌─────────────────┬──────────────┬─────────────────┐
 │ 필드명            │ 타입         │ 설명            │
@@ -228,6 +234,7 @@ erDiagram
 ```
 
 ### 7️⃣ **COURSE_COMMENT_PHOTOS** (댓글 사진) - 최종 정리
+
 ```
 ┌─────────────────┬──────────────┬─────────────────┐
 │ 필드명            │ 타입         │ 설명            │
@@ -241,6 +248,7 @@ erDiagram
 ```
 
 ### 8️⃣ **APP_SETTINGS** (앱 설정) - 최종 정리
+
 ```
 ┌─────────────────┬──────────────┬─────────────────┐
 │ 필드명            │ 타입         │ 설명            │
@@ -253,6 +261,7 @@ erDiagram
 ```
 
 ### 9️⃣ **COURSE_STATISTICS** (통계 뷰) - 신규
+
 ```
 ┌─────────────────┬──────────────┬─────────────────┐
 │ 필드명            │ 타입         │ 설명            │
@@ -293,17 +302,17 @@ COURSES
 
 ## 📊 현재 데이터 현황
 
-| 테이블 | 레코드 수 | 상태 | 주요 내용 |
-|--------|-----------|------|-----------|
-| **ADMIN** | 1개 | ✅ 활성 | 관리자: `admin` |
-| **ACCESS_LINKS** | 2개 | ✅ 활성 | 접근 코드: `gsrc81-maps-2024`, `gsrc81` |
-| **COURSE_CATEGORIES** | 4개 | ✅ 활성 | 진관동러닝, 트랙러닝, 트레일러닝, 로드러닝 |
-| **APP_SETTINGS** | 9개 | ✅ 활성 | 앱 이름, 버전, 지도 중심점 등 |
-| **COURSES** | 0개 | 📭 빈 테이블 | 러닝 코스 데이터 없음 |
-| **COURSE_LOCATION_NOTES** | 0개 | 📭 빈 테이블 | 비행 노트 데이터 없음 |
-| **COURSE_COMMENTS** | 0개 | 📭 빈 테이블 | 댓글 데이터 없음 |
-| **COURSE_COMMENT_PHOTOS** | 0개 | 📭 빈 테이블 | 댓글 사진 데이터 없음 |
-| **COURSE_STATISTICS** | 0개 | 📊 통계 뷰 | 자동 집계 뷰 |
+| 테이블                    | 레코드 수 | 상태         | 주요 내용                                  |
+| ------------------------- | --------- | ------------ | ------------------------------------------ |
+| **ADMIN**                 | 1개       | ✅ 활성      | 관리자: `admin`                            |
+| **ACCESS_LINKS**          | 2개       | ✅ 활성      | 접근 코드: `gsrc81-maps-2024`, `gsrc81`    |
+| **COURSE_CATEGORIES**     | 4개       | ✅ 활성      | 진관동러닝, 트랙러닝, 트레일러닝, 로드러닝 |
+| **APP_SETTINGS**          | 9개       | ✅ 활성      | 앱 이름, 버전, 지도 중심점 등              |
+| **COURSES**               | 0개       | 📭 빈 테이블 | 러닝 코스 데이터 없음                      |
+| **COURSE_LOCATION_NOTES** | 0개       | 📭 빈 테이블 | 비행 노트 데이터 없음                      |
+| **COURSE_COMMENTS**       | 0개       | 📭 빈 테이블 | 댓글 데이터 없음                           |
+| **COURSE_COMMENT_PHOTOS** | 0개       | 📭 빈 테이블 | 댓글 사진 데이터 없음                      |
+| **COURSE_STATISTICS**     | 0개       | 📊 통계 뷰   | 자동 집계 뷰                               |
 
 ## 🎯 주요 특징
 
@@ -318,6 +327,7 @@ COURSES
 ## 🚀 현재 상태
 
 ### ✅ **완료된 작업**
+
 - 스키마 단순화 및 정리
 - 불필요한 컬럼 제거
 - 새로운 필드 추가 (tags, sort_order, route_index 등)
@@ -327,6 +337,7 @@ COURSES
 - 카테고리 및 앱 설정
 
 ### 📋 **다음 단계**
+
 - `course.json` 데이터를 `COURSES` 테이블로 마이그레이션
 - 실제 러닝 코스 데이터 입력
 - 댓글 및 노트 기능 테스트
@@ -335,6 +346,7 @@ COURSES
 ## 🔧 **스키마 정리 요약**
 
 ### ❌ **제거된 컬럼들**
+
 - `password_hash` (ACCESS_LINKS)
 - `updated_at` (ADMIN, COURSE_CATEGORIES)
 - `view_count`, `like_count` (COURSES)
@@ -345,6 +357,7 @@ COURSES
 - `description` (APP_SETTINGS)
 
 ### ✅ **추가된 컬럼들**
+
 - `last_login_at` (ADMIN)
 - `description`, `cover_image_url` (COURSE_CATEGORIES)
 - `tags`, `sort_order` (COURSES)
@@ -352,6 +365,7 @@ COURSES
 - `is_flagged`, `hidden_by_admin`, `edited_at` (COURSE_COMMENTS)
 
 ### 🎉 **결과**
+
 - **성능 향상**: 불필요한 컬럼 제거로 쿼리 최적화
 - **확장성 확보**: 새로운 기능을 위한 필드 추가
 - **데이터 무결성**: 백업 데이터 보존으로 안전성 확보

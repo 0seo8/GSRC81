@@ -18,6 +18,8 @@ interface CourseDetailMapClientProps {
   courseId: string;
 }
 
-export function CourseDetailMapClient({ courseId }: CourseDetailMapClientProps) {
+export function CourseDetailMapClient({
+  courseId,
+}: CourseDetailMapClientProps) {
   return <TrailMapV2 courseId={courseId} />;
 }

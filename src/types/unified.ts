@@ -12,7 +12,7 @@ export interface UnifiedGPXData {
 export interface GPXPoint {
   lat: number;
   lng: number;
-  ele?: number;  // elevation in meters
+  ele?: number; // elevation in meters
   dist?: number; // distance from start in km
 }
 
@@ -24,8 +24,8 @@ export interface GPXBounds {
 }
 
 export interface GPXStats {
-  totalDistance: number;    // km (소수점 3자리)
-  elevationGain: number;    // meters
+  totalDistance: number; // km (소수점 3자리)
+  elevationGain: number; // meters
   estimatedDuration: number; // minutes
 }
 
@@ -49,14 +49,14 @@ export interface CourseV2 {
   description?: string;
   difficulty: "easy" | "medium" | "hard";
   course_type?: "track" | "trail" | "road"; // 새로운 필드
-  
+
   // 통합된 GPX 데이터
   gpx_data: UnifiedGPXData;
-  
+
   // UI 관련
   cover_image_url?: string;
   is_active: boolean;
-  
+
   // 메타데이터
   created_at: string;
   updated_at?: string;
@@ -67,16 +67,17 @@ export interface CourseV2 {
 
 // 헬퍼 함수들
 export const extractStartPoint = (course: CourseV2): [number, number] => {
-  const { lat, lng } = course.gpx_data.metadata?.startPoint || 
-                       course.gpx_data.points[0] || 
-                       { lat: 0, lng: 0 };
+  const { lat, lng } = course.gpx_data.metadata?.startPoint ||
+    course.gpx_data.points[0] || { lat: 0, lng: 0 };
   return [lat, lng];
 };
 
 export const extractEndPoint = (course: CourseV2): [number, number] => {
-  const { lat, lng } = course.gpx_data.metadata?.endPoint || 
-                       course.gpx_data.points[course.gpx_data.points.length - 1] || 
-                       { lat: 0, lng: 0 };
+  const { lat, lng } = course.gpx_data.metadata?.endPoint ||
+    course.gpx_data.points[course.gpx_data.points.length - 1] || {
+      lat: 0,
+      lng: 0,
+    };
   return [lat, lng];
 };
 
@@ -87,10 +88,10 @@ export const getDistance = (course: CourseV2): number => {
 export const getDuration = (course: CourseV2): string => {
   const minutes = course.gpx_data.stats.estimatedDuration;
   if (!minutes) return "시간 미정";
-  
+
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  
+
   if (hours > 0) {
     return mins > 0 ? `${hours}시간 ${mins}분` : `${hours}시간`;
   }
@@ -102,10 +103,12 @@ export const getElevationGain = (course: CourseV2): number => {
 };
 
 // 레거시 호환 변환 함수
-export const convertToLegacyCourse = (course: CourseV2): Record<string, unknown> => {
+export const convertToLegacyCourse = (
+  course: CourseV2,
+): Record<string, unknown> => {
   const [startLat, startLng] = extractStartPoint(course);
   const [endLat, endLng] = extractEndPoint(course);
-  
+
   return {
     ...course,
     start_latitude: startLat,
@@ -116,20 +119,20 @@ export const convertToLegacyCourse = (course: CourseV2): Record<string, unknown>
     avg_time_min: course.gpx_data.stats.estimatedDuration,
     elevation_gain: course.gpx_data.stats.elevationGain,
     gpx_coordinates: JSON.stringify(course.gpx_data.points),
-    nearest_station: course.gpx_data.metadata?.nearestStation
+    nearest_station: course.gpx_data.metadata?.nearestStation,
   };
 };
 
 // 난이도별 컬러 (다크 모던 테마)
 export const difficultyColors = {
-  easy: "#4CAF50",    // Green
-  medium: "#FFD93D",  // Yellow  
-  hard: "#FF6F3D"     // Orange (Signal Orange)
+  easy: "#4CAF50", // Green
+  medium: "#FFD93D", // Yellow
+  hard: "#FF6F3D", // Orange (Signal Orange)
 } as const;
 
 // 코스 타입별 아이콘
 export const courseTypeIcons = {
-  track: "🏃",   // 트랙
-  trail: "🏔️",   // 트레일
-  road: "🛣️"     // 로드
+  track: "🏃", // 트랙
+  trail: "🏔️", // 트레일
+  road: "🛣️", // 로드
 } as const;

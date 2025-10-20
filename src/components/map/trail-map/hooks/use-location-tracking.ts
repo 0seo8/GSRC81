@@ -53,7 +53,7 @@ export const useLocationTracking = (mapRef: React.RefObject<MapRef>) => {
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 60000,
-      }
+      },
     );
   }, [mapRef]);
 

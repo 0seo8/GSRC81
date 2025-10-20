@@ -64,15 +64,15 @@ export function GPXUploadForm({
   const loadCategories = async () => {
     try {
       const { data, error } = await supabase
-        .from('course_categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order');
+        .from("course_categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order");
 
       if (error) throw error;
       setCategories(data || []);
     } catch (error) {
-      console.error('Failed to load categories:', error);
+      console.error("Failed to load categories:", error);
     }
   };
 
@@ -106,7 +106,7 @@ export function GPXUploadForm({
           // 거리 계산 (Haversine formula)
           const calculateDistance = (
             coord1: { lat: number; lng: number },
-            coord2: { lat: number; lng: number }
+            coord2: { lat: number; lng: number },
           ) => {
             const R = 6371; // Earth's radius in km
             const dLat = ((coord2.lat - coord1.lat) * Math.PI) / 180;
@@ -125,7 +125,7 @@ export function GPXUploadForm({
           for (let i = 1; i < coordinates.length; i++) {
             totalDistance += calculateDistance(
               coordinates[i - 1],
-              coordinates[i]
+              coordinates[i],
             );
           }
 
@@ -407,20 +407,19 @@ export function GPXUploadForm({
           </div>
         </div>
 
-
         <div>
           <Label htmlFor="tags">태그</Label>
           <div className="flex items-center space-x-2">
             <Tag className="w-4 h-4 text-gray-500" />
             <Input
               id="tags"
-              value={formData.tags.join(' ')}
+              value={formData.tags.join(" ")}
               onChange={(e) => {
                 const tagString = e.target.value;
                 const tags = tagString
-                  .split(' ')
-                  .map(tag => tag.trim())
-                  .filter(tag => tag.length > 0);
+                  .split(" ")
+                  .map((tag) => tag.trim())
+                  .filter((tag) => tag.length > 0);
                 setFormData({ ...formData, tags });
               }}
               placeholder="태그1 태그2 태그3 (스페이스로 구분)"
@@ -433,8 +432,10 @@ export function GPXUploadForm({
 
         <div>
           <Label>대표 이미지</Label>
-          <ImageUploader 
-            onUpload={(url) => setFormData({ ...formData, cover_image_url: url })}
+          <ImageUploader
+            onUpload={(url) =>
+              setFormData({ ...formData, cover_image_url: url })
+            }
             currentUrl={formData.cover_image_url}
             bucket="course-photos"
           />

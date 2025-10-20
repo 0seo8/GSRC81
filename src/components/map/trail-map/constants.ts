@@ -3,8 +3,8 @@ export const FLIGHT_CONFIG = {
   BASE_DURATION_PER_POINT: 200,
 
   // 최소/최대 총 애니메이션 시간 (ms)
-  MIN_TOTAL_DURATION: 30000,  // 30초
-  MAX_TOTAL_DURATION: 60000,  // 60초
+  MIN_TOTAL_DURATION: 30000, // 30초
+  MAX_TOTAL_DURATION: 60000, // 60초
 
   // 카메라 설정
   FLIGHT_ZOOM: 16,

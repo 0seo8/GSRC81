@@ -8,13 +8,13 @@ export function useMapState(courses: CourseWithComments[]) {
   const [selectedCourse, setSelectedCourse] =
     useState<CourseWithComments | null>(null);
   const [selectedCourses, setSelectedCourses] = useState<CourseWithComments[]>(
-    []
+    [],
   );
 
   // React 19의 useOptimistic을 활용한 낙관적 업데이트
   const [optimisticCourses, addOptimisticCourse] = useOptimistic(
     courses,
-    (state, newCourse: CourseWithComments) => [...state, newCourse]
+    (state, newCourse: CourseWithComments) => [...state, newCourse],
   );
 
   const handleMapLoad = useCallback((mapInstance: mapboxgl.Map) => {

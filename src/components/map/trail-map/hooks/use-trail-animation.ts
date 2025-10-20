@@ -10,7 +10,7 @@ export const useTrailAnimation = (
   trailData: TrailData | null,
   onKmMarkerShow: (km: number) => void,
   onResetKmMarkers: () => void,
-  setKmMarkers: (markers: KmMarker[]) => void
+  setKmMarkers: (markers: KmMarker[]) => void,
 ) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isFullRouteView, setIsFullRouteView] = useState(true); // 초기에는 전체 보기로 시작
@@ -81,7 +81,7 @@ export const useTrailAnimation = (
         prevPt.lat,
         prevPt.lng,
         currPt.lat,
-        currPt.lng
+        currPt.lng,
       );
 
       cumulativeDistance += segmentDistance;
@@ -107,9 +107,9 @@ export const useTrailAnimation = (
     const totalDuration = Math.min(
       Math.max(
         pointCount * FLIGHT_CONFIG.BASE_DURATION_PER_POINT,
-        FLIGHT_CONFIG.MIN_TOTAL_DURATION
+        FLIGHT_CONFIG.MIN_TOTAL_DURATION,
       ),
-      FLIGHT_CONFIG.MAX_TOTAL_DURATION
+      FLIGHT_CONFIG.MAX_TOTAL_DURATION,
     );
 
     // 저장된 진행률부터 시작 (새로운 애니메이션은 항상 0부터 시작)
@@ -118,7 +118,7 @@ export const useTrailAnimation = (
 
     let currentIndex = Math.min(
       Math.floor(startProgress * (pointCount - 1)),
-      pointCount - 1
+      pointCount - 1,
     );
 
     // km 마커 표시를 위한 변수들
@@ -132,7 +132,7 @@ export const useTrailAnimation = (
 
       currentIndex = Math.min(
         Math.floor(timeProgress * (pointCount - 1)),
-        pointCount - 1
+        pointCount - 1,
       );
 
       const actualProgress = currentIndex / (pointCount - 1);
@@ -152,7 +152,7 @@ export const useTrailAnimation = (
               prevPt.lat,
               prevPt.lng,
               currPt.lat,
-              currPt.lng
+              currPt.lng,
             );
           }
           lastCalculatedIndex = currentIndex;
@@ -270,7 +270,7 @@ export const useTrailAnimation = (
         bearing: 0,
         duration: 1000,
         essential: true,
-      }
+      },
     );
   }, [trailData, animationProgress, mapRef]);
 

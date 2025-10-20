@@ -23,7 +23,9 @@ export interface CourseWithComments extends Course {
   category_key?: string;
 }
 
-export async function getCourses(categoryKey?: string): Promise<CourseWithComments[]> {
+export async function getCourses(
+  categoryKey?: string,
+): Promise<CourseWithComments[]> {
   try {
     const { data, error } = await supabaseServer
       .from(TABLES.COURSES)
@@ -40,7 +42,7 @@ export async function getCourses(categoryKey?: string): Promise<CourseWithCommen
         created_at,
         course_categories(key),
         course_comments(count)
-      `
+      `,
       )
       .eq("is_active", true)
       .order("created_at", { ascending: false });
@@ -59,13 +61,13 @@ export async function getCourses(categoryKey?: string): Promise<CourseWithCommen
         ...course,
         comment_count: course.course_comments?.[0]?.count || 0,
         category_key: course.course_categories?.key || "jingwan", // JOIN된 카테고리 키 사용, 없으면 기본값
-      })
+      }),
     );
 
     // 카테고리 필터링 (기본값: "jingwan")
     const targetCategory = categoryKey || "jingwan";
     const filteredCourses = coursesWithCommentCount.filter(
-      course => course.category_key === targetCategory
+      (course) => course.category_key === targetCategory,
     );
 
     return filteredCourses;

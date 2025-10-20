@@ -5,7 +5,11 @@ import Map, { Source, Layer, Marker, MapRef } from "react-map-gl/mapbox";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Flag } from "lucide-react";
-import { CourseV2, UnifiedGPXData, convertToLegacyCourse } from "@/types/unified";
+import {
+  CourseV2,
+  UnifiedGPXData,
+  convertToLegacyCourse,
+} from "@/types/unified";
 import { getCourseByIdV2 } from "@/lib/courses-data-v2";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -61,7 +65,13 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     startTrailAnimation,
     showFullRoute,
     stopAnimation,
-  } = useTrailAnimation(mapRef, trailData, showKmMarker, resetKmMarkers, setKmMarkers);
+  } = useTrailAnimation(
+    mapRef,
+    trailData,
+    showKmMarker,
+    resetKmMarkers,
+    setKmMarkers,
+  );
 
   // 위치/경로보기 버튼 클릭 핸들러
   const handleLocationRouteButton = useCallback(() => {
@@ -114,12 +124,12 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     const totalPoints = coordinates.length;
     const currentPointIndex = Math.min(
       Math.floor(animationProgress * (totalPoints - 1)),
-      totalPoints - 1
+      totalPoints - 1,
     );
 
     const currentCoordinates = coordinates.slice(
       0,
-      Math.max(2, currentPointIndex + 1)
+      Math.max(2, currentPointIndex + 1),
     );
 
     return {
@@ -152,7 +162,7 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   // V2 API를 사용한 데이터 로드
   const loadCourseData = async (courseId: string): Promise<TrailData> => {
     const courseV2 = await getCourseByIdV2(courseId);
-    
+
     if (!courseV2) {
       throw new Error("코스를 찾을 수 없습니다.");
     }
@@ -215,7 +225,7 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
         // 초기 중심점 설정
         const bounds = data.stats.bounds;
-        
+
         const centerLon = (bounds.minLng + bounds.maxLng) / 2;
         const centerLat = (bounds.minLat + bounds.maxLat) / 2;
 
@@ -240,7 +250,7 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
         setError(
           err instanceof Error
             ? err.message
-            : "트레일 데이터를 불러올 수 없습니다."
+            : "트레일 데이터를 불러올 수 없습니다.",
         );
       } finally {
         setLoading(false);
@@ -286,9 +296,16 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
   // 시작/종료 포인트는 stats.bounds 또는 geoJSON에서 추출
   const coordinates = trailData.geoJSON.features[0]?.geometry.coordinates;
-  const startPoint = coordinates?.[0] ? { lng: coordinates[0][0], lat: coordinates[0][1] } : null;
-  const endPoint = coordinates?.length > 1 ? 
-    { lng: coordinates[coordinates.length - 1][0], lat: coordinates[coordinates.length - 1][1] } : null;
+  const startPoint = coordinates?.[0]
+    ? { lng: coordinates[0][0], lat: coordinates[0][1] }
+    : null;
+  const endPoint =
+    coordinates?.length > 1
+      ? {
+          lng: coordinates[coordinates.length - 1][0],
+          lat: coordinates[coordinates.length - 1][1],
+        }
+      : null;
 
   return (
     <div>

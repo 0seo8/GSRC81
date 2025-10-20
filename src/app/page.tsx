@@ -1,38 +1,14 @@
 "use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // 인증 상태 확인
-    const checkAuth = () => {
-      try {
-        const authCookie = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('gsrc81-auth='));
-        
-        if (authCookie) {
-          const authData = JSON.parse(decodeURIComponent(authCookie.split('=')[1]));
-          const isValid = Date.now() - authData.timestamp < 24 * 60 * 60 * 1000; // 24시간
-          
-          if (isValid && authData.authenticated) {
-            // 로그인된 상태면 지도 페이지로
-            router.replace('/map');
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('Auth check error:', error);
-      }
-      
-      // 로그인이 안된 상태면 로그인 페이지로
-      router.replace('/login');
-    };
-
-    checkAuth();
+    // 미들웨어에서 인증을 처리하므로 바로 /map으로 리다이렉트
+    router.replace("/map");
   }, [router]);
 
   // 로딩 화면

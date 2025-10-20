@@ -198,8 +198,8 @@ export function CourseDetailMap({
         .setLngLat(coordinates[0] as [number, number])
         .setPopup(
           new mapboxgl.Popup().setHTML(
-            '<div class="font-semibold">🏃‍♂️ 시작점</div>'
-          )
+            '<div class="font-semibold">🏃‍♂️ 시작점</div>',
+          ),
         )
         .addTo(map.current);
 
@@ -213,8 +213,8 @@ export function CourseDetailMap({
           .setLngLat(lastPoint as [number, number])
           .setPopup(
             new mapboxgl.Popup().setHTML(
-              '<div class="font-semibold">🏁 도착점</div>'
-            )
+              '<div class="font-semibold">🏁 도착점</div>',
+            ),
           )
           .addTo(map.current);
       }
@@ -355,7 +355,7 @@ export function CourseDetailMap({
     // 지도 컨트롤 추가
     map.current.addControl(
       new mapboxgl.NavigationControl({ showCompass: false }),
-      "top-right"
+      "top-right",
     );
 
     map.current.on("load", () => {
@@ -425,7 +425,7 @@ export function CourseDetailMap({
     // 회색 배경 라인 (전체 경로)
     if (map.current.getSource("route-full")) {
       (map.current.getSource("route-full") as mapboxgl.GeoJSONSource).setData(
-        fullFeature
+        fullFeature,
       );
     } else {
       map.current.addSource("route-full", {
@@ -443,7 +443,7 @@ export function CourseDetailMap({
 
     if (map.current.getSource("route-draw")) {
       (map.current.getSource("route-draw") as mapboxgl.GeoJSONSource).setData(
-        emptyLine
+        emptyLine,
       );
     } else {
       map.current.addSource("route-draw", {
@@ -514,11 +514,11 @@ export function CourseDetailMap({
         Math.min(progressKm, routeLenKm),
         {
           units: "kilometers",
-        }
+        },
       ) as GeoJSON.Feature<GeoJSON.LineString>;
 
       (map.current.getSource("route-draw") as mapboxgl.GeoJSONSource).setData(
-        partial
+        partial,
       );
 
       // 진행률 업데이트 (0-50%는 노선 그리기)
@@ -555,7 +555,7 @@ export function CourseDetailMap({
   // ─── 3) 드론 비행 애니메이션 ───
   const startDroneFlight = (
     lineFeature: GeoJSON.Feature<GeoJSON.LineString>,
-    routeLength: number
+    routeLength: number,
   ) => {
     // 3D 지형만 활성화 (라이트 스타일 유지)
     if (map.current && map.current.getSource("mapbox-dem")) {
@@ -636,7 +636,7 @@ export function CourseDetailMap({
         currentCoords[1],
         currentCoords[0],
         bearing,
-        cam.dist
+        cam.dist,
       );
 
       map.current.easeTo({
@@ -729,7 +729,7 @@ export function CourseDetailMap({
     if (map.current && routeCoordinates.length > 0) {
       const bounds = new mapboxgl.LngLatBounds();
       routeCoordinates.forEach((coord) =>
-        bounds.extend(coord as [number, number])
+        bounds.extend(coord as [number, number]),
       );
       map.current.fitBounds(bounds, {
         padding: 50,
@@ -789,7 +789,7 @@ export function CourseDetailMap({
                 </div>
                 <div
                   className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent hover:bg-primary/80 ${getDifficultyColor(
-                    course.difficulty
+                    course.difficulty,
                   )}`}
                 >
                   {getDifficultyText(course.difficulty)}

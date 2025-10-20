@@ -24,16 +24,25 @@ export function SafeAreaProvider({ children }: SafeAreaProviderProps) {
     if (typeof document === "undefined") return;
 
     const root = document.documentElement;
-    
+
     // CSS 변수 설정
     root.style.setProperty("--safe-area-inset-top", `${safeAreaInsets.top}px`);
-    root.style.setProperty("--safe-area-inset-bottom", `${safeAreaInsets.bottom}px`);
-    root.style.setProperty("--safe-area-inset-left", `${safeAreaInsets.left}px`);
-    root.style.setProperty("--safe-area-inset-right", `${safeAreaInsets.right}px`);
-    
+    root.style.setProperty(
+      "--safe-area-inset-bottom",
+      `${safeAreaInsets.bottom}px`,
+    );
+    root.style.setProperty(
+      "--safe-area-inset-left",
+      `${safeAreaInsets.left}px`,
+    );
+    root.style.setProperty(
+      "--safe-area-inset-right",
+      `${safeAreaInsets.right}px`,
+    );
+
     // iOS 여부도 CSS 변수로 설정
     root.style.setProperty("--is-ios", isIOS ? "1" : "0");
-    
+
     // body에 iOS 클래스 추가
     if (isIOS) {
       document.body.classList.add("is-ios");

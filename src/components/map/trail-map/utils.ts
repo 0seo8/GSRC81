@@ -6,7 +6,7 @@ export const calculateDistance = (
   lat1: number,
   lng1: number,
   lat2: number,
-  lng2: number
+  lng2: number,
 ): number => {
   const R = 6371000; // 지구 반지름 (미터)
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -23,7 +23,7 @@ export const calculateDistance = (
 
 // 경로상의 km 지점 좌표들 계산
 export const calculateKmMarkers = (
-  points: GpxCoordinate[] | CoursePoint[]
+  points: GpxCoordinate[] | CoursePoint[],
 ): KmMarker[] => {
   const markers: KmMarker[] = [];
   let cumulativeDistance = 0;
@@ -45,7 +45,7 @@ export const calculateKmMarkers = (
       prevLat,
       prevLng,
       currLat,
-      currLng
+      currLng,
     );
 
     cumulativeDistance += segmentDistance;
@@ -74,9 +74,7 @@ export const calculateKmMarkers = (
 
 // 통계 계산 함수
 export const calculateStats = (points: CoursePoint[], course: Course) => {
-  const elevations = points
-    .filter((p) => p.elevation)
-    .map((p) => p.elevation!);
+  const elevations = points.filter((p) => p.elevation).map((p) => p.elevation!);
   const maxElevation = elevations.length > 0 ? Math.max(...elevations) : 0;
   const minElevation = elevations.length > 0 ? Math.min(...elevations) : 0;
 
@@ -128,12 +126,12 @@ export const calculateZoomLevel = (bounds: {
   const latDiff = bounds.maxLat - bounds.minLat;
   const lonDiff = bounds.maxLon - bounds.minLon;
   const maxDiff = Math.max(latDiff, lonDiff);
-  
+
   let zoom = 14;
   if (maxDiff < 0.001) zoom = 17;
   else if (maxDiff < 0.005) zoom = 16;
   else if (maxDiff < 0.01) zoom = 15;
   else if (maxDiff < 0.05) zoom = 13;
-  
+
   return Math.min(zoom + 1, 17);
 };

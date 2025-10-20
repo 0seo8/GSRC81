@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React from "react";
 
 export default function LoginPage() {
   const handleKakaoLogin = () => {
@@ -44,11 +44,14 @@ export default function LoginPage() {
           {/* Terms Agreement */}
           <div className="px-2">
             <p className="text-gray-600 text-sm text-center leading-relaxed mb-2">
-              카카오톡으로 로그인하면 <span className="font-medium">GSRC81의 회칙</span> 및{' '}
-              <span className="font-medium">개인정보 처리방침</span>에 동의하게 됩니다.
+              카카오톡으로 로그인하면{" "}
+              <span className="font-medium">GSRC81의 회칙</span> 및{" "}
+              <span className="font-medium">개인정보 처리방침</span>에 동의하게
+              됩니다.
             </p>
             <p className="text-gray-500 text-xs text-center leading-relaxed">
-              By logging in with KakaoTalk, you confirm that you agree to GSRC81&apos;s Terms of Service and Privacy Policy.
+              By logging in with KakaoTalk, you confirm that you agree to
+              GSRC81&apos;s Terms of Service and Privacy Policy.
             </p>
           </div>
         </div>

@@ -32,7 +32,7 @@ export default async function CourseDetailPage({
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50" style={{ paddingTop: '5rem' }}>
+      <div className="min-h-screen bg-gray-50" style={{ paddingTop: "5rem" }}>
         {/* 헤더 공간 확보 */}
         <div className="max-w-2xl mx-auto space-y-4">
           <CourseDetailMapClient courseId={course.id} />

@@ -40,7 +40,7 @@ export default function PasswordManagePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -140,7 +140,7 @@ export default function PasswordManagePage() {
 
       showMessage(
         "비밀번호가 성공적으로 변경되었습니다. 모든 사용자가 새 비밀번호로 다시 로그인해야 합니다.",
-        "success"
+        "success",
       );
 
       // 폼 초기화
@@ -154,7 +154,7 @@ export default function PasswordManagePage() {
       console.error("Password change error:", error);
       showMessage(
         (error as Error).message || "비밀번호 변경 중 오류가 발생했습니다.",
-        "error"
+        "error",
       );
     } finally {
       setSaving(false);

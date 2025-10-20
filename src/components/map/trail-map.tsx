@@ -172,7 +172,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
       } catch (err) {
         console.error("Failed to load trail data:", err);
         setError(
-          err instanceof Error ? err.message : "Failed to load trail data"
+          err instanceof Error ? err.message : "Failed to load trail data",
         );
       } finally {
         setLoading(false);
@@ -247,7 +247,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
           bearing: 0,
           duration: 1000,
           essential: true,
-        }
+        },
       );
     }
   }, [isFullRouteView, trailData]);
@@ -270,7 +270,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
       const bearing = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
       return bearing;
     },
-    []
+    [],
   );
 
   // 지형 특성 분석 - 현재 위치 주변의 고도 변화를 분석
@@ -328,7 +328,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
         terrainRoughness: Math.sqrt(elevationVariance), // 지형 험준도
       };
     },
-    []
+    [],
   );
 
   // 지형에 따른 카메라 설정 계산 - 비행하는 느낌을 위해 조정
@@ -341,7 +341,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
         isHighTerrain: boolean;
         terrainRoughness: number;
       },
-      currentElevation: number
+      currentElevation: number,
     ) => {
       const baseZoom = 15.5; // 더 넓은 시야로 비행감 증대
       const basePitch = 55; // 낮은 각도로 더 비행기 시점
@@ -375,7 +375,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
       // 지형 험준도에 따른 추가 조정
       const roughnessAdjustment = Math.min(
         terrainData.terrainRoughness / 100,
-        1
+        1,
       );
       zoomAdjustment -= roughnessAdjustment * 0.15;
       distanceOffset += roughnessAdjustment * 50; // 험한 지형에서는 더 멀리
@@ -389,7 +389,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
         cameraElevation: currentElevation + elevationOffset, // 실제 카메라 고도
       };
     },
-    []
+    [],
   );
 
   // 카메라 오프셋을 적용한 위치 계산
@@ -413,7 +413,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
 
       return [lon + lonOffset, lat + latOffset];
     },
-    []
+    [],
   );
 
   // 트레일 애니메이션 시작 - 카메라가 경로를 따라 이동
@@ -457,7 +457,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
       firstPoint.lat,
       firstPoint.lon,
       lookAheadPoint.lat,
-      lookAheadPoint.lon
+      lookAheadPoint.lon,
     );
 
     // 시작 위치로 카메라 이동 (비행 시작 각도)
@@ -564,13 +564,13 @@ const TrailMap: React.FC<TrailMapProps> = ({
         const terrainData = analyzeTerrainCharacteristics(
           points,
           currentIndex,
-          15
+          15,
         );
 
         // 지형에 따른 카메라 설정 계산 (현재 고도 전달)
         const cameraSettings = calculateCameraSettings(
           terrainData,
-          currentElevation
+          currentElevation,
         );
 
         // 진행 방향 계산 (더 먼 미래 지점을 보고 부드러운 방향 결정)
@@ -582,7 +582,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
             currentLat,
             currentLon,
             futurePoint.lat,
-            futurePoint.lon
+            futurePoint.lon,
           );
         }
 
@@ -591,7 +591,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
           currentLat,
           currentLon,
           bearing,
-          cameraSettings.distanceOffset
+          cameraSettings.distanceOffset,
         );
 
         // 카메라를 즉시 이동 (노선과 완전 동기화)
@@ -664,7 +664,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
                     bearing: 0, // 북쪽 정렬
                     duration: 3000, // 부드러운 전환
                     essential: true,
-                  }
+                  },
                 );
 
                 // 애니메이션 완료 후 전체보기 모드로 설정
@@ -733,7 +733,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
     // currentAnimationPoint.index까지의 좌표들
     const animatedCoordinates = originalCoordinates.slice(
       0,
-      currentAnimationPoint.index + 1
+      currentAnimationPoint.index + 1,
     );
 
     // 마지막 점을 현재 위치로 업데이트
@@ -812,7 +812,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
           bearing: 0, // 북쪽 정렬
           duration: 1000,
           essential: true,
-        }
+        },
       );
 
       // 전체보기 모드로 설정
@@ -881,7 +881,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
                 bearing: 0,
                 duration: 2000,
                 essential: true,
-              }
+              },
             );
 
             setIsFullRouteView(true);

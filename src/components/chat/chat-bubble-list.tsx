@@ -68,7 +68,7 @@ export function ChatBubbleList({
         (payload) => {
           loadComments();
           onCommentUpdate?.();
-        }
+        },
       )
       .subscribe();
 

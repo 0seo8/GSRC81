@@ -8,7 +8,7 @@ export async function GET(req: Request) {
 
     if (!code)
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=no_code`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=no_code`,
       );
 
     // 1️⃣ 카카오 OAuth 토큰 요청
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
     if (!kakaoAccessToken) {
       console.error("No access token received");
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=no_token`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=no_token`,
       );
     }
 
@@ -46,13 +46,13 @@ export async function GET(req: Request) {
     if (!id) {
       console.error("No user ID found in Kakao response");
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=invalid_user`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=invalid_user`,
       );
     }
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
     );
 
     // 3️⃣ access_links에서 기존 유저 확인
@@ -65,20 +65,20 @@ export async function GET(req: Request) {
     if (!existingUser) {
       // 최초 로그인 → 접근 코드 입력 페이지로 리다이렉트
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/verify?uid=${id}`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/verify?uid=${id}`,
       );
     }
 
     if (!existingUser.is_active) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=not_active`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=not_active`,
       );
     }
 
     // 4️⃣ 이미 등록된 유저 → 바로 로그인 성공
     // 쿠키로 인증 상태 설정
     const response = NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/map`
+      `${process.env.NEXT_PUBLIC_SITE_URL}/map`,
     );
 
     const authData = {
@@ -98,7 +98,7 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error("Kakao callback error:", error);
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=callback_error`
+      `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=callback_error`,
     );
   }
 }

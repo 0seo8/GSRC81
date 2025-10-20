@@ -54,7 +54,7 @@ function calculateDistance(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
 ): number {
   const R = 6371; // 지구 반지름 (km)
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -86,7 +86,7 @@ export function calculateZoomLevel(bounds: TrailStats["bounds"]): number {
 // 난이도 계산
 function calculateDifficulty(
   distance: number,
-  elevationGain: number
+  elevationGain: number,
 ): "Easy" | "Moderate" | "Hard" {
   const score = distance * 0.3 + elevationGain * 0.001;
 
@@ -98,7 +98,7 @@ function calculateDifficulty(
 // 예상 소요 시간 계산 (hours)
 function calculateEstimatedTime(
   distance: number,
-  elevationGain: number
+  elevationGain: number,
 ): number {
   // 평지 기준 시속 4km + 고도 100m당 15분 추가
   const baseTime = distance / 4; // hours
@@ -128,14 +128,17 @@ export async function loadGPXData(courseId: string): Promise<TrailData> {
         const gpxPoints = courseData.gpx_data.points;
         let cumulativeDistance = 0;
         points = gpxPoints.map(
-          (coord: { lat: number; lng: number; ele?: number }, index: number) => {
+          (
+            coord: { lat: number; lng: number; ele?: number },
+            index: number,
+          ) => {
             if (index > 0) {
               const prevCoord = gpxPoints[index - 1];
               cumulativeDistance += calculateDistance(
                 prevCoord.lat,
                 prevCoord.lng,
                 coord.lat,
-                coord.lng
+                coord.lng,
               );
             }
 
@@ -145,7 +148,7 @@ export async function loadGPXData(courseId: string): Promise<TrailData> {
               ele: coord.ele || 100, // 실제 고도 데이터 사용
               distance: cumulativeDistance,
             };
-          }
+          },
         );
 
         coordinates = points.map((p) => [p.lon, p.lat, p.ele]);
@@ -177,7 +180,7 @@ export async function loadGPXData(courseId: string): Promise<TrailData> {
                 prevCoord.lat,
                 prevCoord.lng,
                 coord.lat,
-                coord.lng
+                coord.lng,
               );
             }
 
@@ -187,7 +190,7 @@ export async function loadGPXData(courseId: string): Promise<TrailData> {
               ele: coord.ele || 100,
               distance: cumulativeDistance,
             };
-          }
+          },
         );
 
         coordinates = points.map((p) => [p.lon, p.lat, p.ele]);

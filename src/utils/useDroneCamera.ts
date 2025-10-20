@@ -26,7 +26,7 @@ export function analyzeTerrain(points: Point[], index: number, window = 15) {
 /** 지형·속도에 따른 카메라 매개변수 보간 */
 export function cameraParams(
   terrain: { avg: number; var_: number; range: number; rough: number },
-  eleNow: number
+  eleNow: number,
 ) {
   let dz = 16.5;
   let pitch = 65;
@@ -58,7 +58,7 @@ export function offset(
   lat: number,
   lon: number,
   bearingDeg: number,
-  distM: number
+  distM: number,
 ): [number, number] {
   const R = 6371e3;
   const θ = (bearingDeg * Math.PI) / 180;
@@ -67,13 +67,13 @@ export function offset(
 
   const φ2 = Math.asin(
     Math.sin(φ1) * Math.cos(distM / R) +
-      Math.cos(φ1) * Math.sin(distM / R) * Math.cos(θ)
+      Math.cos(φ1) * Math.sin(distM / R) * Math.cos(θ),
   );
   const λ2 =
     λ1 +
     Math.atan2(
       Math.sin(θ) * Math.sin(distM / R) * Math.cos(φ1),
-      Math.cos(distM / R) - Math.sin(φ1) * Math.sin(φ2)
+      Math.cos(distM / R) - Math.sin(φ1) * Math.sin(φ2),
     );
 
   return [(λ2 * 180) / Math.PI, (φ2 * 180) / Math.PI];

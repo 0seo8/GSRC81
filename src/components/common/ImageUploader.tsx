@@ -10,10 +10,10 @@ interface ImageUploaderProps {
   bucket?: string;
 }
 
-export default function ImageUploader({ 
-  onUpload, 
-  currentUrl, 
-  bucket = "course-photos" 
+export default function ImageUploader({
+  onUpload,
+  currentUrl,
+  bucket = "course-photos",
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentUrl || null);
@@ -23,14 +23,14 @@ export default function ImageUploader({
     if (!file) return;
 
     // 파일 타입 검증
-    if (!file.type.startsWith('image/')) {
-      alert('이미지 파일만 업로드 가능합니다.');
+    if (!file.type.startsWith("image/")) {
+      alert("이미지 파일만 업로드 가능합니다.");
       return;
     }
 
     // 파일 크기 검증 (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('파일 크기는 5MB 이하여야 합니다.');
+      alert("파일 크기는 5MB 이하여야 합니다.");
       return;
     }
 
@@ -44,15 +44,15 @@ export default function ImageUploader({
       if (error) throw error;
 
       // Public URL 생성
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(fileName);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(bucket).getPublicUrl(fileName);
 
       setPreview(publicUrl);
       onUpload(publicUrl);
     } catch (error) {
-      console.error('Upload error:', error);
-      alert('업로드 중 오류가 발생했습니다.');
+      console.error("Upload error:", error);
+      alert("업로드 중 오류가 발생했습니다.");
     } finally {
       setUploading(false);
     }
@@ -60,7 +60,7 @@ export default function ImageUploader({
 
   const removeImage = () => {
     setPreview(null);
-    onUpload('');
+    onUpload("");
   };
 
   return (

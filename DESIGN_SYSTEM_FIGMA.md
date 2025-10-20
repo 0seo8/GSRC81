@@ -9,51 +9,54 @@
 ## 🎨 색상 가이드 (Figma 기반)
 
 ### Primary Colors
+
 ```css
 /* 메인 배경색 */
---bg-primary: #EBE7E4;        /* fill_2CD7TB - 메인 배경 */
---bg-secondary: #D9D9D9;      /* fill_IOCY7O - 지도 배경 */
+--bg-primary: #ebe7e4; /* fill_2CD7TB - 메인 배경 */
+--bg-secondary: #d9d9d9; /* fill_IOCY7O - 지도 배경 */
 --bg-overlay: rgba(217, 215, 212, 0.4); /* fill_MYMCD1 - 오버레이 */
 
 /* 텍스트 색상 */
---text-primary: #000000;      /* fill_IMUM94 - 기본 텍스트 */
+--text-primary: #000000; /* fill_IMUM94 - 기본 텍스트 */
 --text-secondary: rgba(0, 0, 0, 0.5); /* fill_GFPZUQ - 보조 텍스트 */
---text-tertiary: #828282;     /* fill_RJFCGV - 터셔리 텍스트 */
---text-white: #FFFFFF;        /* fill_QLU3RC - 흰색 텍스트 */
+--text-tertiary: #828282; /* fill_RJFCGV - 터셔리 텍스트 */
+--text-white: #ffffff; /* fill_QLU3RC - 흰색 텍스트 */
 ```
 
 ### Category Colors (러닝 카테고리별)
+
 ```css
 /* 트랙 러닝 */
---track-primary: #D04836;     /* fill_Y1ABXM - 트랙 러닝 메인 */
---track-secondary: #FCFEF2;  /* fill_OZJCYM - 트랙 러닝 보조 */
+--track-primary: #d04836; /* fill_Y1ABXM - 트랙 러닝 메인 */
+--track-secondary: #fcfef2; /* fill_OZJCYM - 트랙 러닝 보조 */
 
 /* 로드 러닝 */
---road-primary: #FCFC60;      /* fill_C3B47Z - 로드 러닝 메인 */
---road-secondary: #E0E0E0;    /* fill_5G0NOK - 로드 러닝 보조 */
+--road-primary: #fcfc60; /* fill_C3B47Z - 로드 러닝 메인 */
+--road-secondary: #e0e0e0; /* fill_5G0NOK - 로드 러닝 보조 */
 
 /* 트레일 러닝 */
---trail-primary: #78A893;     /* fill_9W2HCU - 트레일 러닝 메인 */
---trail-secondary: #E5E4D4;   /* fill_5YMV63 - 트레일 러닝 보조 */
+--trail-primary: #78a893; /* fill_9W2HCU - 트레일 러닝 메인 */
+--trail-secondary: #e5e4d4; /* fill_5YMV63 - 트레일 러닝 보조 */
 
 /* 진관동 러닝 */
---jingwan-primary: #697064;  /* fill_6QKJ8X - 진관동 러닝 메인 */
---jingwan-secondary: #7A7A7A; /* fill_SI90H0 - 진관동 러닝 보조 */
+--jingwan-primary: #697064; /* fill_6QKJ8X - 진관동 러닝 메인 */
+--jingwan-secondary: #7a7a7a; /* fill_SI90H0 - 진관동 러닝 보조 */
 
 /* 기타 색상 */
---button-bg: #D8D5D3;         /* fill_4RXB1X - 버튼 배경 */
---button-hover: #C3B47Z;      /* 버튼 호버 (추정) */
+--button-bg: #d8d5d3; /* fill_4RXB1X - 버튼 배경 */
+--button-hover: #C3B47Z; /* 버튼 호버 (추정) */
 ```
 
 ### Status & UI Colors
+
 ```css
 /* 상태 표시 */
---status-bar: #FFFFFF;        /* 상태바 배경 */
---status-icon: #DADADA;       /* fill_CX0I06 - 상태 아이콘 */
+--status-bar: #ffffff; /* 상태바 배경 */
+--status-icon: #dadada; /* fill_CX0I06 - 상태 아이콘 */
 
 /* 구분선 */
 --border-light: rgba(0, 0, 0, 0.5); /* stroke_WZ9EKV - 경계선 */
---border-strong: #000000;     /* stroke_10VJTU - 강한 경계선 */
+--border-strong: #000000; /* stroke_10VJTU - 강한 경계선 */
 ```
 
 ---
@@ -61,14 +64,16 @@
 ## 📝 타이포그래피 (Figma 기반)
 
 ### Font Families
+
 ```css
 /* 메인 폰트 */
---font-primary: 'Poppins', sans-serif;
---font-secondary: 'Noto Sans', sans-serif;
---font-body: 'Inter', sans-serif;
+--font-primary: "Poppins", sans-serif;
+--font-secondary: "Noto Sans", sans-serif;
+--font-body: "Inter", sans-serif;
 ```
 
 ### Font Sizes & Weights
+
 ```css
 /* 헤더 */
 --text-header: {
@@ -141,7 +146,7 @@
   font-weight: 700;
   font-size: 45px;
   line-height: 1.4;
-}
+};
 ```
 
 ---
@@ -149,15 +154,16 @@
 ## 📐 간격 시스템 (Figma 기반)
 
 ### Spacing Scale
+
 ```css
 /* 기본 간격 */
---space-xs: 4px;      /* 작은 간격 */
---space-sm: 8px;      /* 작은 간격 */
---space-md: 16px;     /* 중간 간격 */
---space-lg: 24px;     /* 큰 간격 */
---space-xl: 32px;     /* 매우 큰 간격 */
---space-2xl: 48px;    /* 2배 큰 간격 */
---space-3xl: 92px;    /* 3배 큰 간격 */
+--space-xs: 4px; /* 작은 간격 */
+--space-sm: 8px; /* 작은 간격 */
+--space-md: 16px; /* 중간 간격 */
+--space-lg: 24px; /* 큰 간격 */
+--space-xl: 32px; /* 매우 큰 간격 */
+--space-2xl: 48px; /* 2배 큰 간격 */
+--space-3xl: 92px; /* 3배 큰 간격 */
 
 /* 컴포넌트별 간격 */
 --padding-button: 8px 16px;
@@ -167,6 +173,7 @@
 ```
 
 ### Layout Dimensions
+
 ```css
 /* 화면 크기 */
 --screen-width: 390px;
@@ -191,6 +198,7 @@
 ## 🧩 컴포넌트 디자인 (Figma 기반)
 
 ### 1. 카드 컴포넌트
+
 ```css
 .course-card {
   width: 375px;
@@ -216,7 +224,7 @@
 }
 
 .course-distance {
-  font-family: 'Poppins';
+  font-family: "Poppins";
   font-weight: 600;
   font-size: 70px;
   line-height: 1.4;
@@ -232,12 +240,13 @@
 ```
 
 ### 2. 댓글 컴포넌트
+
 ```css
 .comment-bubble {
   padding: 8px 16px;
   border-radius: 18px;
   max-width: 221px;
-  background: #FFFFFF;
+  background: #ffffff;
 }
 
 .comment-bubble-sent {
@@ -251,14 +260,14 @@
 }
 
 .comment-user {
-  font-family: 'Inter';
+  font-family: "Inter";
   font-weight: 500;
   font-size: 14px;
   color: #000000;
 }
 
 .comment-timestamp {
-  font-family: 'Inter';
+  font-family: "Inter";
   font-weight: 400;
   font-size: 14px;
   color: rgba(0, 0, 0, 0.5);
@@ -266,17 +275,18 @@
 ```
 
 ### 3. 버튼 컴포넌트
+
 ```css
 .button-primary {
   width: 327px;
   height: 40px;
-  background: #D8D5D3;
+  background: #d8d5d3;
   border-radius: 10px;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Inter';
+  font-family: "Inter";
   font-weight: 500;
   font-size: 10px;
   color: #000000;
@@ -290,11 +300,12 @@
 ```
 
 ### 4. 상태바 컴포넌트
+
 ```css
 .status-bar {
   width: 375px;
   height: 44px;
-  background: #FFFFFF;
+  background: #ffffff;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -319,6 +330,7 @@
 ## 📱 반응형 디자인 (Figma 기반)
 
 ### Breakpoints
+
 ```css
 /* 모바일 우선 */
 @media (max-width: 390px) {
@@ -345,12 +357,13 @@
 ```
 
 ### Layout Patterns
+
 ```css
 /* 지도 레이아웃 */
 .map-container {
   width: 390px;
   height: 844px;
-  background: #D9D9D9;
+  background: #d9d9d9;
   position: relative;
 }
 
@@ -360,7 +373,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: #EBE7E4;
+  background: #ebe7e4;
   border-radius: 24px 24px 0px 0px;
   padding: 24px;
 }
@@ -386,6 +399,7 @@
 ## ✨ 애니메이션 (Figma 기반)
 
 ### Transitions
+
 ```css
 /* 기본 전환 */
 .transition-base {
@@ -394,7 +408,9 @@
 
 /* 카드 호버 */
 .card-hover {
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .card-hover:hover {
@@ -404,7 +420,9 @@
 
 /* 버튼 클릭 */
 .button-click {
-  transition: background-color 0.1s, transform 0.1s;
+  transition:
+    background-color 0.1s,
+    transform 0.1s;
 }
 
 .button-click:active {
@@ -417,8 +435,12 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* 슬라이드 업 */
@@ -427,11 +449,11 @@
 }
 
 @keyframes slideUp {
-  from { 
+  from {
     transform: translateY(20px);
     opacity: 0;
   }
-  to { 
+  to {
     transform: translateY(0);
     opacity: 1;
   }
@@ -443,11 +465,13 @@
 ## 🎯 사용 가이드
 
 ### 1. 색상 사용법
+
 - **Primary**: 메인 브랜드 색상으로 헤더, 버튼에 사용
 - **Category Colors**: 각 러닝 카테고리별로 구분하여 사용
 - **Text Colors**: 계층에 따라 primary, secondary, tertiary 사용
 
 ### 2. 타이포그래피 사용법
+
 - **Header**: 앱 제목, 섹션 제목
 - **Title**: 코스명, 주요 제목
 - **Body**: 설명 텍스트, 일반 내용
@@ -455,11 +479,13 @@
 - **Comment**: 댓글, 사용자 입력
 
 ### 3. 컴포넌트 사용법
+
 - **Card**: 코스 정보 표시, 일관된 스타일 유지
 - **Button**: 액션 버튼, 일관된 크기와 스타일
 - **Comment**: 사용자 피드백, 구분된 스타일
 
 ### 4. 반응형 고려사항
+
 - **모바일 우선**: 390px 기준으로 설계
 - **터치 친화적**: 최소 44px 터치 영역
 - **가독성**: 충분한 대비와 크기
@@ -469,6 +495,7 @@
 ## 📋 체크리스트
 
 ### 개발 시 확인사항
+
 - [ ] 색상 값이 Figma와 정확히 일치하는지 확인
 - [ ] 폰트 패밀리와 크기가 일치하는지 확인
 - [ ] 간격과 패딩이 디자인과 일치하는지 확인
@@ -477,6 +504,7 @@
 - [ ] 애니메이션이 부드럽게 작동하는지 확인
 
 ### 디자인 검수
+
 - [ ] 전체적인 색상 조화
 - [ ] 타이포그래피 계층 구조
 - [ ] 컴포넌트 일관성

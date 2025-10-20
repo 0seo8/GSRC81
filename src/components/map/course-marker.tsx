@@ -30,7 +30,7 @@ function getDistanceInMeters(
   lat1: number,
   lng1: number,
   lat2: number,
-  lng2: number
+  lng2: number,
 ): number {
   const R = 6371000; // 지구 반지름 (미터)
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -116,7 +116,7 @@ const CourseMarkerComponent = function CourseMarker({
   // 코스들을 클러스터링하는 함수 (카테고리별로 클러스터링)
   function clusterCourses(
     courses: Course[],
-    maxDistance: number
+    maxDistance: number,
   ): CourseCluster[] {
     if (maxDistance === 0) {
       // 클러스터링 없음 - 각 코스를 개별 클러스터로 처리
@@ -159,7 +159,7 @@ const CourseMarkerComponent = function CourseMarker({
           course.start_latitude,
           course.start_longitude,
           otherCourse.start_latitude,
-          otherCourse.start_longitude
+          otherCourse.start_longitude,
         );
 
         if (distance <= maxDistance) {
@@ -312,10 +312,8 @@ const CourseMarkerComponent = function CourseMarker({
           const categoryKey = course.category_key || "jingwan";
           const markerColor = getCategoryColor(categoryKey);
 
-          // PDF에서 보이는 것처럼 마커에 번호 표시
-          // 임시로 courses 배열에서의 인덱스를 번호로 사용
-          const courseIndex = courses.findIndex((c) => c.id === course.id);
-          const markerNumber = courseIndex >= 0 ? courseIndex + 1 : 1;
+          // 개별 마커는 항상 1로 표시 (겹치지 않는 경우)
+          const markerNumber = 1;
 
           // PDF 스타일 핀 마커 (개별) - 번호 포함
           markerElement.innerHTML = `

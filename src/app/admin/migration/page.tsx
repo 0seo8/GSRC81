@@ -3,12 +3,24 @@
 import { useState, useEffect } from "react";
 import { ProtectedAdminRoute } from "@/components/protected-admin-route";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, CheckCircle, Loader2, Database, ArrowRight } from "lucide-react";
-import { 
-  checkMigrationStatus, 
-  migrateAllCourses, 
-  migrateSingleCourse 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  AlertTriangle,
+  CheckCircle,
+  Loader2,
+  Database,
+  ArrowRight,
+} from "lucide-react";
+import {
+  checkMigrationStatus,
+  migrateAllCourses,
+  migrateSingleCourse,
 } from "@/lib/gpx-migration";
 
 export default function MigrationPage() {
@@ -16,7 +28,7 @@ export default function MigrationPage() {
     total: 0,
     migrated: 0,
     pending: 0,
-    percentage: 0
+    percentage: 0,
   });
   const [migrating, setMigrating] = useState(false);
   const [results, setResults] = useState<{
@@ -35,7 +47,11 @@ export default function MigrationPage() {
   };
 
   const handleMigration = async () => {
-    if (!confirm('GPX 데이터 마이그레이션을 시작하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) {
+    if (
+      !confirm(
+        "GPX 데이터 마이그레이션을 시작하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.",
+      )
+    ) {
       return;
     }
 
@@ -47,11 +63,11 @@ export default function MigrationPage() {
       setResults(migrationResults);
       await loadStatus();
     } catch (error) {
-      console.error('Migration failed:', error);
+      console.error("Migration failed:", error);
       setResults({
         success: 0,
         failed: status.pending,
-        errors: [`Migration failed: ${error}`]
+        errors: [`Migration failed: ${error}`],
       });
     } finally {
       setMigrating(false);
@@ -109,7 +125,7 @@ export default function MigrationPage() {
                   <span className="font-medium">{status.percentage}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
+                  <div
                     className="bg-blue-600 h-2.5 rounded-full transition-all"
                     style={{ width: `${status.percentage}%` }}
                   />
@@ -137,7 +153,7 @@ export default function MigrationPage() {
               <div className="space-y-2">
                 <h3 className="font-semibold">새로운 구조:</h3>
                 <pre className="bg-gray-100 p-3 rounded text-xs overflow-x-auto">
-{`{
+                  {`{
   "version": "1.1",
   "points": [{"lat": 37.1, "lng": 127.1, "ele": 50}],
   "bounds": {"minLat": 37.1, "maxLat": 37.2, ...},
@@ -154,7 +170,11 @@ export default function MigrationPage() {
 
           {/* 실행 결과 */}
           {results && (
-            <Card className={results.failed > 0 ? 'border-red-500' : 'border-green-500'}>
+            <Card
+              className={
+                results.failed > 0 ? "border-red-500" : "border-green-500"
+              }
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   {results.failed > 0 ? (

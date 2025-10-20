@@ -88,7 +88,7 @@ export function CourseDetailDrawer({
         <div className="flex items-center justify-start">
           <span
             className={`px-4 py-2 rounded-full text-sm font-semibold ${getDifficultyColor(
-              course.difficulty
+              course.difficulty,
             )} border`}
           >
             {getDifficultyText(course.difficulty)}

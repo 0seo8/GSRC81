@@ -12,25 +12,29 @@ interface MarkerSkeletonProps {
   isLoading: boolean;
 }
 
-export function MarkerSkeleton({ map, positions, isLoading }: MarkerSkeletonProps) {
+export function MarkerSkeleton({
+  map,
+  positions,
+  isLoading,
+}: MarkerSkeletonProps) {
   const [skeletonMarkers, setSkeletonMarkers] = useState<mapboxgl.Marker[]>([]);
 
   useEffect(() => {
     if (!map || !isLoading || positions.length === 0) {
       // 로딩이 끝나면 스켈레톤 제거
-      skeletonMarkers.forEach(marker => marker.remove());
+      skeletonMarkers.forEach((marker) => marker.remove());
       setSkeletonMarkers([]);
       return;
     }
 
     // 기존 스켈레톤 제거
-    skeletonMarkers.forEach(marker => marker.remove());
+    skeletonMarkers.forEach((marker) => marker.remove());
 
     // 새로운 스켈레톤 마커 생성
-    const newMarkers = positions.map(pos => {
+    const newMarkers = positions.map((pos) => {
       const skeletonElement = document.createElement("div");
       skeletonElement.className = "marker-skeleton";
-      
+
       // 스켈레톤 스타일
       skeletonElement.style.cssText = `
         width: 40px;
@@ -70,7 +74,7 @@ export function MarkerSkeleton({ map, positions, isLoading }: MarkerSkeletonProp
 
       const marker = new mapboxgl.Marker({
         element: skeletonElement,
-        anchor: "center"
+        anchor: "center",
       })
         .setLngLat([pos.lng, pos.lat])
         .addTo(map);
@@ -82,7 +86,7 @@ export function MarkerSkeleton({ map, positions, isLoading }: MarkerSkeletonProp
 
     // Cleanup
     return () => {
-      newMarkers.forEach(marker => marker.remove());
+      newMarkers.forEach((marker) => marker.remove());
     };
   }, [map, isLoading, positions]); // skeletonMarkers를 의존성에서 제외
 

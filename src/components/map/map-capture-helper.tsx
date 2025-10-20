@@ -82,10 +82,10 @@ export function MapCaptureHelper({ map, onClose }: MapCaptureHelperProps) {
 
     setCaptureInfo(
       `캡처 완료! 줌: ${currentZoom.toFixed(
-        2
+        2,
       )}, 중심: [${currentCenter[0].toFixed(4)}, ${currentCenter[1].toFixed(
-        4
-      )}]`
+        4,
+      )}]`,
     );
   };
 
@@ -109,7 +109,7 @@ export function MapCaptureHelper({ map, onClose }: MapCaptureHelperProps) {
 
         const link = document.createElement("a");
         link.download = `gsrc81-map-zoom${currentZoom.toFixed(
-          0
+          0,
         )}-${Date.now()}.png`;
         link.href = dataURL;
         document.body.appendChild(link);

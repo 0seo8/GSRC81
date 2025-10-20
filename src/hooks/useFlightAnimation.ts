@@ -88,7 +88,7 @@ function distanceBetweenPoints(
   lat1: number,
   lng1: number,
   lat2: number,
-  lng2: number
+  lng2: number,
 ): number {
   const R = 6371000; // 지구 반지름 (미터)
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -111,7 +111,7 @@ export function useFlightAnimation(
   mapRef: React.RefObject<MapRef>,
   gpxData: ProcessedGPXData | null,
   courseNotes: CourseNote[] = [],
-  config: Partial<FlightAnimationConfig> = {}
+  config: Partial<FlightAnimationConfig> = {},
 ) {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
 
@@ -208,7 +208,7 @@ export function useFlightAnimation(
     setKmMarkers((prev) =>
       prev.map((marker) => {
         const distanceToMarker = Math.abs(
-          currentPoint.dist - marker.point.dist
+          currentPoint.dist - marker.point.dist,
         );
         const shouldShow = distanceToMarker <= 100; // 100m 이내에서 표시
 
@@ -218,15 +218,15 @@ export function useFlightAnimation(
             setTimeout(() => {
               setKmMarkers((markers) =>
                 markers.map((m) =>
-                  m.km === marker.km ? { ...m, isVisible: false } : m
-                )
+                  m.km === marker.km ? { ...m, isVisible: false } : m,
+                ),
               );
             }, finalConfig.kmMarkerShowDuration);
           }
         }
 
         return { ...marker, isVisible: shouldShow };
-      })
+      }),
     );
 
     // 코스 노트 표시 로직
@@ -237,7 +237,7 @@ export function useFlightAnimation(
         currentPoint.lat,
         currentPoint.lng,
         note.latitude,
-        note.longitude
+        note.longitude,
       );
 
       return noteDistance <= finalConfig.noteShowDistance;
@@ -339,7 +339,7 @@ export function useFlightAnimation(
 
     // 모든 마커 숨기기
     setKmMarkers((prev) =>
-      prev.map((marker) => ({ ...marker, isVisible: false }))
+      prev.map((marker) => ({ ...marker, isVisible: false })),
     );
     setVisibleNotes([]);
   }, []);
@@ -360,7 +360,7 @@ export function useFlightAnimation(
         bearing: 0,
         duration: 1000,
         essential: true,
-      }
+      },
     );
 
     setState((prev) => ({ ...prev, isFullRouteView: true }));
@@ -372,7 +372,7 @@ export function useFlightAnimation(
 
       const targetDist = targetKm * 1000;
       const closestPointIndex = gpxData.points.findIndex(
-        (point) => Math.abs(point.dist - targetDist) < 50
+        (point) => Math.abs(point.dist - targetDist) < 50,
       );
 
       if (closestPointIndex >= 0) {
@@ -380,7 +380,7 @@ export function useFlightAnimation(
         jumpToProgress(progress);
       }
     },
-    [gpxData]
+    [gpxData],
   );
 
   const jumpToProgress = useCallback(
@@ -389,7 +389,7 @@ export function useFlightAnimation(
 
       const clampedProgress = Math.max(0, Math.min(1, targetProgress));
       const targetIndex = Math.floor(
-        clampedProgress * (gpxData.points.length - 1)
+        clampedProgress * (gpxData.points.length - 1),
       );
       const targetPoint = gpxData.points[targetIndex];
 
@@ -410,7 +410,7 @@ export function useFlightAnimation(
         essential: true,
       });
     },
-    [gpxData, mapRef]
+    [gpxData, mapRef],
   );
 
   // ====================================================================

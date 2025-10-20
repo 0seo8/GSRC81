@@ -22,7 +22,7 @@ export function PasswordChangeForm({ onClose }: { onClose?: () => void }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | null>(
-    null
+    null,
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,12 +65,12 @@ export function PasswordChangeForm({ onClose }: { onClose?: () => void }) {
       // 사용자들을 로그아웃 시켜야 함을 알림
       setTimeout(() => {
         setMessage(
-          "비밀번호가 변경되었습니다. 모든 사용자가 다시 로그인해야 합니다."
+          "비밀번호가 변경되었습니다. 모든 사용자가 다시 로그인해야 합니다.",
         );
       }, 2000);
     } catch (error: unknown) {
       setMessage(
-        (error as Error).message || "비밀번호 변경 중 오류가 발생했습니다."
+        (error as Error).message || "비밀번호 변경 중 오류가 발생했습니다.",
       );
       setMessageType("error");
     } finally {

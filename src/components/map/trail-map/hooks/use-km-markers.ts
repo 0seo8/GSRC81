@@ -4,7 +4,7 @@ import { KmMarker } from "../types";
 export const useKmMarkers = () => {
   const [kmMarkers, setKmMarkers] = useState<KmMarker[]>([]);
   const [visibleKmMarkers, setVisibleKmMarkers] = useState<Set<number>>(
-    new Set()
+    new Set(),
   );
   const [lastShownKm, setLastShownKm] = useState(0);
 

@@ -9,7 +9,7 @@ import { CourseV2, UnifiedGPXData } from "@/types/unified";
  * 기존 Course를 새로운 CourseV2로 변환
  */
 export async function migrateCourseToV2(
-  course: Course
+  course: Course,
 ): Promise<Partial<CourseV2>> {
   try {
     // 1. course_points 테이블에서 데이터 가져오기
