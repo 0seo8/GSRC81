@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { Upload, X } from "lucide-react";
 
 interface ImageUploaderProps {
   onUpload: (url: string) => void;
@@ -37,7 +37,7 @@ export default function ImageUploader({
     setUploading(true);
     try {
       const fileName = `${Date.now()}-${file.name}`;
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from(bucket)
         .upload(fileName, file, { upsert: false });
 

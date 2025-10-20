@@ -75,7 +75,7 @@ export default function CoursesManagePage() {
   };
 
   const handleGPXSubmit = async (formData: FormData, gpxData: unknown) => {
-    let courseData: any = null;
+    let courseData = null;
 
     try {
       setSubmitting(true);

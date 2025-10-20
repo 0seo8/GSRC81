@@ -17,11 +17,7 @@ import {
   Database,
   ArrowRight,
 } from "lucide-react";
-import {
-  checkMigrationStatus,
-  migrateAllCourses,
-  migrateSingleCourse,
-} from "@/lib/gpx-migration";
+import { checkMigrationStatus, migrateAllCourses } from "@/lib/gpx-migration";
 
 export default function MigrationPage() {
   const [status, setStatus] = useState({
@@ -49,7 +45,7 @@ export default function MigrationPage() {
   const handleMigration = async () => {
     if (
       !confirm(
-        "GPX 데이터 마이그레이션을 시작하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.",
+        "GPX 데이터 마이그레이션을 시작하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다."
       )
     ) {
       return;

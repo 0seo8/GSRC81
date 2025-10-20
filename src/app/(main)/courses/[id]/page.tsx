@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { ProtectedRoute } from "@/components/protected-route";
-import { ChatBubbleList } from "@/components/chat/chat-bubble-list";
 import { CourseDetailMapClient } from "@/components/course-detail-map-client";
 import { Course } from "@/types";
 import { getCourseById } from "@/lib/courses-data";

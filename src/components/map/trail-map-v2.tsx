@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import Map, { Source, Layer, Marker, MapRef } from "react-map-gl/mapbox";
+import Map, { Source, Layer, Marker, MapRef, MapMouseEvent } from "react-map-gl/mapbox";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { Flag } from "lucide-react";
+import { Flag, MessageSquare } from "lucide-react";
 import {
   CourseV2,
   UnifiedGPXData,
@@ -27,6 +27,9 @@ import { LoadingState } from "./trail-map/components/loading-state";
 import { ErrorState } from "./trail-map/components/error-state";
 import { MapControls } from "./trail-map/components/map-controls";
 import { CourseInfo } from "./trail-map/components/course-info";
+import { CommentModal } from "../comment-modal";
+import { CommentList } from "../comment-list";
+import { getCourseComments, getFlightModeComments, CourseComment } from "@/lib/comments";
 
 // TrailData를 그대로 사용 (타입 호환성 위해)
 
@@ -35,6 +38,18 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
+  
+  // 댓글 관련 상태
+  const [clickedPoint, setClickedPoint] = useState<{
+    lng: number;
+    lat: number;
+    distanceMarker: number;
+  } | null>(null);
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [commentsVersion, setCommentsVersion] = useState(0); // 댓글 목록 새로고침용
+  const [comments, setComments] = useState<CourseComment[]>([]);
+  const [flightComments, setFlightComments] = useState<CourseComment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
 
   const mapRef = useRef<MapRef>(null);
 
@@ -72,6 +87,102 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     resetKmMarkers,
     setKmMarkers,
   );
+
+  // 가장 가까운 경로 지점 찾기 함수
+  const findNearestRoutePoint = useCallback((clickLng: number, clickLat: number) => {
+    if (!trailData?.geoJSON?.features?.[0]?.geometry?.coordinates) return null;
+
+    const coordinates = trailData.geoJSON.features[0].geometry.coordinates;
+    let minDistance = Infinity;
+    let nearestPoint: { lng: number; lat: number; distanceMarker: number } | null = null;
+    let nearestIndex = -1;
+    let cumulativeDistance = 0;
+
+    coordinates.forEach((coord: number[], index: number) => {
+      const [lng, lat] = coord;
+      
+      // Haversine 공식을 사용한 거리 계산
+      const R = 6371000; // 지구 반지름 (미터)
+      const dLat = ((lat - clickLat) * Math.PI) / 180;
+      const dLng = ((lng - clickLng) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((clickLat * Math.PI) / 180) *
+          Math.cos((lat * Math.PI) / 180) *
+          Math.sin(dLng / 2) *
+          Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = R * c;
+
+      // 이전 지점과의 거리 계산하여 누적 거리 업데이트
+      if (index > 0) {
+        const [prevLng, prevLat] = coordinates[index - 1];
+        const segmentDistance = R * 2 * Math.asin(Math.sqrt(
+          Math.sin(((lat - prevLat) * Math.PI) / 180 / 2) ** 2 +
+          Math.cos((prevLat * Math.PI) / 180) *
+            Math.cos((lat * Math.PI) / 180) *
+            Math.sin(((lng - prevLng) * Math.PI) / 180 / 2) ** 2
+        ));
+        cumulativeDistance += segmentDistance;
+      }
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestPoint = { lng, lat, distanceMarker: cumulativeDistance / 1000 }; // km로 변환
+        nearestIndex = index;
+      }
+    });
+
+    return nearestPoint ? {
+      lng: nearestPoint.lng,
+      lat: nearestPoint.lat,
+      distanceMarker: nearestPoint.distanceMarker,
+      index: nearestIndex
+    } : null;
+  }, [trailData]);
+
+  // 지도 클릭 핸들러
+  const handleMapClick = useCallback((event: MapMouseEvent) => {
+    if (isAnimating) return; // 애니메이션 중에는 클릭 비활성화
+
+    const { lng, lat } = event.lngLat;
+    const nearestPoint = findNearestRoutePoint(lng, lat);
+
+    if (nearestPoint) {
+      setClickedPoint({
+        lng: nearestPoint.lng,
+        lat: nearestPoint.lat,
+        distanceMarker: nearestPoint.distanceMarker
+      });
+      setShowCommentModal(true);
+    }
+  }, [isAnimating, findNearestRoutePoint]);
+
+  // 댓글 로드 함수
+  const loadComments = useCallback(async () => {
+    if (!courseId) return;
+    
+    try {
+      setLoadingComments(true);
+      const [allComments, flightOnlyComments] = await Promise.all([
+        getCourseComments(courseId),
+        getFlightModeComments(courseId)
+      ]);
+      
+      setComments(allComments);
+      setFlightComments(flightOnlyComments);
+    } catch (error) {
+      console.error('댓글 로드 실패:', error);
+    } finally {
+      setLoadingComments(false);
+    }
+  }, [courseId]);
+
+  // 댓글 추가 성공 핸들러
+  const handleCommentAdded = useCallback(() => {
+    setCommentsVersion(prev => prev + 1);
+    loadComments(); // 댓글 목록 새로고침
+  }, [loadComments]);
 
   // 위치/경로보기 버튼 클릭 핸들러
   const handleLocationRouteButton = useCallback(() => {
@@ -262,6 +373,13 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     }
   }, [courseId]);
 
+  // 댓글 로드
+  useEffect(() => {
+    if (courseId) {
+      loadComments();
+    }
+  }, [courseId, loadComments]);
+
   // 트레일 라인 스타일
   const trailLineLayer = {
     id: "trail-line",
@@ -323,6 +441,7 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                 ref={mapRef}
                 {...viewState}
                 onMove={(evt) => setViewState(evt.viewState)}
+                onClick={handleMapClick}
                 mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
                 style={{ width: "100%", height: "100%" }}
                 mapStyle="mapbox://styles/mapbox/streets-v12"
@@ -420,6 +539,73 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                     </div>
                   </Marker>
                 )}
+
+                {/* 클릭된 지점 마커 */}
+                {clickedPoint && (
+                  <Marker
+                    longitude={clickedPoint.lng}
+                    latitude={clickedPoint.lat}
+                    anchor="bottom"
+                  >
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="bg-orange-500 text-white rounded-full p-2 shadow-lg border-2 border-white cursor-pointer"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </motion.div>
+                  </Marker>
+                )}
+
+                {/* 댓글 말풍선 마커들 */}
+                {(isAnimating ? flightComments : comments)
+                  .filter(comment => comment.latitude && comment.longitude)
+                  .map((comment) => (
+                    <Marker
+                      key={comment.id}
+                      longitude={comment.longitude!}
+                      latitude={comment.latitude!}
+                      anchor="bottom"
+                    >
+                      <motion.div
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.3, delay: 0.1 }}
+                        className="relative max-w-xs"
+                      >
+                        {/* 말풍선 */}
+                        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3 relative">
+                          {/* 말풍선 꼬리 */}
+                          <div className="absolute bottom-0 left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white transform translate-y-full"></div>
+                          
+                          {/* 댓글 내용 */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-gray-800">
+                                {comment.author_nickname}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {comment.distance_marker?.toFixed(1)}km
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700 leading-relaxed">
+                              {comment.message}
+                            </p>
+                            <div className="text-xs text-gray-400">
+                              {new Date(comment.created_at).toLocaleDateString('ko-KR', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </Marker>
+                  ))}
               </Map>
             </div>
           </CardContent>
@@ -428,6 +614,23 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
       {/* 코스 정보 Card */}
       <CourseInfo trailData={trailData} savedProgress={savedProgress} />
+      
+      {/* 댓글 목록 */}
+      <div className="mt-4">
+        <CommentList 
+          comments={comments} 
+          loading={loadingComments}
+        />
+      </div>
+      
+      {/* 댓글 입력 모달 */}
+      <CommentModal
+        isOpen={showCommentModal}
+        onClose={() => setShowCommentModal(false)}
+        courseId={courseId}
+        position={clickedPoint}
+        onCommentAdded={handleCommentAdded}
+      />
     </div>
   );
 };

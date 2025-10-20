@@ -65,10 +65,10 @@ export function ChatBubbleList({
           table: "course_comments",
           filter: `course_id=eq.${courseId}`,
         },
-        (payload) => {
+        () => {
           loadComments();
           onCommentUpdate?.();
-        },
+        }
       )
       .subscribe();
 
