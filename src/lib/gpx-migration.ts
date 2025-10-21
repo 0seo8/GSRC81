@@ -82,7 +82,7 @@ export async function migrateCourseToV2(
       description: course.description,
       difficulty: course.difficulty,
       course_type: determineCourseType(course), // 타입 추론
-      gpx_data_v2: gpxData,
+      gpx_data: gpxData,
       cover_image_url: course.cover_image_url,
       is_active: course.is_active,
       created_at: course.created_at,
@@ -152,7 +152,7 @@ export async function migrateAllCourses(): Promise<{
         // 3. 업데이트
         const { error: updateError } = await supabase
           .from("courses")
-          .update({ gpx_data_v2: courseV2.gpx_data_v2 })
+          .update({ gpx_data: courseV2.gpx_data })
           .eq("id", course.id);
 
         if (updateError) throw updateError;

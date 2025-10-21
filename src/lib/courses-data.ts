@@ -23,8 +23,24 @@ export interface CourseWithComments extends Course {
   category_key?: string;
 }
 
+// Supabase select 결과 레코드 타입
+interface SupabaseCourseRow {
+  id: string;
+  title: string;
+  description?: string;
+  distance_km: number;
+  difficulty: Course["difficulty"];
+  start_latitude: number;
+  start_longitude: number;
+  cover_image_url?: string;
+  created_at: string;
+  is_active: boolean;
+  course_categories?: { key?: string } | { key?: string }[] | null;
+  course_comments?: { count: number }[] | null;
+}
+
 export async function getCourses(
-  categoryKey?: string
+  categoryKey?: string,
 ): Promise<CourseWithComments[]> {
   try {
     const { data, error } = await supabaseServer
@@ -40,9 +56,10 @@ export async function getCourses(
         start_longitude,
         cover_image_url,
         created_at,
+        is_active,
         course_categories(key),
         course_comments(count)
-      `
+      `,
       )
       .eq("is_active", true)
       .order("created_at", { ascending: false });
@@ -56,18 +73,21 @@ export async function getCourses(
       return [];
     }
 
-    const coursesWithCommentCount: CourseWithComments[] = data.map(
-      (course: any) => ({
+    const rows = (data ?? []) as SupabaseCourseRow[];
+    const coursesWithCommentCount: CourseWithComments[] = rows.map(
+      (course) => ({
         ...course,
         comment_count: course.course_comments?.[0]?.count || 0,
-        category_key: course.course_categories?.key || "jingwan", // JOIN된 카테고리 키 사용, 없으면 기본값
-      })
+        category_key: Array.isArray(course.course_categories)
+          ? (course.course_categories[0]?.key ?? "jingwan")
+          : (course.course_categories?.key ?? "jingwan"), // JOIN된 카테고리 키 사용, 없으면 기본값
+      }),
     );
 
     // 카테고리 필터링 (기본값: "jingwan")
     const targetCategory = categoryKey || "jingwan";
     const filteredCourses = coursesWithCommentCount.filter(
-      (course) => course.category_key === targetCategory
+      (course) => course.category_key === targetCategory,
     );
 
     return filteredCourses;

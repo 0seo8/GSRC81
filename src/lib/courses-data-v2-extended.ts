@@ -1,10 +1,5 @@
 // GSRC81 Maps: 확장된 V2 코스 데이터 서비스
-import {
-  CourseV2,
-  extractStartPoint,
-  extractEndPoint,
-  getDistance,
-} from "@/types/unified";
+import { CourseV2, extractStartPoint, getDistance } from "@/types/unified";
 import { getActiveCoursesV2 } from "./courses-data-v2";
 
 // MapClient 호환성을 위한 확장 타입

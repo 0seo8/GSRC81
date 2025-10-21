@@ -93,8 +93,8 @@ export const calculateStats = (points: CoursePoint[], course: Course) => {
   const bounds = {
     minLat: Math.min(...points.map((p) => p.latitude)),
     maxLat: Math.max(...points.map((p) => p.latitude)),
-    minLon: Math.min(...points.map((p) => p.longitude)),
-    maxLon: Math.max(...points.map((p) => p.longitude)),
+    minLng: Math.min(...points.map((p) => p.longitude)),
+    maxLng: Math.max(...points.map((p) => p.longitude)),
   };
 
   return {

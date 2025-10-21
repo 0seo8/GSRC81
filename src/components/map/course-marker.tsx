@@ -22,8 +22,6 @@ interface CourseMarkerProps {
   onClusterClick?: (courses: Course[]) => void;
 }
 
-let effectCallCount = 0;
-
 // TODO: 2. 전체맵에서 클러스트 간격을 조절하기.
 // 두 지점 간 거리 계산 (Haversine formula)
 function getDistanceInMeters(
@@ -191,8 +189,6 @@ const CourseMarkerComponent = function CourseMarker({
 
   // 마커 렌더링 및 클러스터링
   useEffect(() => {
-    effectCallCount++;
-
     if (!map || !courses.length) {
       return;
     }

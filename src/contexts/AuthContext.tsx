@@ -5,6 +5,8 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
+  error: string | null;
+  login: (password: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -13,6 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -41,9 +44,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const login = async (password: string): Promise<boolean> => {
+    try {
+      setError(null);
+      setIsLoading(true);
+
+      const expected = process.env.NEXT_PUBLIC_APP_PASSWORD || "gsrc81";
+      const isValid =
+        password === expected ||
+        (process.env.NODE_ENV === "development" &&
+          (password === "gsrc81" || password === "admin123"));
+
+      if (!isValid) {
+        setError("비밀번호가 올바르지 않습니다.");
+        return false;
+      }
+
+      const authData = {
+        authenticated: true,
+        timestamp: Date.now(),
+      };
+
+      document.cookie = `gsrc81-auth=${encodeURIComponent(JSON.stringify(authData))}; Max-Age=86400; path=/`;
+      setIsAuthenticated(true);
+      return true;
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("로그인 중 오류가 발생했습니다.");
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = () => {
     document.cookie = "gsrc81-auth=; Max-Age=0; path=/";
     setIsAuthenticated(false);
+    setError(null);
   };
 
   return (
@@ -51,6 +88,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         isAuthenticated,
         isLoading,
+        error,
+        login,
         logout,
       }}
     >

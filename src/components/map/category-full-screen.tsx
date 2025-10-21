@@ -99,7 +99,10 @@ export function CategoryFullScreen({
   };
 
   // 스와이프 핸들러 - 카테고리와 카드 모두 처리
-  const handleSwipe = (_: any, info: PanInfo) => {
+  const handleSwipe = (
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo,
+  ) => {
     const swipeThreshold = 50;
 
     // 좌우 스와이프 - 카테고리 변경

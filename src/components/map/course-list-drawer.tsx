@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Drawer } from "@/components/ui/drawer";
-import { X, Clock, TrendingUp, MapPin, Users } from "lucide-react";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Course {
@@ -32,19 +32,6 @@ export function CourseListDrawer({
   onClose,
 }: CourseListDrawerProps) {
   const router = useRouter();
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "easy":
-        return "bg-gray-100 text-gray-800";
-      case "medium":
-        return "bg-gray-200 text-gray-800";
-      case "hard":
-        return "bg-gray-300 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
 
   const getDifficultyText = (difficulty: string) => {
     switch (difficulty) {

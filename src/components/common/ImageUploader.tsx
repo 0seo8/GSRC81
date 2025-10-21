@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Upload, X } from "lucide-react";
+import Image from "next/image";
 
 interface ImageUploaderProps {
   onUpload: (url: string) => void;
@@ -100,9 +101,11 @@ export default function ImageUploader({
       {/* 미리보기 */}
       {preview && (
         <div className="relative">
-          <img
+          <Image
             src={preview}
             alt="미리보기"
+            width={400}
+            height={160}
             className="w-full h-40 object-cover rounded-lg border border-gray-200"
           />
           <Button

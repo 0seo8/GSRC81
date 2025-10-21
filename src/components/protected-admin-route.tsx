@@ -20,7 +20,7 @@ export function ProtectedAdminRoute({
     if (!isAdminAuthenticated) {
       router.replace(redirectTo);
     }
-  }, [isAdminAuthenticated, redirectTo]); // router 제거
+  }, [isAdminAuthenticated, redirectTo, router]);
 
   if (!isAdminAuthenticated) {
     return (

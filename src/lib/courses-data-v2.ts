@@ -215,18 +215,20 @@ export function subscribeToCourseChanges(callback: (course: CourseV2) => void) {
         table: "courses",
       },
       async (payload) => {
-        if (payload.new && payload.new.gpx_data) {
+        const newCourse = payload.new as Record<string, unknown>;
+        if (newCourse && newCourse.gpx_data) {
           const course: CourseV2 = {
-            id: payload.new.id,
-            title: payload.new.title,
-            description: payload.new.description,
-            difficulty: payload.new.difficulty,
-            course_type: determineCourseType(payload.new),
-            gpx_data: payload.new.gpx_data as UnifiedGPXData,
-            cover_image_url: payload.new.cover_image_url,
-            is_active: payload.new.is_active,
-            created_at: payload.new.created_at,
-            updated_at: payload.new.updated_at,
+            id: newCourse.id as string,
+            title: newCourse.title as string,
+            description: newCourse.description as string,
+            difficulty: newCourse.difficulty as "easy" | "medium" | "hard",
+            course_type: determineCourseType(newCourse),
+            gpx_data: newCourse.gpx_data as UnifiedGPXData,
+            cover_image_url:
+              (newCourse.cover_image_url as string | null) || undefined,
+            is_active: newCourse.is_active as boolean,
+            created_at: newCourse.created_at as string,
+            updated_at: newCourse.updated_at as string,
           };
           callback(course);
         }

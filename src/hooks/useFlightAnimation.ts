@@ -144,7 +144,7 @@ export function useFlightAnimation(
       return;
     }
 
-    const markers = extractKmMarkers(gpxData.points).map((point, index) => ({
+    const markers = extractKmMarkers(gpxData.points).map((point) => ({
       km: Math.round(point.dist / 1000),
       point,
       position: { lat: point.lat, lng: point.lng },
@@ -293,7 +293,7 @@ export function useFlightAnimation(
         animationRef.current = requestAnimationFrame(animate);
       }, 1200);
     }
-  }, [gpxData, state.isAnimating, animate]);
+  }, [gpxData, state.isAnimating, animate, mapRef]);
 
   const pauseAnimation = useCallback(() => {
     if (!state.isAnimating || isPausedRef.current) return;

@@ -1,25 +1,22 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import Map, { Source, Layer, Marker, MapRef, MapMouseEvent } from "react-map-gl/mapbox";
+import Map, {
+  Source,
+  Layer,
+  Marker,
+  MapRef,
+  MapMouseEvent,
+} from "react-map-gl/mapbox";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Flag, MessageSquare } from "lucide-react";
-import {
-  CourseV2,
-  UnifiedGPXData,
-  convertToLegacyCourse,
-} from "@/types/unified";
+import { convertToLegacyCourse } from "@/types/unified";
 import { getCourseByIdV2 } from "@/lib/courses-data-v2";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-import {
-  TrailMapProps,
-  TrailData,
-  GpxCoordinate,
-  TrailGeoJSON,
-} from "./trail-map/types";
-import { INITIAL_VIEW_STATE, MAP_STYLES } from "./trail-map/constants";
+import { TrailMapProps, TrailData, TrailGeoJSON } from "./trail-map/types";
+import { INITIAL_VIEW_STATE } from "./trail-map/constants";
 import { useTrailAnimation } from "./trail-map/hooks/use-trail-animation";
 import { useLocationTracking } from "./trail-map/hooks/use-location-tracking";
 import { useKmMarkers } from "./trail-map/hooks/use-km-markers";
@@ -29,7 +26,13 @@ import { MapControls } from "./trail-map/components/map-controls";
 import { CourseInfo } from "./trail-map/components/course-info";
 import { CommentModal } from "../comment-modal";
 import { CommentList } from "../comment-list";
-import { getCourseComments, getFlightModeComments, CourseComment } from "@/lib/comments";
+import { CourseGallery } from "../course-gallery";
+import {
+  getCourseComments,
+  getFlightModeComments,
+  CourseComment,
+} from "@/lib/comments";
+import { getCoursePhotos, CoursePhoto } from "@/lib/course-photos";
 
 // TrailData를 그대로 사용 (타입 호환성 위해)
 
@@ -38,7 +41,7 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
-  
+
   // 댓글 관련 상태
   const [clickedPoint, setClickedPoint] = useState<{
     lng: number;
@@ -46,10 +49,12 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     distanceMarker: number;
   } | null>(null);
   const [showCommentModal, setShowCommentModal] = useState(false);
-  const [commentsVersion, setCommentsVersion] = useState(0); // 댓글 목록 새로고침용
+  const [, setCommentsVersion] = useState(0); // 댓글 목록 새로고침용
   const [comments, setComments] = useState<CourseComment[]>([]);
   const [flightComments, setFlightComments] = useState<CourseComment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [coursePhotos, setCoursePhotos] = useState<CoursePhoto[]>([]);
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
 
   const mapRef = useRef<MapRef>(null);
 
@@ -57,20 +62,13 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   const {
     kmMarkers,
     visibleKmMarkers,
-    lastShownKm,
     setKmMarkers,
     resetKmMarkers,
     showKmMarker,
-    hideAllKmMarkers,
   } = useKmMarkers();
 
-  const {
-    userLocation,
-    locationButtonState,
-    findMyLocation,
-    resetLocation,
-    setLocationButtonState,
-  } = useLocationTracking(mapRef);
+  const { userLocation, locationButtonState, findMyLocation, resetLocation } =
+    useLocationTracking(mapRef);
 
   const {
     isAnimating,
@@ -79,7 +77,6 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     savedProgress,
     startTrailAnimation,
     showFullRoute,
-    stopAnimation,
   } = useTrailAnimation(
     mapRef,
     trailData,
@@ -89,98 +86,134 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   );
 
   // 가장 가까운 경로 지점 찾기 함수
-  const findNearestRoutePoint = useCallback((clickLng: number, clickLat: number) => {
-    if (!trailData?.geoJSON?.features?.[0]?.geometry?.coordinates) return null;
+  const findNearestRoutePoint = useCallback(
+    (clickLng: number, clickLat: number) => {
+      if (!trailData?.geoJSON?.features?.[0]?.geometry?.coordinates)
+        return null;
 
-    const coordinates = trailData.geoJSON.features[0].geometry.coordinates;
-    let minDistance = Infinity;
-    let nearestPoint: { lng: number; lat: number; distanceMarker: number } | null = null;
-    let nearestIndex = -1;
-    let cumulativeDistance = 0;
+      const coordinates = trailData.geoJSON.features[0].geometry.coordinates;
+      let minDistance = Infinity;
+      let nearestLng = 0;
+      let nearestLat = 0;
+      let nearestDistanceMarker = 0;
+      let found = false;
+      let nearestIndex = -1;
+      let cumulativeDistance = 0;
 
-    coordinates.forEach((coord: number[], index: number) => {
-      const [lng, lat] = coord;
-      
-      // Haversine 공식을 사용한 거리 계산
-      const R = 6371000; // 지구 반지름 (미터)
-      const dLat = ((lat - clickLat) * Math.PI) / 180;
-      const dLng = ((lng - clickLng) * Math.PI) / 180;
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos((clickLat * Math.PI) / 180) *
-          Math.cos((lat * Math.PI) / 180) *
-          Math.sin(dLng / 2) *
-          Math.sin(dLng / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const distance = R * c;
+      coordinates.forEach((coord: number[], index: number) => {
+        const [lng, lat] = coord;
 
-      // 이전 지점과의 거리 계산하여 누적 거리 업데이트
-      if (index > 0) {
-        const [prevLng, prevLat] = coordinates[index - 1];
-        const segmentDistance = R * 2 * Math.asin(Math.sqrt(
-          Math.sin(((lat - prevLat) * Math.PI) / 180 / 2) ** 2 +
-          Math.cos((prevLat * Math.PI) / 180) *
+        // Haversine 공식을 사용한 거리 계산
+        const R = 6371000; // 지구 반지름 (미터)
+        const dLat = ((lat - clickLat) * Math.PI) / 180;
+        const dLng = ((lng - clickLng) * Math.PI) / 180;
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos((clickLat * Math.PI) / 180) *
             Math.cos((lat * Math.PI) / 180) *
-            Math.sin(((lng - prevLng) * Math.PI) / 180 / 2) ** 2
-        ));
-        cumulativeDistance += segmentDistance;
-      }
+            Math.sin(dLng / 2) *
+            Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
 
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearestPoint = { lng, lat, distanceMarker: cumulativeDistance / 1000 }; // km로 변환
-        nearestIndex = index;
-      }
-    });
+        // 이전 지점과의 거리 계산하여 누적 거리 업데이트
+        if (index > 0) {
+          const [prevLng, prevLat] = coordinates[index - 1];
+          const segmentDistance =
+            R *
+            2 *
+            Math.asin(
+              Math.sqrt(
+                Math.sin(((lat - prevLat) * Math.PI) / 180 / 2) ** 2 +
+                  Math.cos((prevLat * Math.PI) / 180) *
+                    Math.cos((lat * Math.PI) / 180) *
+                    Math.sin(((lng - prevLng) * Math.PI) / 180 / 2) ** 2,
+              ),
+            );
+          cumulativeDistance += segmentDistance;
+        }
 
-    return nearestPoint ? {
-      lng: nearestPoint.lng,
-      lat: nearestPoint.lat,
-      distanceMarker: nearestPoint.distanceMarker,
-      index: nearestIndex
-    } : null;
-  }, [trailData]);
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearestLng = lng;
+          nearestLat = lat;
+          nearestDistanceMarker = cumulativeDistance / 1000; // km
+          found = true;
+          nearestIndex = index;
+        }
+      });
+
+      if (found) {
+        return {
+          lng: nearestLng,
+          lat: nearestLat,
+          distanceMarker: nearestDistanceMarker,
+          index: nearestIndex,
+        };
+      }
+      return null;
+    },
+    [trailData],
+  );
 
   // 지도 클릭 핸들러
-  const handleMapClick = useCallback((event: MapMouseEvent) => {
-    if (isAnimating) return; // 애니메이션 중에는 클릭 비활성화
+  const handleMapClick = useCallback(
+    (event: MapMouseEvent) => {
+      if (isAnimating) return; // 애니메이션 중에는 클릭 비활성화
 
-    const { lng, lat } = event.lngLat;
-    const nearestPoint = findNearestRoutePoint(lng, lat);
+      const { lng, lat } = event.lngLat;
+      const nearestPoint = findNearestRoutePoint(lng, lat);
 
-    if (nearestPoint) {
-      setClickedPoint({
-        lng: nearestPoint.lng,
-        lat: nearestPoint.lat,
-        distanceMarker: nearestPoint.distanceMarker
-      });
-      setShowCommentModal(true);
-    }
-  }, [isAnimating, findNearestRoutePoint]);
+      if (nearestPoint) {
+        setClickedPoint({
+          lng: nearestPoint.lng,
+          lat: nearestPoint.lat,
+          distanceMarker: nearestPoint.distanceMarker,
+        });
+        setShowCommentModal(true);
+      }
+    },
+    [isAnimating, findNearestRoutePoint],
+  );
 
   // 댓글 로드 함수
   const loadComments = useCallback(async () => {
     if (!courseId) return;
-    
+
     try {
       setLoadingComments(true);
       const [allComments, flightOnlyComments] = await Promise.all([
         getCourseComments(courseId),
-        getFlightModeComments(courseId)
+        getFlightModeComments(courseId),
       ]);
-      
+
       setComments(allComments);
       setFlightComments(flightOnlyComments);
     } catch (error) {
-      console.error('댓글 로드 실패:', error);
+      console.error("댓글 로드 실패:", error);
     } finally {
       setLoadingComments(false);
     }
   }, [courseId]);
 
+  // 사진 로드 함수
+  const loadCoursePhotos = useCallback(async () => {
+    if (!courseId) return;
+
+    try {
+      setLoadingPhotos(true);
+      const photos = await getCoursePhotos(courseId);
+      setCoursePhotos(photos);
+    } catch (error) {
+      console.error("코스 사진 로드 실패:", error);
+    } finally {
+      setLoadingPhotos(false);
+    }
+  }, [courseId]);
+
   // 댓글 추가 성공 핸들러
   const handleCommentAdded = useCallback(() => {
-    setCommentsVersion(prev => prev + 1);
+    setCommentsVersion((prev) => prev + 1);
     loadComments(); // 댓글 목록 새로고침
   }, [loadComments]);
 
@@ -206,11 +239,13 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     }
   }, [trailData, showFullRoute, isAnimating]);
 
-  // 애니메이션 진행률에 따른 부분 GeoJSON 생성 (gpx_data 기반)
+  // 애니메이션 진행률에 따른 부분 GeoJSON 생성 (geoJSON 기반)
   const getAnimatedGeoJSON = useCallback(() => {
-    if (!trailData?.course?.gpx_data?.points) return null;
+    if (!trailData?.geoJSON?.features?.[0]?.geometry?.coordinates) return null;
 
-    const coordinates = trailData.course.gpx_data.points;
+    const coordinates = trailData.geoJSON.features[0].geometry.coordinates.map(
+      (c) => ({ lng: c[0], lat: c[1], ele: (c[2] as number | undefined) || 0 }),
+    );
 
     if (!isAnimating || animationProgress === 1) {
       return {
@@ -373,12 +408,13 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     }
   }, [courseId]);
 
-  // 댓글 로드
+  // 댓글 및 사진 로드
   useEffect(() => {
     if (courseId) {
       loadComments();
+      loadCoursePhotos();
     }
-  }, [courseId, loadComments]);
+  }, [courseId, loadComments, loadCoursePhotos]);
 
   // 트레일 라인 스타일
   const trailLineLayer = {
@@ -561,7 +597,7 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
                 {/* 댓글 말풍선 마커들 */}
                 {(isAnimating ? flightComments : comments)
-                  .filter(comment => comment.latitude && comment.longitude)
+                  .filter((comment) => comment.latitude && comment.longitude)
                   .map((comment) => (
                     <Marker
                       key={comment.id}
@@ -579,7 +615,7 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                         <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3 relative">
                           {/* 말풍선 꼬리 */}
                           <div className="absolute bottom-0 left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white transform translate-y-full"></div>
-                          
+
                           {/* 댓글 내용 */}
                           <div className="space-y-1">
                             <div className="flex items-center justify-between">
@@ -594,12 +630,15 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                               {comment.message}
                             </p>
                             <div className="text-xs text-gray-400">
-                              {new Date(comment.created_at).toLocaleDateString('ko-KR', {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
+                              {new Date(comment.created_at).toLocaleDateString(
+                                "ko-KR",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )}
                             </div>
                           </div>
                         </div>
@@ -614,15 +653,21 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
       {/* 코스 정보 Card */}
       <CourseInfo trailData={trailData} savedProgress={savedProgress} />
-      
+
       {/* 댓글 목록 */}
       <div className="mt-4">
-        <CommentList 
-          comments={comments} 
-          loading={loadingComments}
+        <CommentList comments={comments} loading={loadingComments} />
+      </div>
+
+      {/* 코스 갤러리 */}
+      <div className="mt-4">
+        <CourseGallery
+          courseId={courseId}
+          photos={coursePhotos}
+          loading={loadingPhotos}
         />
       </div>
-      
+
       {/* 댓글 입력 모달 */}
       <CommentModal
         isOpen={showCommentModal}

@@ -34,9 +34,11 @@ export interface CourseComment {
 /**
  * 새 댓글을 등록합니다
  */
-export async function createComment(data: CreateCommentData): Promise<CourseComment> {
+export async function createComment(
+  data: CreateCommentData,
+): Promise<CourseComment> {
   const { data: comment, error } = await supabase
-    .from('course_comments')
+    .from("course_comments")
     .insert({
       course_id: data.course_id,
       author_nickname: data.author_nickname,
@@ -52,8 +54,8 @@ export async function createComment(data: CreateCommentData): Promise<CourseComm
     .single();
 
   if (error) {
-    console.error('Error creating comment:', error);
-    throw new Error('댓글 등록에 실패했습니다.');
+    console.error("Error creating comment:", error);
+    throw new Error("댓글 등록에 실패했습니다.");
   }
 
   return comment;
@@ -62,18 +64,20 @@ export async function createComment(data: CreateCommentData): Promise<CourseComm
 /**
  * 코스의 댓글 목록을 가져옵니다
  */
-export async function getCourseComments(courseId: string): Promise<CourseComment[]> {
+export async function getCourseComments(
+  courseId: string,
+): Promise<CourseComment[]> {
   const { data: comments, error } = await supabase
-    .from('course_comments')
-    .select('*')
-    .eq('course_id', courseId)
-    .eq('is_deleted', false)
-    .eq('hidden_by_admin', false)
-    .order('distance_marker', { ascending: true });
+    .from("course_comments")
+    .select("*")
+    .eq("course_id", courseId)
+    .eq("is_deleted", false)
+    .eq("hidden_by_admin", false)
+    .order("distance_marker", { ascending: true });
 
   if (error) {
-    console.error('Error fetching comments:', error);
-    throw new Error('댓글을 불러오는데 실패했습니다.');
+    console.error("Error fetching comments:", error);
+    throw new Error("댓글을 불러오는데 실패했습니다.");
   }
 
   return comments || [];
@@ -82,19 +86,21 @@ export async function getCourseComments(courseId: string): Promise<CourseComment
 /**
  * 비행모드에서 표시할 댓글만 가져옵니다
  */
-export async function getFlightModeComments(courseId: string): Promise<CourseComment[]> {
+export async function getFlightModeComments(
+  courseId: string,
+): Promise<CourseComment[]> {
   const { data: comments, error } = await supabase
-    .from('course_comments')
-    .select('*')
-    .eq('course_id', courseId)
-    .eq('is_deleted', false)
-    .eq('hidden_by_admin', false)
-    .eq('is_visible_in_flight', true)
-    .order('distance_marker', { ascending: true });
+    .from("course_comments")
+    .select("*")
+    .eq("course_id", courseId)
+    .eq("is_deleted", false)
+    .eq("hidden_by_admin", false)
+    .eq("is_visible_in_flight", true)
+    .order("distance_marker", { ascending: true });
 
   if (error) {
-    console.error('Error fetching flight mode comments:', error);
-    throw new Error('비행모드 댓글을 불러오는데 실패했습니다.');
+    console.error("Error fetching flight mode comments:", error);
+    throw new Error("비행모드 댓글을 불러오는데 실패했습니다.");
   }
 
   return comments || [];

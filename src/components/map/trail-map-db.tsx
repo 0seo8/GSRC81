@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Flag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { Course, CoursePoint } from "@/types";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import {
@@ -15,7 +14,7 @@ import {
   GpxCoordinate,
   TrailGeoJSON,
 } from "./trail-map/types";
-import { INITIAL_VIEW_STATE, MAP_STYLES } from "./trail-map/constants";
+import { INITIAL_VIEW_STATE } from "./trail-map/constants";
 import { calculateStats } from "./trail-map/utils";
 import { useTrailAnimation } from "./trail-map/hooks/use-trail-animation";
 import { useLocationTracking } from "./trail-map/hooks/use-location-tracking";
@@ -37,20 +36,13 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   const {
     kmMarkers,
     visibleKmMarkers,
-    lastShownKm,
     setKmMarkers,
     resetKmMarkers,
     showKmMarker,
-    hideAllKmMarkers,
   } = useKmMarkers();
 
-  const {
-    userLocation,
-    locationButtonState,
-    findMyLocation,
-    resetLocation,
-    setLocationButtonState,
-  } = useLocationTracking(mapRef);
+  const { userLocation, locationButtonState, findMyLocation, resetLocation } =
+    useLocationTracking(mapRef);
 
   const {
     isAnimating,
@@ -59,8 +51,13 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     savedProgress,
     startTrailAnimation,
     showFullRoute,
-    stopAnimation,
-  } = useTrailAnimation(mapRef, trailData, showKmMarker, resetKmMarkers);
+  } = useTrailAnimation(
+    mapRef,
+    trailData,
+    showKmMarker,
+    resetKmMarkers,
+    setKmMarkers,
+  );
 
   // 위치/경로보기 버튼 클릭 핸들러
   const handleLocationRouteButton = useCallback(() => {
@@ -251,12 +248,12 @@ const TrailMapDB: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
         // 초기 중심점 설정 (나중에 fitBounds로 덮어씌워짐)
         const bounds = data.stats.bounds;
-        const centerLon = (bounds.minLon + bounds.maxLon) / 2;
+        const centerLon = (bounds.minLng + bounds.maxLng) / 2;
         const centerLat = (bounds.minLat + bounds.maxLat) / 2;
 
         // 경로 범위에 맞는 대략적인 줌 레벨 계산
         const latRange = bounds.maxLat - bounds.minLat;
-        const lonRange = bounds.maxLon - bounds.minLon;
+        const lonRange = bounds.maxLng - bounds.minLng;
         const maxRange = Math.max(latRange, lonRange);
 
         let initialZoom = 10;

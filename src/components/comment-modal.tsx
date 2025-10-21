@@ -31,7 +31,7 @@ export function CommentModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!position || !message.trim() || !nickname.trim()) return;
 
     setIsSubmitting(true);
@@ -47,7 +47,7 @@ export function CommentModal({
       };
 
       await createComment(commentData);
-      
+
       // 성공적으로 등록된 후 처리
       setMessage("");
       setNickname("");

@@ -22,12 +22,13 @@ export function CourseDrawer({
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
 
   const isOpen = selectedCourses.length > 0 || selectedCourse !== null;
-  const courses =
-    selectedCourses.length > 0
+  const courses = useMemo(() => {
+    return selectedCourses.length > 0
       ? selectedCourses
       : selectedCourse
         ? [selectedCourse]
         : [];
+  }, [selectedCourses, selectedCourse]);
 
   // 카테고리별로 코스들을 그룹화
   const categorizedCourses = useMemo(() => {
@@ -91,7 +92,7 @@ export function CourseDrawer({
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
             onDragStart={() => setIsDragging(true)}
-            onDragEnd={(_, info) => {
+            onDragEnd={(event, info) => {
               setIsDragging(false);
               // 드래그 속도나 거리가 충분하면 드로어를 닫음
               if (info.velocity.y > 500 || info.offset.y > 100) {
@@ -99,7 +100,7 @@ export function CourseDrawer({
               }
             }}
             className="absolute inset-0 bg-white z-30 flex flex-col drawer-safe-bottom cursor-grab active:cursor-grabbing"
-            onClick={(e) => {
+            onClick={() => {
               // 드래그 중이 아닐 때만 클릭으로 닫기
               if (!isDragging) {
                 onClose();

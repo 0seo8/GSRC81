@@ -1,4 +1,4 @@
-import { Route, Timer, Mountain } from "lucide-react";
+import { Route, Timer, Mountain, User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrailData } from "../types";
 import { formatTime } from "../utils";
@@ -10,83 +10,94 @@ interface CourseInfoProps {
 }
 
 export const CourseInfo = ({ trailData, savedProgress }: CourseInfoProps) => {
+  // 난이도 한글 변환
+  const getDifficultyText = (difficulty: string) => {
+    switch (difficulty.toLowerCase()) {
+      case "easy":
+        return "쉬움";
+      case "medium":
+        return "보통";
+      case "hard":
+        return "어려움";
+      default:
+        return difficulty;
+    }
+  };
+
   return (
-    <Card className="mt-4 py-6">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-gray-800">
+    <Card className="mt-4">
+      <CardContent className="p-6">
+        {/* 코스 제목과 작성자 */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900">
             {trailData.course.title}
-          </CardTitle>
-
-          {/* 속도 설정 및 진행률 표시 (개발용) */}
-          <div className="text-xs text-gray-500 text-right">
-            <div>속도: {FLIGHT_CONFIG.BASE_DURATION_PER_POINT}ms/pt</div>
-            {savedProgress > 0 && (
-              <div>저장됨: {(savedProgress * 100).toFixed(0)}%</div>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent>
-        {/* 첫 번째 줄: 거리, 시간 */}
-        <div className="grid grid-cols-2 gap-6 mb-4">
-          <div className="flex items-center gap-3">
-            <Route className="w-5 h-5 text-blue-600" />
-            <div>
-              <div className="font-semibold text-gray-800 text-base">
-                {trailData.stats.totalDistance.toFixed(1)} km
-              </div>
-              <div className="text-sm text-gray-500">거리</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Timer className="w-5 h-5 text-green-600" />
-            <div>
-              <div className="font-semibold text-gray-800 text-base">
-                {formatTime(trailData.stats.estimatedTime)}
-              </div>
-              <div className="text-sm text-gray-500">예상 시간</div>
-            </div>
+          </h2>
+          <div className="flex items-center text-sm text-gray-600">
+            <User className="w-4 h-4 mr-1" />
+            <span>BY GSRC81</span>
           </div>
         </div>
 
-        {/* 두 번째 줄: 고도, 난이도 */}
-        <div className="grid grid-cols-2 gap-6 mb-4">
-          <div className="flex items-center gap-3">
-            <Mountain className="w-5 h-5 text-orange-600" />
-            <div>
-              <div className="font-semibold text-gray-800 text-base">
-                +{trailData.stats.elevationGain.toFixed(0)}m
-              </div>
-              <div className="text-sm text-gray-500">고도 상승</div>
+        {/* 거리/시간/고도/난이도 4컬럼 */}
+        <div className="grid grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="text-center">
+            <div className="text-sm text-gray-600 mb-1">거리</div>
+            <div className="text-lg font-semibold text-gray-900">
+              {trailData.stats.totalDistance.toFixed(0)}km
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-5 h-5 rounded-full ${
-                trailData.course.difficulty === "easy"
-                  ? "bg-green-500"
-                  : trailData.course.difficulty === "medium"
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
-              }`}
-            />
-            <div>
-              <div className="font-semibold text-gray-800 text-base capitalize">
-                {trailData.stats.difficulty}
-              </div>
-              <div className="text-sm text-gray-500">난이도</div>
+          <div className="text-center">
+            <div className="text-sm text-gray-600 mb-1">시간</div>
+            <div className="text-lg font-semibold text-gray-900">
+              {formatTime(trailData.stats.estimatedTime)}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-gray-600 mb-1">고도</div>
+            <div className="text-lg font-semibold text-gray-900">
+              {trailData.stats.elevationGain.toFixed(0)}m
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-gray-600 mb-1">난이도</div>
+            <div className="text-lg font-semibold text-gray-900">
+              {getDifficultyText(trailData.stats.difficulty)}
             </div>
           </div>
         </div>
 
         {/* 코스 설명 */}
-        {trailData.course.description && (
-          <div className="pt-4 border-t border-gray-200">
-            <p className="text-gray-700 text-sm leading-relaxed">
-              {trailData.course.description}
-            </p>
+        <div className="mb-6">
+          {trailData.course.description ? (
+            <div className="space-y-3">
+              <p className="text-gray-700 leading-relaxed text-base">
+                {trailData.course.description}
+              </p>
+
+              {/* 추가 안내 정보 (PDF 디자인 기반) */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-700 leading-relaxed">
+                  러닝 전 다양한 준비운동을 배우고, 나에게 맞는 조를 선택해서
+                  뛰어봐요! 모두 정기런에서 만나요!
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <p className="text-gray-600 text-sm">
+                이 코스에 대한 상세 정보가 곧 업데이트됩니다.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* 개발용 정보 (개발 환경에서만 표시) */}
+        {process.env.NODE_ENV === "development" && (
+          <div className="text-xs text-gray-400 border-t pt-4">
+            <div>속도: {FLIGHT_CONFIG.BASE_DURATION_PER_POINT}ms/pt</div>
+            {savedProgress > 0 && (
+              <div>저장된 진행률: {(savedProgress * 100).toFixed(0)}%</div>
+            )}
           </div>
         )}
       </CardContent>

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const commentBubbleVariants = cva(
   "comment-bubble p-2 max-w-[221px] transition-all duration-200",
@@ -45,9 +46,11 @@ const CommentBubble = React.forwardRef<HTMLDivElement, CommentBubbleProps>(
         {/* 사용자 정보 */}
         <div className="flex items-center space-x-1 mb-1">
           {avatar && (
-            <img
+            <Image
               src={avatar}
               alt={user}
+              width={24}
+              height={24}
               className="w-6 h-6 rounded-full object-cover"
             />
           )}

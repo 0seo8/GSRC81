@@ -99,7 +99,7 @@ const MapboxMapComponent = function MapboxMap({
                     ["get", "name"],
                   ]);
                 }
-              } catch (error) {}
+              } catch {}
             }
           });
         };

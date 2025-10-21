@@ -88,7 +88,7 @@ export function MarkerSkeleton({
     return () => {
       newMarkers.forEach((marker) => marker.remove());
     };
-  }, [map, isLoading, positions]); // skeletonMarkers를 의존성에서 제외
+  }, [map, isLoading, positions, skeletonMarkers]);
 
   return null;
 }

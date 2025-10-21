@@ -2,11 +2,10 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { MapRef } from "react-map-gl/mapbox";
 import { TrailData, GpxCoordinate, KmMarker } from "../types";
 import { FLIGHT_CONFIG } from "../constants";
-import { calculateDistance, calculateKmMarkers } from "../utils";
-import { CoursePoint } from "@/types";
+import { calculateDistance } from "../utils";
 
 export const useTrailAnimation = (
-  mapRef: React.RefObject<MapRef>,
+  mapRef: React.RefObject<MapRef | null>,
   trailData: TrailData | null,
   onKmMarkerShow: (km: number) => void,
   onResetKmMarkers: () => void,
@@ -46,14 +45,7 @@ export const useTrailAnimation = (
         ele: coord[2] || 0,
       }));
     }
-    // 2순위: 원본 gpx_data.points에서 직접 추출
-    else if (trailData.course.gpx_data?.points) {
-      points = trailData.course.gpx_data.points.map((point) => ({
-        lng: point.lng,
-        lat: point.lat,
-        ele: point.ele || 0,
-      }));
-    }
+    // 2순위는 제거 - Course 타입에 gpx_data 속성이 없음
     // 3순위 (레거시): gpx_coordinates 파싱
     else if (trailData.course.gpx_coordinates) {
       try {
@@ -284,7 +276,7 @@ export const useTrailAnimation = (
       }
     }
     setIsAnimating(false);
-  }, [animationProgress]);
+  }, [animationProgress, mapRef]);
 
   return {
     isAnimating,

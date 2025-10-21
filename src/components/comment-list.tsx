@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { MessageSquare, MapPin, User } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { CourseComment } from "@/lib/comments";
+import Image from "next/image";
 
 interface CommentListProps {
   comments: CourseComment[];
@@ -57,9 +58,11 @@ export function CommentList({ comments, loading = false }: CommentListProps) {
                 {/* 아바타 */}
                 <div className="flex-shrink-0">
                   {comment.avatar_url ? (
-                    <img
+                    <Image
                       src={comment.avatar_url}
                       alt={comment.author_nickname}
+                      width={40}
+                      height={40}
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (
@@ -84,13 +87,16 @@ export function CommentList({ comments, loading = false }: CommentListProps) {
                       )}
                     </div>
                     <time className="text-xs text-gray-400">
-                      {new Date(comment.created_at).toLocaleDateString('ko-KR', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                      {new Date(comment.created_at).toLocaleDateString(
+                        "ko-KR",
+                        {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )}
                     </time>
                   </div>
 

@@ -103,14 +103,18 @@ export const getElevationGain = (course: CourseV2): number => {
 };
 
 // 레거시 호환 변환 함수
-export const convertToLegacyCourse = (
-  course: CourseV2,
-): Record<string, unknown> => {
+import type { Course } from "@/types";
+
+export const convertToLegacyCourse = (course: CourseV2): Course => {
   const [startLat, startLng] = extractStartPoint(course);
   const [endLat, endLng] = extractEndPoint(course);
 
-  return {
-    ...course,
+  const legacy: Course = {
+    id: course.id,
+    title: course.title,
+    description: course.description,
+    gpx_url: course.gpx_data.metadata?.gpxUrl,
+    gpx_coordinates: JSON.stringify(course.gpx_data.points),
     start_latitude: startLat,
     start_longitude: startLng,
     end_latitude: endLat,
@@ -118,9 +122,15 @@ export const convertToLegacyCourse = (
     distance_km: course.gpx_data.stats.totalDistance,
     avg_time_min: course.gpx_data.stats.estimatedDuration,
     elevation_gain: course.gpx_data.stats.elevationGain,
-    gpx_coordinates: JSON.stringify(course.gpx_data.points),
+    difficulty: course.difficulty,
     nearest_station: course.gpx_data.metadata?.nearestStation,
+    cover_image_url: course.cover_image_url,
+    is_active: course.is_active,
+    created_at: course.created_at,
+    updated_at: course.updated_at,
   };
+
+  return legacy;
 };
 
 // 난이도별 컬러 (다크 모던 테마)

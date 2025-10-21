@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { MapRef } from "react-map-gl/mapbox";
 import { UserLocation, LocationButtonState } from "../types";
 
-export const useLocationTracking = (mapRef: React.RefObject<MapRef>) => {
+export const useLocationTracking = (mapRef: React.RefObject<MapRef | null>) => {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationButtonState, setLocationButtonState] =
     useState<LocationButtonState>("location");

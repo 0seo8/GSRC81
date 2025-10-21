@@ -1,10 +1,10 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 
-export default function VerifyPage() {
+function VerifyContent() {
   const params = useSearchParams();
   const router = useRouter();
   const kakaoUserId = params.get("uid");
@@ -124,5 +124,24 @@ export default function VerifyPage() {
       {/* Bottom Safe Area */}
       <div className="h-8"></div>
     </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-black text-lg font-semibold tracking-wide mb-4">
+              GSRC81 MAPS
+            </h1>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto"></div>
+          </div>
+        </div>
+      }
+    >
+      <VerifyContent />
+    </Suspense>
   );
 }

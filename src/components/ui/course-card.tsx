@@ -45,7 +45,6 @@ const CourseCard = React.forwardRef<HTMLDivElement, CourseCardProps>(
       className,
       category,
       size,
-      rounded,
       title,
       distance,
       difficulty,

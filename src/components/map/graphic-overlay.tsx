@@ -27,7 +27,6 @@ export function GraphicOverlay({
       const zoom = map.getZoom();
       const center = map.getCenter();
       const bearing = map.getBearing();
-      const pitch = map.getPitch();
 
       // 기준점 (은평구 중심) 대비 계산
       const baseZoom = 12;
