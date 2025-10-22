@@ -50,6 +50,7 @@ export function CategoryFullScreen({
     categories.findIndex((cat) => cat.key === initialCategory) || 0,
   );
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   const currentCategory = categories[currentCategoryIndex];
   const currentDesign =
@@ -105,6 +106,12 @@ export function CategoryFullScreen({
   ) => {
     const swipeThreshold = 50;
 
+    // 드래그 거리가 임계값보다 작으면 클릭으로 간주하여 스와이프 무시
+    const totalDistance = Math.sqrt(info.offset.x ** 2 + info.offset.y ** 2);
+    if (totalDistance < swipeThreshold) {
+      return; // 클릭으로 간주, 스와이프 처리하지 않음
+    }
+
     // 좌우 스와이프 - 카테고리 변경
     if (Math.abs(info.offset.x) > Math.abs(info.offset.y)) {
       if (info.offset.x > swipeThreshold) {
@@ -145,12 +152,16 @@ export function CategoryFullScreen({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col max-h-[85vh]"
+            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col max-h-[85vh] rounded-t-[45px]"
             style={{ backgroundColor: currentDesign.backgroundColor }}
             onClick={(e) => e.stopPropagation()}
             drag
             dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-            onDragEnd={handleSwipe}
+            onDragStart={() => setIsDragging(true)}
+            onDragEnd={(e, info) => {
+              setIsDragging(false);
+              handleSwipe(e, info);
+            }}
           >
             {/* 헤더 */}
             <div className="p-4 pb-2">
@@ -219,7 +230,11 @@ export function CategoryFullScreen({
                       }}
                       drag={relativeIndex === 0 ? "y" : false} // 맨 앞 카드만 드래그 가능
                       dragConstraints={{ top: -100, bottom: 100 }}
-                      onDragEnd={handleSwipe}
+                      onDragStart={() => setIsDragging(true)}
+                      onDragEnd={(e, info) => {
+                        setIsDragging(false);
+                        handleSwipe(e, info);
+                      }}
                       className="absolute left-0 right-0 rounded-[45px] p-6 cursor-pointer"
                       style={{
                         backgroundColor: cardColor,
@@ -229,7 +244,12 @@ export function CategoryFullScreen({
                         boxShadow: `0 ${4 + relativeIndex * 2}px ${12 + relativeIndex * 4}px rgba(0,0,0,0.15)`,
                         transform: `scale(${scale})`,
                       }}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation(); // 이벤트 전파 방지
+
+                        // 드래그 중이면 클릭 이벤트 무시
+                        if (isDragging) return;
+
                         if (relativeIndex === 0) {
                           onCourseClick(course.id);
                         } else {
