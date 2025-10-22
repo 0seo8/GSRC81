@@ -25,11 +25,13 @@ export async function GET(req: Request) {
     });
 
     const tokenData = await tokenRes.json();
+    console.log("Token response:", JSON.stringify(tokenData, null, 2));
 
     const kakaoAccessToken = tokenData.access_token;
 
     if (!kakaoAccessToken) {
       console.error("No access token received");
+      console.error("Token data:", JSON.stringify(tokenData, null, 2));
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=no_token`,
       );
@@ -40,11 +42,13 @@ export async function GET(req: Request) {
       headers: { Authorization: `Bearer ${kakaoAccessToken}` },
     });
     const userData = await userRes.json();
+    console.log("Kakao user data:", JSON.stringify(userData, null, 2));
 
     const { id } = userData;
 
     if (!id) {
       console.error("No user ID found in Kakao response");
+      console.error("Full userData:", JSON.stringify(userData, null, 2));
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=invalid_user`,
       );
