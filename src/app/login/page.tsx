@@ -23,7 +23,7 @@ export default function LoginPage() {
         <div className="mb-16">
           <div className="text-center">
             <h2 className="text-black text-4xl sm:text-5xl font-black leading-tight mb-6">
-              <div>RUN</div>
+              <div>RUNING을 해보자구 그러자구 할수 있다구</div>
               <div>OUR ROUTE,</div>
               <div>MAKE</div>
               <div>YOUR STORY.</div>
