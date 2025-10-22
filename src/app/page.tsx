@@ -16,7 +16,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#F5F5F5] flex flex-col justify-center items-center">
       <div className="mb-4">
         <h1 className="text-black text-xl font-semibold tracking-wide text-center">
-          GSRC81 MAPS
+          GSRC81 MAPS 테스트를 위한 작업 변경사항
         </h1>
       </div>
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
