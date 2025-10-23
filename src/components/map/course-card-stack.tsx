@@ -122,7 +122,10 @@ const CourseCardStackComponent = function CourseCardStack({
               }}
               onMouseEnter={() => setHoveredCardId(course.id)}
               onMouseLeave={() => setHoveredCardId(null)}
-              onClick={() => onCourseClick(course.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onCourseClick(course.id);
+              }}
             >
               <div className="flex items-center justify-between h-full">
                 {/* Left: Course Info */}
