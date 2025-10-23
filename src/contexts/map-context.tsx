@@ -34,27 +34,27 @@ function mapReducer(state: MapState, action: MapAction): MapState {
   switch (action.type) {
     case "SET_CATEGORY":
       return { ...state, currentCategory: action.payload };
-    
+
     case "ADD_COURSES":
-      const existingIds = new Set(state.allCourses.map(c => c.id));
-      const newCourses = action.payload.filter(c => !existingIds.has(c.id));
-      return { 
-        ...state, 
-        allCourses: [...state.allCourses, ...newCourses] 
+      const existingIds = new Set(state.allCourses.map((c) => c.id));
+      const newCourses = action.payload.filter((c) => !existingIds.has(c.id));
+      return {
+        ...state,
+        allCourses: [...state.allCourses, ...newCourses],
       };
-    
+
     case "SET_FULLSCREEN":
       return { ...state, isFullscreenOpen: action.payload };
-    
+
     case "SET_SELECTED_COURSE":
       return { ...state, selectedCourse: action.payload };
-    
+
     case "SET_SELECTED_COURSES":
       return { ...state, selectedCourses: action.payload };
-    
+
     case "SET_LOADING":
       return { ...state, isLoading: action.payload };
-    
+
     case "RESET_SELECTION":
       return {
         ...state,
@@ -62,7 +62,7 @@ function mapReducer(state: MapState, action: MapAction): MapState {
         selectedCourses: [],
         isFullscreenOpen: false,
       };
-    
+
     default:
       return state;
   }
@@ -87,7 +87,7 @@ export function MapProvider({ children, initialCourses }: MapProviderProps) {
   });
 
   const displayCourses = state.allCourses.filter(
-    course => (course.category_key || "jingwan") === state.currentCategory
+    (course) => (course.category_key || "jingwan") === state.currentCategory,
   );
 
   const value: MapContextValue = {

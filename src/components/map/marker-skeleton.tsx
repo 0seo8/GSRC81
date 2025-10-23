@@ -21,7 +21,7 @@ export function MarkerSkeleton({
 
   useEffect(() => {
     // 기존 마커들 정리
-    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
     // 로딩 상태가 아니거나 조건이 맞지 않으면 early return
@@ -84,7 +84,7 @@ export function MarkerSkeleton({
 
     // Cleanup function
     return () => {
-      markersRef.current.forEach(marker => marker.remove());
+      markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
     };
   }, [map, isLoading, positions]);
@@ -92,7 +92,7 @@ export function MarkerSkeleton({
   // 컴포넌트 언마운트시 정리
   useEffect(() => {
     return () => {
-      markersRef.current.forEach(marker => marker.remove());
+      markersRef.current.forEach((marker) => marker.remove());
     };
   }, []);
 

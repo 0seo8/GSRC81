@@ -33,20 +33,23 @@ export function MapClient({ courses, categories }: MapClientProps) {
     useState<string>("jingwan");
 
   // 필요한 카테고리 코스만 동적 로드
-  const loadCategoryIfNeeded = useCallback(async (categoryKey: string) => {
-    const hasCategory = allCourses.some(course => 
-      (course.category_key || "jingwan") === categoryKey
-    );
-    
-    if (!hasCategory) {
-      try {
-        const categoryCourses = await getCourses(categoryKey);
-        setAllCourses(prev => [...prev, ...categoryCourses]);
-      } catch (error) {
-        console.error(`Failed to load ${categoryKey} courses:`, error);
+  const loadCategoryIfNeeded = useCallback(
+    async (categoryKey: string) => {
+      const hasCategory = allCourses.some(
+        (course) => (course.category_key || "jingwan") === categoryKey,
+      );
+
+      if (!hasCategory) {
+        try {
+          const categoryCourses = await getCourses(categoryKey);
+          setAllCourses((prev) => [...prev, ...categoryCourses]);
+        } catch (error) {
+          console.error(`Failed to load ${categoryKey} courses:`, error);
+        }
       }
-    }
-  }, [allCourses]);
+    },
+    [allCourses],
+  );
 
   // 지도에 표시할 코스를 현재 카테고리로 필터링
   const mapCourses = allCourses.filter(

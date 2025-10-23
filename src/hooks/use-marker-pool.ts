@@ -1,21 +1,20 @@
 import { useRef, useCallback } from "react";
-import { type Map } from "mapbox-gl";
 
 interface MarkerPool {
   available: HTMLElement[];
-  inUse: Map<string, HTMLElement>;
+  inUse: globalThis.Map<string, HTMLElement>;
 }
 
 export function useMarkerPool() {
   const poolRef = useRef<MarkerPool>({
     available: [],
-    inUse: new Map(),
+    inUse: new globalThis.Map(),
   });
 
   // 마커 생성 또는 재사용
   const acquireMarker = useCallback((courseId: string): HTMLElement => {
     const pool = poolRef.current;
-    
+
     // 이미 사용 중인 마커가 있으면 반환
     if (pool.inUse.has(courseId)) {
       return pool.inUse.get(courseId)!;
@@ -35,7 +34,7 @@ export function useMarkerPool() {
   const releaseMarker = useCallback((courseId: string) => {
     const pool = poolRef.current;
     const marker = pool.inUse.get(courseId);
-    
+
     if (marker) {
       // 마커 스타일 초기화
       resetMarkerStyle(marker);
@@ -47,12 +46,12 @@ export function useMarkerPool() {
   // 모든 마커 해제
   const releaseAllMarkers = useCallback(() => {
     const pool = poolRef.current;
-    
-    pool.inUse.forEach((marker, courseId) => {
+
+    pool.inUse.forEach((marker) => {
       resetMarkerStyle(marker);
       pool.available.push(marker);
     });
-    
+
     pool.inUse.clear();
   }, []);
 

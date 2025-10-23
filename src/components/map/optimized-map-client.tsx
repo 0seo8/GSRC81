@@ -22,9 +22,9 @@ interface OptimizedMapClientProps {
   categories: CourseCategory[];
 }
 
-export function OptimizedMapClient({ 
-  courses, 
-  categories 
+export function OptimizedMapClient({
+  courses,
+  categories,
 }: OptimizedMapClientProps) {
   const router = useRouter();
   const [allCourses, setAllCourses] = useState<CourseWithComments[]>(courses);
@@ -34,10 +34,12 @@ export function OptimizedMapClient({
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
 
   // 현재 카테고리의 코스만 필터링 (memoized)
-  const displayCourses = useMemo(() => 
-    allCourses.filter(course => 
-      (course.category_key || "jingwan") === currentCategory
-    ), [allCourses, currentCategory]
+  const displayCourses = useMemo(
+    () =>
+      allCourses.filter(
+        (course) => (course.category_key || "jingwan") === currentCategory,
+      ),
+    [allCourses, currentCategory],
   );
 
   const {
@@ -52,50 +54,65 @@ export function OptimizedMapClient({
   useMapBounds(map, optimisticCourses);
 
   // 카테고리별 코스 동적 로딩
-  const loadCoursesByCategory = useCallback(async (categoryKey: string) => {
-    const existingCourses = allCourses.filter(course => 
-      (course.category_key || "jingwan") === categoryKey
-    );
-    
-    if (existingCourses.length === 0) {
-      try {
-        const newCourses = await getCourses(categoryKey);
-        setAllCourses(prev => [...prev, ...newCourses]);
-      } catch (error) {
-        console.error(`Failed to load ${categoryKey} courses:`, error);
+  const loadCoursesByCategory = useCallback(
+    async (categoryKey: string) => {
+      const existingCourses = allCourses.filter(
+        (course) => (course.category_key || "jingwan") === categoryKey,
+      );
+
+      if (existingCourses.length === 0) {
+        try {
+          const newCourses = await getCourses(categoryKey);
+          setAllCourses((prev) => [...prev, ...newCourses]);
+        } catch (error) {
+          console.error(`Failed to load ${categoryKey} courses:`, error);
+        }
       }
-    }
-  }, [allCourses]);
+    },
+    [allCourses],
+  );
 
   // 마커 클릭 핸들러
-  const handleCourseClick = useCallback(async (course: CourseWithComments) => {
-    const categoryKey = course.category_key || "jingwan";
-    await loadCoursesByCategory(categoryKey);
-    setCurrentCategory(categoryKey);
-    setIsFullscreenOpen(true);
-    mapHandleCourseClick(course);
-  }, [loadCoursesByCategory, mapHandleCourseClick]);
+  const handleCourseClick = useCallback(
+    async (course: CourseWithComments) => {
+      const categoryKey = course.category_key || "jingwan";
+      await loadCoursesByCategory(categoryKey);
+      setCurrentCategory(categoryKey);
+      setIsFullscreenOpen(true);
+      mapHandleCourseClick(course);
+    },
+    [loadCoursesByCategory, mapHandleCourseClick],
+  );
 
-  const handleClusterClick = useCallback(async (coursesInCluster: CourseWithComments[]) => {
-    const categoryKey = coursesInCluster[0]?.category_key || "jingwan";
-    await loadCoursesByCategory(categoryKey);
-    setCurrentCategory(categoryKey);
-    setIsFullscreenOpen(true);
-    mapHandleClusterClick(coursesInCluster);
-  }, [loadCoursesByCategory, mapHandleClusterClick]);
+  const handleClusterClick = useCallback(
+    async (coursesInCluster: CourseWithComments[]) => {
+      const categoryKey = coursesInCluster[0]?.category_key || "jingwan";
+      await loadCoursesByCategory(categoryKey);
+      setCurrentCategory(categoryKey);
+      setIsFullscreenOpen(true);
+      mapHandleClusterClick(coursesInCluster);
+    },
+    [loadCoursesByCategory, mapHandleClusterClick],
+  );
 
   // 카드 클릭으로 코스 상세 페이지 이동
-  const handleCourseDetailNavigation = useCallback((courseId: string) => {
-    router.push(`/courses/${courseId}`);
-    setIsFullscreenOpen(false);
-    handleCloseDrawer();
-  }, [router, handleCloseDrawer]);
+  const handleCourseDetailNavigation = useCallback(
+    (courseId: string) => {
+      router.push(`/courses/${courseId}`);
+      setIsFullscreenOpen(false);
+      handleCloseDrawer();
+    },
+    [router, handleCloseDrawer],
+  );
 
   // 카테고리 변경
-  const handleCategoryChange = useCallback(async (categoryKey: string) => {
-    await loadCoursesByCategory(categoryKey);
-    setCurrentCategory(categoryKey);
-  }, [loadCoursesByCategory]);
+  const handleCategoryChange = useCallback(
+    async (categoryKey: string) => {
+      await loadCoursesByCategory(categoryKey);
+      setCurrentCategory(categoryKey);
+    },
+    [loadCoursesByCategory],
+  );
 
   // 현재 위치로 이동
   const handleCurrentLocation = useCallback(() => {
@@ -117,7 +134,7 @@ export function OptimizedMapClient({
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 300000,
-      }
+      },
     );
   }, [map]);
 
@@ -140,7 +157,10 @@ export function OptimizedMapClient({
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
-      <div className="flex-1 relative overflow-hidden" style={{ paddingTop: "4rem" }}>
+      <div
+        className="flex-1 relative overflow-hidden"
+        style={{ paddingTop: "4rem" }}
+      >
         {/* 지도 */}
         <MapboxMap
           accessToken={mapboxToken}
