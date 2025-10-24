@@ -19,7 +19,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           <div className="flex items-center space-x-4">
             <span className="text-black text-sm">MENU</span>
             <button
-              className="p-2 bg-white rounded-full shadow-lg"
+              className="p-2 bg-transparent rounded-full"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? (

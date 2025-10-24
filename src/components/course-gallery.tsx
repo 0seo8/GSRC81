@@ -40,37 +40,19 @@ export function CourseGallery({
     );
   }
 
-  if (photos.length === 0) {
-    return (
-      <Card className="p-6">
-        <div className="text-center">
-          <ImageIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-          <p className="text-lg font-medium mb-1 text-gray-500">
-            아직 사진이 없습니다
-          </p>
-          <p className="text-sm text-gray-400 mb-4">
-            이 코스의 첫 번째 사진을 공유해주세요!
-          </p>
-          <Button
-            variant="outline"
-            className="border-orange-500 text-orange-500 hover:bg-orange-50"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            사진 업로드
-          </Button>
-        </div>
-      </Card>
-    );
-  }
+  // 빈 상태는 메인 컴포넌트에서 처리
 
   return (
     <>
-      <Card className="p-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <ImageIcon className="w-5 h-5 text-gray-600" />
             <h3 className="text-lg font-semibold text-gray-900">
-              코스 갤러리 ({photos.length})
+              GSRC81 Running Crew!
             </h3>
+          </div>
+          {photos.length > 0 && (
             <Button
               size="sm"
               variant="outline"
@@ -79,9 +61,11 @@ export function CourseGallery({
               <Plus className="w-4 h-4 mr-2" />
               사진 추가
             </Button>
-          </div>
+          )}
+        </div>
 
-          {/* 사진 그리드 */}
+        {/* 사진이 있을 때 */}
+        {photos.length > 0 ? (
           <div className="grid grid-cols-2 gap-3">
             {photos.map((photo, index) => (
               <motion.div
@@ -119,17 +103,41 @@ export function CourseGallery({
               </motion.div>
             ))}
           </div>
-
-          {/* PDF에서 보이는 GSRC81 단체 사진 스타일로 예시 추가 */}
-          {photos.length === 0 && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 text-center">
-                GSRC81 멤버들과 함께한 러닝 순간들을 공유해보세요! 🏃‍♂️🏃‍♀️
-              </p>
+        ) : (
+          /* PDF 스타일 GSRC81 단체 사진 섹션 */
+          <div className="relative">
+            <Image
+              src="/images/gsrc81-group-photo.jpg"
+              alt="GSRC81 Running Crew"
+              width={800}
+              height={400}
+              className="w-full h-48 object-cover rounded-lg"
+              onError={(e) => {
+                // 이미지 로드 실패 시 대체 컨텐츠 표시
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling!.classList.remove('hidden');
+              }}
+            />
+            
+            {/* 대체 컨텐츠 */}
+            <div className="hidden w-full h-48 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg items-center justify-center">
+              <div className="text-center text-white">
+                <div className="text-2xl font-bold mb-2">GSRC81</div>
+                <div className="text-lg">Running Crew!</div>
+                <div className="text-sm mt-2 opacity-90">함께 달리며 만들어가는 우리들의 이야기</div>
+              </div>
             </div>
-          )}
-        </div>
-      </Card>
+            
+            {/* 오버레이 텍스트 */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 rounded-b-lg">
+              <div className="text-white">
+                <div className="text-lg font-bold">GSRC81</div>
+                <div className="text-sm opacity-90">Running Crew!</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* 이미지 모달 */}
       <AnimatePresence>

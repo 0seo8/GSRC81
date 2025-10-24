@@ -250,12 +250,8 @@ export function CategoryFullScreen({
                         // 드래그 중이면 클릭 이벤트 무시
                         if (isDragging) return;
 
-                        if (relativeIndex === 0) {
-                          onCourseClick(course.id);
-                        } else {
-                          // 뒤의 카드를 클릭하면 앞으로 가져오기
-                          setCurrentCardIndex(index);
-                        }
+                        // 모든 카드 클릭 시 바로 상세 페이지로 이동
+                        onCourseClick(course.id);
                       }}
                     >
                       <div className="flex justify-between items-start">

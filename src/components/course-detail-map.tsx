@@ -9,34 +9,37 @@ import Map, {
   MapMouseEvent,
 } from "react-map-gl/mapbox";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import { Flag, MessageSquare } from "lucide-react";
 import { convertToLegacyCourse } from "@/types/unified";
 import { getCourseByIdV2 } from "@/lib/courses-data-v2";
+import { Course } from "@/types";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-import { TrailMapProps, TrailData, TrailGeoJSON } from "./trail-map/types";
-import { INITIAL_VIEW_STATE } from "./trail-map/constants";
-import { useTrailAnimation } from "./trail-map/hooks/use-trail-animation";
-import { useLocationTracking } from "./trail-map/hooks/use-location-tracking";
-import { useKmMarkers } from "./trail-map/hooks/use-km-markers";
-import { LoadingState } from "./trail-map/components/loading-state";
-import { ErrorState } from "./trail-map/components/error-state";
-import { MapControls } from "./trail-map/components/map-controls";
-import { CourseInfo } from "./trail-map/components/course-info";
-import { CommentModal } from "../comment-modal";
-import { CommentList } from "../comment-list";
-import { CourseGallery } from "../course-gallery";
+import { TrailData, TrailGeoJSON } from "./map/trail-map/types";
+import { INITIAL_VIEW_STATE } from "./map/trail-map/constants";
+import { useTrailAnimation } from "./map/trail-map/hooks/use-trail-animation";
+import { useLocationTracking } from "./map/trail-map/hooks/use-location-tracking";
+import { useKmMarkers } from "./map/trail-map/hooks/use-km-markers";
+import { LoadingState } from "./map/trail-map/components/loading-state";
+import { ErrorState } from "./map/trail-map/components/error-state";
+import { MapControls } from "./map/trail-map/components/map-controls";
+import { CommentModal } from "./comment-modal";
 import {
-  getCourseComments,
   getFlightModeComments,
   CourseComment,
 } from "@/lib/comments";
-import { getCoursePhotos, CoursePhoto } from "@/lib/course-photos";
 
-// TrailData를 그대로 사용 (타입 호환성 위해)
+interface CourseDetailMapProps {
+  courseId: string;
+  course: Course | null;
+  className?: string;
+}
 
-const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
+const CourseDetailMap: React.FC<CourseDetailMapProps> = ({ 
+  courseId, 
+  course,
+  className = "" 
+}) => {
   const [trailData, setTrailData] = useState<TrailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,12 +52,7 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     distanceMarker: number;
   } | null>(null);
   const [showCommentModal, setShowCommentModal] = useState(false);
-  const [, setCommentsVersion] = useState(0); // 댓글 목록 새로고침용
-  const [comments, setComments] = useState<CourseComment[]>([]);
   const [flightComments, setFlightComments] = useState<CourseComment[]>([]);
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [coursePhotos, setCoursePhotos] = useState<CoursePhoto[]>([]);
-  const [loadingPhotos, setLoadingPhotos] = useState(false);
 
   const mapRef = useRef<MapRef>(null);
 
@@ -177,45 +175,21 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   );
 
   // 댓글 로드 함수
-  const loadComments = useCallback(async () => {
+  const loadFlightComments = useCallback(async () => {
     if (!courseId) return;
 
     try {
-      setLoadingComments(true);
-      const [allComments, flightOnlyComments] = await Promise.all([
-        getCourseComments(courseId),
-        getFlightModeComments(courseId),
-      ]);
-
-      setComments(allComments);
+      const flightOnlyComments = await getFlightModeComments(courseId);
       setFlightComments(flightOnlyComments);
     } catch (error) {
       console.error("댓글 로드 실패:", error);
-    } finally {
-      setLoadingComments(false);
-    }
-  }, [courseId]);
-
-  // 사진 로드 함수
-  const loadCoursePhotos = useCallback(async () => {
-    if (!courseId) return;
-
-    try {
-      setLoadingPhotos(true);
-      const photos = await getCoursePhotos(courseId);
-      setCoursePhotos(photos);
-    } catch (error) {
-      console.error("코스 사진 로드 실패:", error);
-    } finally {
-      setLoadingPhotos(false);
     }
   }, [courseId]);
 
   // 댓글 추가 성공 핸들러
   const handleCommentAdded = useCallback(() => {
-    setCommentsVersion((prev) => prev + 1);
-    loadComments(); // 댓글 목록 새로고침
-  }, [loadComments]);
+    loadFlightComments(); // 댓글 목록 새로고침
+  }, [loadFlightComments]);
 
   // 위치/경로보기 버튼 클릭 핸들러
   const handleLocationRouteButton = useCallback(() => {
@@ -408,13 +382,12 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     }
   }, [courseId]);
 
-  // 댓글 및 사진 로드
+  // 댓글 로드
   useEffect(() => {
     if (courseId) {
-      loadComments();
-      loadCoursePhotos();
+      loadFlightComments();
     }
-  }, [courseId, loadComments, loadCoursePhotos]);
+  }, [courseId, loadFlightComments]);
 
   // 트레일 라인 스타일
   const trailLineLayer = {
@@ -441,11 +414,22 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   };
 
   if (loading) {
-    return <LoadingState className={className} />;
+    return (
+      <div className="h-full bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">지도를 불러오는 중...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error || !trailData) {
-    return <ErrorState className={className} error={error || undefined} />;
+    return (
+      <div className="h-full bg-gray-100 flex items-center justify-center">
+        <p className="text-red-600">{error || "지도를 불러올 수 없습니다."}</p>
+      </div>
+    );
   }
 
   // 시작/종료 포인트는 stats.bounds 또는 geoJSON에서 추출
@@ -462,213 +446,182 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
       : null;
 
   return (
-    <div>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className={className}
+    <div className={`h-full relative ${className}`}>
+      <Map
+        ref={mapRef}
+        {...viewState}
+        onMove={(evt) => setViewState(evt.viewState)}
+        onClick={handleMapClick}
+        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
+        style={{ width: "100%", height: "100%" }}
+        mapStyle="mapbox://styles/mapbox/streets-v12"
+        onLoad={onMapLoad}
+        doubleClickZoom={false}
+        attributionControl={false}
+        maxZoom={12.85}
+        minZoom={10}
       >
-        <Card>
-          <CardContent className="p-0">
-            {/* 지도 */}
-            <div className="relative h-[70vh] md:h-[80vh] overflow-hidden">
-              <Map
-                ref={mapRef}
-                {...viewState}
-                onMove={(evt) => setViewState(evt.viewState)}
-                onClick={handleMapClick}
-                mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
-                style={{ width: "100%", height: "100%" }}
-                mapStyle="mapbox://styles/mapbox/streets-v12"
-                onLoad={onMapLoad}
-                doubleClickZoom={false}
-                attributionControl={false}
-                maxZoom={12.85}
-                minZoom={10}
-              >
-                <MapControls
-                  isAnimating={isAnimating}
-                  isFullRouteView={isFullRouteView}
-                  savedProgress={savedProgress}
-                  locationButtonState={locationButtonState}
-                  onAnimationToggle={
-                    isAnimating
-                      ? showFullRoute
-                      : isFullRouteView
-                        ? startTrailAnimation
-                        : showFullRoute
-                  }
-                  onLocationRouteToggle={handleLocationRouteButton}
-                />
-
-                {/* 트레일 레이어 */}
-                {(() => {
-                  const geoJSONData = getAnimatedGeoJSON();
-                  return (
-                    geoJSONData && (
-                      <Source id="trail" type="geojson" data={geoJSONData}>
-                        <Layer {...trailOutlineLayer} />
-                        <Layer {...trailLineLayer} />
-                      </Source>
-                    )
-                  );
-                })()}
-
-                {/* 시작점 마커 */}
-                {startPoint && (
-                  <Marker
-                    longitude={startPoint.lng}
-                    latitude={startPoint.lat}
-                    anchor="bottom"
-                  >
-                    <div className="bg-green-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
-                      <Flag className="w-4 h-4" />
-                    </div>
-                  </Marker>
-                )}
-
-                {/* 종료점 마커 */}
-                {endPoint && startPoint !== endPoint && (
-                  <Marker
-                    longitude={endPoint.lng}
-                    latitude={endPoint.lat}
-                    anchor="bottom"
-                  >
-                    <div className="bg-red-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
-                      <Flag className="w-4 h-4" />
-                    </div>
-                  </Marker>
-                )}
-
-                {/* km 지점 마커들 */}
-                {isAnimating &&
-                  kmMarkers
-                    .filter((marker) => visibleKmMarkers.has(marker.km))
-                    .map((marker) => (
-                      <Marker
-                        key={`km-${marker.km}`}
-                        longitude={marker.position.lng}
-                        latitude={marker.position.lat}
-                        anchor="center"
-                      >
-                        <motion.div
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{ scale: 0, opacity: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="bg-blue-500 text-white px-2 py-1 rounded-full shadow-lg border-2 border-white font-bold text-xs"
-                        >
-                          {marker.km}km
-                        </motion.div>
-                      </Marker>
-                    ))}
-
-                {/* 사용자 현재 위치 마커 */}
-                {userLocation && (
-                  <Marker
-                    longitude={userLocation.lng}
-                    latitude={userLocation.lat}
-                    anchor="center"
-                  >
-                    <div className="relative">
-                      <div className="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg"></div>
-                      <div className="absolute -inset-2 bg-blue-200 rounded-full opacity-30 animate-pulse"></div>
-                    </div>
-                  </Marker>
-                )}
-
-                {/* 클릭된 지점 마커 */}
-                {clickedPoint && (
-                  <Marker
-                    longitude={clickedPoint.lng}
-                    latitude={clickedPoint.lat}
-                    anchor="bottom"
-                  >
-                    <motion.div
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="bg-orange-500 text-white rounded-full p-2 shadow-lg border-2 border-white cursor-pointer"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                    </motion.div>
-                  </Marker>
-                )}
-
-                {/* 댓글 말풍선 마커들 */}
-                {(isAnimating ? flightComments : comments)
-                  .filter((comment) => comment.latitude && comment.longitude)
-                  .map((comment) => (
-                    <Marker
-                      key={comment.id}
-                      longitude={comment.longitude!}
-                      latitude={comment.latitude!}
-                      anchor="bottom"
-                    >
-                      <motion.div
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.3, delay: 0.1 }}
-                        className="relative max-w-xs"
-                      >
-                        {/* 말풍선 */}
-                        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3 relative">
-                          {/* 말풍선 꼬리 */}
-                          <div className="absolute bottom-0 left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white transform translate-y-full"></div>
-
-                          {/* 댓글 내용 */}
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-gray-800">
-                                {comment.author_nickname}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                {comment.distance_marker?.toFixed(1)}km
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-700 leading-relaxed">
-                              {comment.message}
-                            </p>
-                            <div className="text-xs text-gray-400">
-                              {new Date(comment.created_at).toLocaleDateString(
-                                "ko-KR",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                },
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    </Marker>
-                  ))}
-              </Map>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* 코스 정보 Card */}
-      <CourseInfo trailData={trailData} savedProgress={savedProgress} />
-
-      {/* 댓글 목록 */}
-      <div className="mt-4">
-        <CommentList comments={comments} loading={loadingComments} />
-      </div>
-
-      {/* 코스 갤러리 */}
-      <div className="mt-4">
-        <CourseGallery
-          courseId={courseId}
-          photos={coursePhotos}
-          loading={loadingPhotos}
+        <MapControls
+          isAnimating={isAnimating}
+          isFullRouteView={isFullRouteView}
+          savedProgress={savedProgress}
+          locationButtonState={locationButtonState}
+          onAnimationToggle={
+            isAnimating
+              ? showFullRoute
+              : isFullRouteView
+                ? startTrailAnimation
+                : showFullRoute
+          }
+          onLocationRouteToggle={handleLocationRouteButton}
         />
-      </div>
+
+        {/* 트레일 레이어 */}
+        {(() => {
+          const geoJSONData = getAnimatedGeoJSON();
+          return (
+            geoJSONData && (
+              <Source id="trail" type="geojson" data={geoJSONData}>
+                <Layer {...trailOutlineLayer} />
+                <Layer {...trailLineLayer} />
+              </Source>
+            )
+          );
+        })()}
+
+        {/* 시작점 마커 */}
+        {startPoint && (
+          <Marker
+            longitude={startPoint.lng}
+            latitude={startPoint.lat}
+            anchor="bottom"
+          >
+            <div className="bg-green-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
+              <Flag className="w-4 h-4" />
+            </div>
+          </Marker>
+        )}
+
+        {/* 종료점 마커 */}
+        {endPoint && startPoint !== endPoint && (
+          <Marker
+            longitude={endPoint.lng}
+            latitude={endPoint.lat}
+            anchor="bottom"
+          >
+            <div className="bg-red-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
+              <Flag className="w-4 h-4" />
+            </div>
+          </Marker>
+        )}
+
+        {/* km 지점 마커들 */}
+        {isAnimating &&
+          kmMarkers
+            .filter((marker) => visibleKmMarkers.has(marker.km))
+            .map((marker) => (
+              <Marker
+                key={`km-${marker.km}`}
+                longitude={marker.position.lng}
+                latitude={marker.position.lat}
+                anchor="center"
+              >
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-blue-500 text-white px-2 py-1 rounded-full shadow-lg border-2 border-white font-bold text-xs"
+                >
+                  {marker.km}km
+                </motion.div>
+              </Marker>
+            ))}
+
+        {/* 사용자 현재 위치 마커 */}
+        {userLocation && (
+          <Marker
+            longitude={userLocation.lng}
+            latitude={userLocation.lat}
+            anchor="center"
+          >
+            <div className="relative">
+              <div className="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg"></div>
+              <div className="absolute -inset-2 bg-blue-200 rounded-full opacity-30 animate-pulse"></div>
+            </div>
+          </Marker>
+        )}
+
+        {/* 클릭된 지점 마커 */}
+        {clickedPoint && (
+          <Marker
+            longitude={clickedPoint.lng}
+            latitude={clickedPoint.lat}
+            anchor="bottom"
+          >
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-orange-500 text-white rounded-full p-2 shadow-lg border-2 border-white cursor-pointer"
+            >
+              <MessageSquare className="w-4 h-4" />
+            </motion.div>
+          </Marker>
+        )}
+
+        {/* 댓글 말풍선 마커들 */}
+        {flightComments
+          .filter((comment) => comment.latitude && comment.longitude)
+          .map((comment) => (
+            <Marker
+              key={comment.id}
+              longitude={comment.longitude!}
+              latitude={comment.latitude!}
+              anchor="bottom"
+            >
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+                className="relative max-w-xs"
+              >
+                {/* 말풍선 */}
+                <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3 relative">
+                  {/* 말풍선 꼬리 */}
+                  <div className="absolute bottom-0 left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white transform translate-y-full"></div>
+
+                  {/* 댓글 내용 */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-800">
+                        {comment.author_nickname}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {comment.distance_marker?.toFixed(1)}km
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      {comment.message}
+                    </p>
+                    <div className="text-xs text-gray-400">
+                      {new Date(comment.created_at).toLocaleDateString(
+                        "ko-KR",
+                        {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </Marker>
+          ))}
+      </Map>
 
       {/* 댓글 입력 모달 */}
       <CommentModal
@@ -682,4 +635,4 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   );
 };
 
-export default TrailMapV2;
+export default CourseDetailMap;
