@@ -11,7 +11,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-lola-50">
       {/* 공통 헤더 - 투명 배경 */}
       <header className="fixed top-4 left-4 right-4 z-50 bg-transparent">
         <div className="flex items-center justify-between">

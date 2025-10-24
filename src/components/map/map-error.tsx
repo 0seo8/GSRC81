@@ -2,7 +2,7 @@
 
 export function MapError() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-lola-50 flex items-center justify-center">
       <div className="text-center">
         <div className="w-12 h-12 text-gray-400 mx-auto mb-4">⚠️</div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">

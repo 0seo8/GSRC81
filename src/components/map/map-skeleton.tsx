@@ -1,9 +1,9 @@
 export function MapSkeleton() {
   return (
-    <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
+    <div className="h-screen bg-lola-50 flex flex-col overflow-hidden">
       <div className="flex-1 relative overflow-hidden">
         {/* 지도 스켈레톤 */}
-        <div className="w-full h-full bg-gray-200 animate-pulse relative">
+        <div className="w-full h-full bg-lola-200 animate-pulse relative">
           {/* 로딩 스피너 */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">

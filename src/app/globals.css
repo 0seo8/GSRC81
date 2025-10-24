@@ -52,13 +52,26 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* Figma 기반 색상 시스템 */
-  --color-bg-primary: #ebe7e4;
-  --color-bg-secondary: #d9d9d9;
-  --color-bg-overlay: rgba(217, 215, 212, 0.4);
-  --color-text-primary: #000000;
-  --color-text-secondary: rgba(0, 0, 0, 0.5);
-  --color-text-tertiary: #828282;
+  /* Lola 색상 팔레트 */
+  --color-lola-50: #faf8fa;
+  --color-lola-100: #f5f2f5;
+  --color-lola-200: #ece8ec;
+  --color-lola-300: #d9d1da;
+  --color-lola-400: #c8bcc9;
+  --color-lola-500: #b2a0b2;
+  --color-lola-600: #9e889d;
+  --color-lola-700: #8b768a;
+  --color-lola-800: #746372;
+  --color-lola-900: #60525e;
+  --color-lola-950: #3f363f;
+
+  /* Figma 기반 색상 시스템 - lola 테마로 업데이트 */
+  --color-bg-primary: var(--color-lola-50);
+  --color-bg-secondary: var(--color-lola-100);
+  --color-bg-overlay: rgba(250, 248, 250, 0.4);
+  --color-text-primary: var(--color-lola-950);
+  --color-text-secondary: var(--color-lola-700);
+  --color-text-tertiary: var(--color-lola-600);
   --color-text-white: #ffffff;
 
   /* 러닝 카테고리 색상 */
@@ -203,6 +216,75 @@
 }
 
 @layer utilities {
+  /* Lola 색상 유틸리티 */
+  .bg-lola-50 {
+    background-color: var(--color-lola-50);
+  }
+  .bg-lola-100 {
+    background-color: var(--color-lola-100);
+  }
+  .bg-lola-200 {
+    background-color: var(--color-lola-200);
+  }
+  .bg-lola-300 {
+    background-color: var(--color-lola-300);
+  }
+  .bg-lola-400 {
+    background-color: var(--color-lola-400);
+  }
+  .bg-lola-500 {
+    background-color: var(--color-lola-500);
+  }
+  .bg-lola-600 {
+    background-color: var(--color-lola-600);
+  }
+  .bg-lola-700 {
+    background-color: var(--color-lola-700);
+  }
+  .bg-lola-800 {
+    background-color: var(--color-lola-800);
+  }
+  .bg-lola-900 {
+    background-color: var(--color-lola-900);
+  }
+  .bg-lola-950 {
+    background-color: var(--color-lola-950);
+  }
+
+  .text-lola-50 {
+    color: var(--color-lola-50);
+  }
+  .text-lola-100 {
+    color: var(--color-lola-100);
+  }
+  .text-lola-200 {
+    color: var(--color-lola-200);
+  }
+  .text-lola-300 {
+    color: var(--color-lola-300);
+  }
+  .text-lola-400 {
+    color: var(--color-lola-400);
+  }
+  .text-lola-500 {
+    color: var(--color-lola-500);
+  }
+  .text-lola-600 {
+    color: var(--color-lola-600);
+  }
+  .text-lola-700 {
+    color: var(--color-lola-700);
+  }
+  .text-lola-800 {
+    color: var(--color-lola-800);
+  }
+  .text-lola-900 {
+    color: var(--color-lola-900);
+  }
+  .text-lola-950 {
+    color: var(--color-lola-950);
+  }
+
   /* Figma 기반 색상 유틸리티 */
   .bg-figma-primary {
     background-color: var(--color-bg-primary);

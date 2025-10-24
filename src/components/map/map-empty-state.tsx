@@ -8,7 +8,7 @@ interface MapEmptyStateProps {
 
 export function MapEmptyState({ mapboxToken, onMapLoad }: MapEmptyStateProps) {
   return (
-    <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
+    <div className="h-screen bg-lola-50 flex flex-col overflow-hidden">
       <div className="flex-1 relative overflow-hidden">
         <MapboxMap
           accessToken={mapboxToken}
