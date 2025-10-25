@@ -19,7 +19,7 @@ console.log("Supabase config:", {
 
 // 서버 전용 Supabase 클라이언트 (ANON 키 사용, 타임아웃 추가)
 const supabaseServer = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { 
+  auth: {
     persistSession: false,
     autoRefreshToken: false,
   },
@@ -67,8 +67,10 @@ export async function getCourses(
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`Attempting to fetch courses (attempt ${attempt}/${maxRetries})`);
-      
+      console.log(
+        `Attempting to fetch courses (attempt ${attempt}/${maxRetries})`,
+      );
+
       const { data, error } = await supabaseServer
         .from(TABLES.COURSES)
         .select(
@@ -93,13 +95,13 @@ export async function getCourses(
       if (error) {
         console.error(`Failed to fetch courses (attempt ${attempt}):`, error);
         lastError = new Error(`Failed to fetch courses: ${error.message}`);
-        
+
         if (attempt === maxRetries) {
           throw lastError;
         }
-        
+
         // 재시도 전 대기
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
         continue;
       }
 
@@ -126,20 +128,19 @@ export async function getCourses(
 
       console.log(`Successfully fetched ${filteredCourses.length} courses`);
       return filteredCourses;
-
     } catch (error) {
       console.error(`Network error on attempt ${attempt}:`, error);
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       if (attempt === maxRetries) {
         throw lastError;
       }
-      
+
       // 재시도 전 대기
-      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
     }
   }
-  
+
   // 이 부분에 도달할 일은 없지만 TypeScript를 위해 추가
   throw lastError || new Error("Failed to fetch courses after all retries");
 }

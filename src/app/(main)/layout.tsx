@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Menu, X, Navigation } from "lucide-react";
+import { PWAInstallButton } from "@/components/pwa-install-button";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -65,6 +66,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
       {/* 메인 콘텐츠 */}
       <main className="relative">{children}</main>
+
+      {/* PWA 설치 버튼 */}
+      <PWAInstallButton />
     </div>
   );
 }

@@ -1,10 +1,12 @@
 // GSRC81 Maps Service Worker
-const CACHE_NAME = "gsrc81-maps-v1";
+const CACHE_NAME = "gsrc81-maps-v2";
 const urlsToCache = [
   "/",
+  "/map",
   "/manifest.json",
   "/icon-192x192.png",
   "/icon-512x512.png",
+  // 오프라인에서도 기본 페이지들 접근 가능
 ];
 
 // Install event - cache resources

@@ -1,13 +1,15 @@
 {
-  "name": "GSRC81 Maps - 구파발 러너 매퍼",
-  "short_name": "GSRC81 Maps",
-  "description": "은평구 기반 러닝코스 지도 서비스",
-  "theme_color": "#f97316",
-  "background_color": "#f97316",
+  "name": "GSRC81 MAPS - 러닝 코스 가이드",
+  "short_name": "GSRC81 MAPS",
+  "description": "GSRC81 러닝 크루의 코스 탐색 및 비행 모드 가이드 앱",
+  "theme_color": "#000000",
+  "background_color": "#f8f9fa",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "scope": "/",
   "start_url": "/",
+  "lang": "ko",
+  "categories": ["sports", "fitness", "navigation"],
   "icons": [
     {
       "src": "/icon-192x192.png",
@@ -37,7 +39,19 @@
       "src": "/screenshot-mobile.png",
       "sizes": "390x844",
       "type": "image/png",
-      "form_factor": "narrow"
+      "form_factor": "narrow",
+      "label": "GSRC81 MAPS 메인 화면"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "지도 보기",
+      "short_name": "지도",
+      "description": "러닝 코스 지도 탐색",
+      "url": "/map",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
 }

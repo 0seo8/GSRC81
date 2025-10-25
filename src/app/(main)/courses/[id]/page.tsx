@@ -23,7 +23,7 @@ const CourseDetailMap = dynamic(
         </div>
       </div>
     ),
-  }
+  },
 );
 
 interface CourseDetailPageProps {
@@ -114,7 +114,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       <div className="min-h-screen bg-lola-50">
         {/* 상단 지도 영역 */}
         <div className="h-[70vh] relative">
-          <CourseDetailMap courseId={courseId} course={course} />
+          <CourseDetailMap courseId={courseId} />
         </div>
 
         {/* 하단 컨텐츠 */}
@@ -169,7 +169,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   {course.description ||
                     "진관천을 한 바퀴 왕복해 도는 코스입니다. 정기런 때 뛰는 코스이기도 해요! 접근하기 좋아 자주 벙이 열리는 장소입니다. 모두 같이 즐겁게 달려봐요!"}
                 </p>
-
               </div>
             </div>
 
@@ -178,17 +177,12 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               <CourseCommentsList
                 comments={comments}
                 loading={loadingComments}
-                onCommentAdded={() => courseId && loadComments(courseId)}
               />
             </div>
 
             {/* 사진 갤러리 섹션 */}
             <div className="space-y-4">
-              <CourseGallery
-                courseId={courseId || ""}
-                photos={coursePhotos}
-                loading={loadingPhotos}
-              />
+              <CourseGallery photos={coursePhotos} loading={loadingPhotos} />
             </div>
           </div>
         </div>

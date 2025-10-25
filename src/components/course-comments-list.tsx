@@ -8,13 +8,11 @@ import { formatRelativeTime } from "@/utils/date-utils";
 interface CourseCommentsListProps {
   comments: CourseComment[];
   loading: boolean;
-  onCommentAdded: () => void;
 }
 
 export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
   comments,
   loading,
-  onCommentAdded,
 }) => {
   if (loading) {
     return (
@@ -45,12 +43,14 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
         <h3 className="text-lg font-semibold text-gray-900">러닝 노트</h3>
         <span className="text-sm text-gray-500">({comments.length})</span>
       </div>
-      
+
       {comments.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
           <p>아직 댓글이 없습니다.</p>
-          <p className="text-sm mt-1">지도를 클릭해서 첫 번째 댓글을 남겨보세요!</p>
+          <p className="text-sm mt-1">
+            지도를 클릭해서 첫 번째 댓글을 남겨보세요!
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -62,7 +62,7 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                   {comment.author_nickname.charAt(0)}
                 </span>
               </div>
-              
+
               <div className="flex-1 min-w-0">
                 {/* 작성자 정보 (이름, 거리, 시간) */}
                 <div className="flex items-center space-x-2 mb-2">
@@ -70,16 +70,20 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                     {comment.author_nickname}
                   </span>
                   <span className="text-sm text-gray-600">
-                    {comment.distance_marker ? `${comment.distance_marker.toFixed(1)}km` : '0km'}
+                    {comment.distance_marker
+                      ? `${comment.distance_marker.toFixed(1)}km`
+                      : "0km"}
                   </span>
                   <span className="text-sm text-gray-500">
                     {formatRelativeTime(comment.created_at)}
                   </span>
                 </div>
-                
+
                 {/* 말풍선 댓글 내용 */}
-                <div className="relative bg-black text-white px-5 py-4 inline-block min-w-[160px] max-w-[280px]" 
-                     style={{ borderRadius: '0 16px 16px 16px' }}>
+                <div
+                  className="relative bg-black text-white px-5 py-4 inline-block min-w-[160px] max-w-[280px]"
+                  style={{ borderRadius: "0 16px 16px 16px" }}
+                >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">
                     {comment.message}
                   </p>

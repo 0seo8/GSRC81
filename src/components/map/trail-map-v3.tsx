@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import Map, {
   Source,
   Layer,
@@ -42,9 +48,11 @@ class NearestPointFinder {
 
   constructor(geoJSON: TrailGeoJSON | null) {
     if (geoJSON?.features?.[0]?.geometry?.coordinates) {
-      this.coordinates = geoJSON.features[0].geometry.coordinates.map(
-        (c) => ({ lng: c[0], lat: c[1], ele: c[2] || 0 })
-      );
+      this.coordinates = geoJSON.features[0].geometry.coordinates.map((c) => ({
+        lng: c[0],
+        lat: c[1],
+        ele: c[2] || 0,
+      }));
       this.calculateCumulativeDistances();
     }
   }
@@ -56,13 +64,23 @@ class NearestPointFinder {
     for (let i = 1; i < this.coordinates.length; i++) {
       const prev = this.coordinates[i - 1];
       const curr = this.coordinates[i];
-      const distance = this.haversineDistance(prev.lat, prev.lng, curr.lat, curr.lng);
+      const distance = this.haversineDistance(
+        prev.lat,
+        prev.lng,
+        curr.lat,
+        curr.lng,
+      );
       cumulative += distance;
       this.cumulativeDistances.push(cumulative);
     }
   }
 
-  private haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  private haversineDistance(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number,
+  ): number {
     const R = 6371000; // 지구 반지름 (미터)
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLng = ((lng2 - lng1) * Math.PI) / 180;
@@ -85,7 +103,12 @@ class NearestPointFinder {
     // 이진 검색이나 공간 인덱싱 대신 단순 순회 (충분히 빠름)
     for (let i = 0; i < this.coordinates.length; i++) {
       const coord = this.coordinates[i];
-      const distance = this.haversineDistance(clickLat, clickLng, coord.lat, coord.lng);
+      const distance = this.haversineDistance(
+        clickLat,
+        clickLng,
+        coord.lat,
+        coord.lng,
+      );
 
       if (distance < minDistance) {
         minDistance = distance;
@@ -115,9 +138,11 @@ const TrailMapV3: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
     error,
     refreshComments,
     initialViewState,
-  } = useTrailData(courseId) as any;
+  } = useTrailData(courseId);
 
-  const [viewState, setViewState] = useState(initialViewState || INITIAL_VIEW_STATE);
+  const [viewState, setViewState] = useState(
+    initialViewState || INITIAL_VIEW_STATE,
+  );
   const [clickedPoint, setClickedPoint] = useState<{
     lng: number;
     lat: number;
@@ -130,7 +155,7 @@ const TrailMapV3: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
   // 최근접 지점 찾기 인스턴스 (메모이제이션)
   const nearestPointFinder = useMemo(
     () => new NearestPointFinder(trailData?.geoJSON || null),
-    [trailData?.geoJSON]
+    [trailData?.geoJSON],
   );
 
   // Custom hooks
@@ -252,9 +277,13 @@ const TrailMapV3: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
     return {
       startPoint: { lng: coordinates[0][0], lat: coordinates[0][1] },
-      endPoint: coordinates.length > 1 
-        ? { lng: coordinates[coordinates.length - 1][0], lat: coordinates[coordinates.length - 1][1] }
-        : null,
+      endPoint:
+        coordinates.length > 1
+          ? {
+              lng: coordinates[coordinates.length - 1][0],
+              lat: coordinates[coordinates.length - 1][1],
+            }
+          : null,
     };
   }, [trailData?.geoJSON]);
 
@@ -329,7 +358,11 @@ const TrailMapV3: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
                 {/* 시작점 마커 */}
                 {startPoint && (
-                  <Marker longitude={startPoint.lng} latitude={startPoint.lat} anchor="bottom">
+                  <Marker
+                    longitude={startPoint.lng}
+                    latitude={startPoint.lat}
+                    anchor="bottom"
+                  >
                     <div className="bg-green-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
                       <Flag className="w-4 h-4" />
                     </div>
@@ -338,7 +371,11 @@ const TrailMapV3: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
                 {/* 종료점 마커 */}
                 {endPoint && startPoint !== endPoint && (
-                  <Marker longitude={endPoint.lng} latitude={endPoint.lat} anchor="bottom">
+                  <Marker
+                    longitude={endPoint.lng}
+                    latitude={endPoint.lat}
+                    anchor="bottom"
+                  >
                     <div className="bg-red-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
                       <Flag className="w-4 h-4" />
                     </div>
@@ -370,7 +407,11 @@ const TrailMapV3: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
                 {/* 사용자 현재 위치 마커 */}
                 {userLocation && (
-                  <Marker longitude={userLocation.lng} latitude={userLocation.lat} anchor="center">
+                  <Marker
+                    longitude={userLocation.lng}
+                    latitude={userLocation.lat}
+                    anchor="center"
+                  >
                     <div className="relative">
                       <div className="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg"></div>
                       <div className="absolute -inset-2 bg-blue-200 rounded-full opacity-30 animate-pulse"></div>
@@ -380,7 +421,11 @@ const TrailMapV3: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
                 {/* 클릭된 지점 마커 */}
                 {clickedPoint && (
-                  <Marker longitude={clickedPoint.lng} latitude={clickedPoint.lat} anchor="bottom">
+                  <Marker
+                    longitude={clickedPoint.lng}
+                    latitude={clickedPoint.lat}
+                    anchor="bottom"
+                  >
                     <motion.div
                       initial={{ scale: 0, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
@@ -409,15 +454,19 @@ const TrailMapV3: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                         transition={{ duration: 0.3, delay: 0.1 }}
                         className="relative"
                       >
-                        <div className="bg-black text-white shadow-lg px-5 py-4 relative inline-block min-w-[160px] max-w-[240px]"
-                             style={{ borderRadius: '0 16px 16px 16px' }}>
+                        <div
+                          className="bg-black text-white shadow-lg px-5 py-4 relative inline-block min-w-[160px] max-w-[240px]"
+                          style={{ borderRadius: "0 16px 16px 16px" }}
+                        >
                           <div className="space-y-1">
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-sm font-medium text-white truncate">
                                 {comment.author_nickname}
                               </span>
                               <span className="text-sm text-gray-300 flex-shrink-0">
-                                {comment.distance_marker ? `${comment.distance_marker.toFixed(1)}km` : '0km'}
+                                {comment.distance_marker
+                                  ? `${comment.distance_marker.toFixed(1)}km`
+                                  : "0km"}
                               </span>
                             </div>
                             <p className="text-sm text-white leading-relaxed">
@@ -447,11 +496,7 @@ const TrailMapV3: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
       {/* 코스 갤러리 */}
       <div className="mt-4">
-        <CourseGallery
-          courseId={courseId}
-          photos={coursePhotos}
-          loading={false}
-        />
+        <CourseGallery photos={coursePhotos} loading={false} />
       </div>
 
       {/* 댓글 입력 모달 */}

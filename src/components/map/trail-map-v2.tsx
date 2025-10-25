@@ -663,11 +663,7 @@ const TrailMapV2: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
 
       {/* 코스 갤러리 */}
       <div className="mt-4">
-        <CourseGallery
-          courseId={courseId}
-          photos={coursePhotos}
-          loading={loadingPhotos}
-        />
+        <CourseGallery photos={coursePhotos} loading={loadingPhotos} />
       </div>
 
       {/* 댓글 입력 모달 */}

@@ -1,12 +1,30 @@
 "use client";
 
 import React from "react";
+import { SplashScreen } from "@/components/splash-screen";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 export default function LoginPage() {
+  const { isOnboardingComplete, isLoading, completeOnboarding } =
+    useOnboarding();
   const handleKakaoLogin = () => {
     const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI}&response_type=code`;
     window.location.href = kakaoAuthUrl;
   };
+
+  // Show loading state while checking onboarding status
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show splash screen for first-time users
+  if (!isOnboardingComplete) {
+    return <SplashScreen onComplete={completeOnboarding} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex flex-col">

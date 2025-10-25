@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { getCourseByIdV2 } from "@/lib/courses-data-v2";
-import { getCourseComments, getFlightModeComments, CourseComment } from "@/lib/comments";
+import {
+  getCourseComments,
+  getFlightModeComments,
+  CourseComment,
+} from "@/lib/comments";
 import { getCoursePhotos, CoursePhoto } from "@/lib/course-photos";
 import { convertToLegacyCourse } from "@/types/unified";
 import { TrailData, TrailGeoJSON } from "@/components/map/trail-map/types";
@@ -16,6 +20,11 @@ interface UseTrailDataReturn {
   error: string | null;
   refreshComments: () => Promise<void>;
   refreshPhotos: () => Promise<void>;
+  initialViewState: {
+    longitude: number;
+    latitude: number;
+    zoom: number;
+  } | null;
 }
 
 export function useTrailData(courseId: string): UseTrailDataReturn {
@@ -27,55 +36,58 @@ export function useTrailData(courseId: string): UseTrailDataReturn {
   const [error, setError] = useState<string | null>(null);
 
   // 코스 데이터를 TrailData로 변환하는 함수 (메모이제이션)
-  const convertCourseToTrailData = useCallback(async (courseId: string): Promise<TrailData> => {
-    const courseV2 = await getCourseByIdV2(courseId);
+  const convertCourseToTrailData = useCallback(
+    async (courseId: string): Promise<TrailData> => {
+      const courseV2 = await getCourseByIdV2(courseId);
 
-    if (!courseV2) {
-      throw new Error("코스를 찾을 수 없습니다.");
-    }
+      if (!courseV2) {
+        throw new Error("코스를 찾을 수 없습니다.");
+      }
 
-    if (!courseV2.gpx_data?.points || courseV2.gpx_data.points.length === 0) {
-      throw new Error("코스 경로 데이터가 없습니다.");
-    }
+      if (!courseV2.gpx_data?.points || courseV2.gpx_data.points.length === 0) {
+        throw new Error("코스 경로 데이터가 없습니다.");
+      }
 
-    // GeoJSON 생성 (한 번만)
-    const geoJSON: TrailGeoJSON = {
-      type: "FeatureCollection",
-      features: [
-        {
-          type: "Feature",
-          properties: {},
-          geometry: {
-            type: "LineString",
-            coordinates: courseV2.gpx_data.points.map((p) => [
-              p.lng,
-              p.lat,
-              p.ele || 0,
-            ]),
+      // GeoJSON 생성 (한 번만)
+      const geoJSON: TrailGeoJSON = {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "LineString",
+              coordinates: courseV2.gpx_data.points.map((p) => [
+                p.lng,
+                p.lat,
+                p.ele || 0,
+              ]),
+            },
           },
-        },
-      ],
-    };
+        ],
+      };
 
-    // Stats 생성
-    const stats = {
-      totalDistance: courseV2.gpx_data.stats.totalDistance,
-      elevationGain: courseV2.gpx_data.stats.elevationGain,
-      estimatedTime: courseV2.gpx_data.stats.estimatedDuration,
-      maxElevation: 0,
-      minElevation: 0,
-      elevationLoss: 0,
-      difficulty: courseV2.difficulty,
-      bounds: courseV2.gpx_data.bounds,
-    };
+      // Stats 생성
+      const stats = {
+        totalDistance: courseV2.gpx_data.stats.totalDistance,
+        elevationGain: courseV2.gpx_data.stats.elevationGain,
+        estimatedTime: courseV2.gpx_data.stats.estimatedDuration,
+        maxElevation: 0,
+        minElevation: 0,
+        elevationLoss: 0,
+        difficulty: courseV2.difficulty,
+        bounds: courseV2.gpx_data.bounds,
+      };
 
-    return {
-      course: convertToLegacyCourse(courseV2),
-      points: [],
-      geoJSON,
-      stats,
-    };
-  }, []);
+      return {
+        course: convertToLegacyCourse(courseV2),
+        points: [],
+        geoJSON,
+        stats,
+      };
+    },
+    [],
+  );
 
   // 댓글 로드
   const loadComments = useCallback(async () => {
@@ -118,33 +130,36 @@ export function useTrailData(courseId: string): UseTrailDataReturn {
         setError(null);
 
         // 병렬로 모든 데이터 로드
-        const [trailDataResult, commentsResult, photosResult] = await Promise.allSettled([
-          convertCourseToTrailData(courseId),
-          Promise.all([getCourseComments(courseId), getFlightModeComments(courseId)]),
-          getCoursePhotos(courseId),
-        ]);
+        const [trailDataResult, commentsResult, photosResult] =
+          await Promise.allSettled([
+            convertCourseToTrailData(courseId),
+            Promise.all([
+              getCourseComments(courseId),
+              getFlightModeComments(courseId),
+            ]),
+            getCoursePhotos(courseId),
+          ]);
 
         if (!isMounted) return;
 
         // TrailData 처리
-        if (trailDataResult.status === 'fulfilled') {
+        if (trailDataResult.status === "fulfilled") {
           setTrailData(trailDataResult.value);
         } else {
           throw trailDataResult.reason;
         }
 
         // Comments 처리
-        if (commentsResult.status === 'fulfilled') {
+        if (commentsResult.status === "fulfilled") {
           const [allComments, flightOnlyComments] = commentsResult.value;
           setComments(allComments);
           setFlightComments(flightOnlyComments);
         }
 
         // Photos 처리
-        if (photosResult.status === 'fulfilled') {
+        if (photosResult.status === "fulfilled") {
           setCoursePhotos(photosResult.value);
         }
-
       } catch (err) {
         if (!isMounted) return;
         console.error("Failed to load trail data:", err);
@@ -202,5 +217,5 @@ export function useTrailData(courseId: string): UseTrailDataReturn {
     refreshComments: loadComments,
     refreshPhotos: loadCoursePhotos,
     initialViewState,
-  } as UseTrailDataReturn & { initialViewState: any };
+  };
 }

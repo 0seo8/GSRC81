@@ -12,7 +12,6 @@ import { motion } from "framer-motion";
 import { Flag, MessageSquare } from "lucide-react";
 import { convertToLegacyCourse } from "@/types/unified";
 import { getCourseByIdV2 } from "@/lib/courses-data-v2";
-import { Course } from "@/types";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import { TrailData, TrailGeoJSON } from "./map/trail-map/types";
@@ -20,25 +19,18 @@ import { INITIAL_VIEW_STATE } from "./map/trail-map/constants";
 import { useTrailAnimation } from "./map/trail-map/hooks/use-trail-animation";
 import { useLocationTracking } from "./map/trail-map/hooks/use-location-tracking";
 import { useKmMarkers } from "./map/trail-map/hooks/use-km-markers";
-import { LoadingState } from "./map/trail-map/components/loading-state";
-import { ErrorState } from "./map/trail-map/components/error-state";
 import { MapControls } from "./map/trail-map/components/map-controls";
 import { CommentModal } from "./comment-modal";
-import {
-  getFlightModeComments,
-  CourseComment,
-} from "@/lib/comments";
+import { getFlightModeComments, CourseComment } from "@/lib/comments";
 
 interface CourseDetailMapProps {
   courseId: string;
-  course: Course | null;
   className?: string;
 }
 
-const CourseDetailMap: React.FC<CourseDetailMapProps> = ({ 
-  courseId, 
-  course,
-  className = "" 
+const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
+  courseId,
+  className = "",
 }) => {
   const [trailData, setTrailData] = useState<TrailData | null>(null);
   const [loading, setLoading] = useState(true);

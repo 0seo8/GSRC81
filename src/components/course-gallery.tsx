@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Image as ImageIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -17,13 +17,11 @@ interface CoursePhoto {
 }
 
 interface CourseGalleryProps {
-  courseId: string;
   photos?: CoursePhoto[];
   loading?: boolean;
 }
 
 export function CourseGallery({
-  courseId,
   photos = [],
   loading = false,
 }: CourseGalleryProps) {
@@ -87,9 +85,7 @@ export function CourseGallery({
                 {/* 캡션 (있는 경우) */}
                 {photo.caption && (
                   <div className="mt-2">
-                    <p className="text-gray-700 text-sm">
-                      {photo.caption}
-                    </p>
+                    <p className="text-gray-700 text-sm">{photo.caption}</p>
                   </div>
                 )}
               </motion.div>
@@ -106,20 +102,22 @@ export function CourseGallery({
               className="w-full h-48 object-cover rounded-lg"
               onError={(e) => {
                 // 이미지 로드 실패 시 대체 컨텐츠 표시
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.nextElementSibling!.classList.remove('hidden');
+                e.currentTarget.style.display = "none";
+                e.currentTarget.nextElementSibling!.classList.remove("hidden");
               }}
             />
-            
+
             {/* 대체 컨텐츠 */}
             <div className="hidden w-full h-48 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg items-center justify-center">
               <div className="text-center text-white">
                 <div className="text-2xl font-bold mb-2">GSRC81</div>
                 <div className="text-lg">Running Crew!</div>
-                <div className="text-sm mt-2 opacity-90">함께 달리며 만들어가는 우리들의 이야기</div>
+                <div className="text-sm mt-2 opacity-90">
+                  함께 달리며 만들어가는 우리들의 이야기
+                </div>
               </div>
             </div>
-            
+
             {/* 오버레이 텍스트 */}
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 rounded-b-lg">
               <div className="text-white">

@@ -1,5 +1,5 @@
-import { Route, Timer, Mountain, User } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { User } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { TrailData } from "../types";
 import { formatTime } from "../utils";
 import { FLIGHT_CONFIG } from "../constants";
