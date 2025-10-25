@@ -111,9 +111,9 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-lola-50" style={{ paddingTop: "5rem" }}>
+      <div className="min-h-screen bg-lola-50">
         {/* 상단 지도 영역 */}
-        <div className="h-[50vh] relative">
+        <div className="h-[70vh] relative">
           <CourseDetailMap courseId={courseId} course={course} />
         </div>
 
@@ -122,9 +122,14 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
           <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
             {/* 코스 정보 섹션 */}
             <div className="space-y-4">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {course.title}
-              </h1>
+              <div className="flex items-center justify-between mb-4">
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {course.title}
+                </h1>
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">BY GSRC81</span>
+                </div>
+              </div>
 
               {/* 통계 정보 */}
               <div className="grid grid-cols-4 gap-4 py-4 border-b border-gray-200">
@@ -165,10 +170,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     "진관천을 한 바퀴 왕복해 도는 코스입니다. 정기런 때 뛰는 코스이기도 해요! 접근하기 좋아 자주 벙이 열리는 장소입니다. 모두 같이 즐겁게 달려봐요!"}
                 </p>
 
-                <div className="flex items-center justify-end text-sm text-gray-500">
-                  <span>BY</span>
-                  <span className="ml-1 font-medium">GSRC81</span>
-                </div>
               </div>
             </div>
 

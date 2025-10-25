@@ -3,6 +3,7 @@
 import React from "react";
 import { CourseComment } from "@/lib/comments";
 import { MessageCircle } from "lucide-react";
+import { formatRelativeTime } from "@/utils/date-utils";
 
 interface CourseCommentsListProps {
   comments: CourseComment[];
@@ -54,36 +55,32 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
       ) : (
         <div className="space-y-4">
           {comments.map((comment) => (
-            <div key={comment.id} className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-start space-x-3">
-                {/* 프로필 이미지 또는 기본 아바타 */}
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-sm font-medium">
-                    {comment.author_nickname.charAt(0)}
+            <div key={comment.id} className="flex items-start space-x-3">
+              {/* 프로필 이미지 */}
+              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-gray-600 text-sm font-medium">
+                  {comment.author_nickname.charAt(0)}
+                </span>
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                {/* 작성자 정보 (이름, 거리, 시간) */}
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="font-medium text-gray-900 text-sm">
+                    {comment.author_nickname}
+                  </span>
+                  <span className="text-sm text-gray-600">
+                    {comment.distance_marker ? `${comment.distance_marker.toFixed(1)}km` : '0km'}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {formatRelativeTime(comment.created_at)}
                   </span>
                 </div>
                 
-                <div className="flex-1 min-w-0">
-                  {/* 작성자 정보 */}
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="font-medium text-gray-900 text-sm">
-                      {comment.author_nickname}
-                    </span>
-                    {comment.distance_marker && (
-                      <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
-                        {comment.distance_marker.toFixed(1)}km
-                      </span>
-                    )}
-                    <span className="text-xs text-gray-500">
-                      {new Date(comment.created_at).toLocaleDateString('ko-KR', {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
-                  </div>
-                  
-                  {/* 댓글 내용 */}
-                  <p className="text-gray-700 text-sm leading-relaxed">
+                {/* 말풍선 댓글 내용 */}
+                <div className="relative bg-black text-white px-5 py-4 inline-block min-w-[160px] max-w-[280px]" 
+                     style={{ borderRadius: '0 16px 16px 16px' }}>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
                     {comment.message}
                   </p>
                 </div>

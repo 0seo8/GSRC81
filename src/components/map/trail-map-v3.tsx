@@ -26,6 +26,7 @@ import { CommentModal } from "../comment-modal";
 import { CommentList } from "../comment-list";
 import { CourseGallery } from "../course-gallery";
 import { useTrailData } from "@/hooks/use-trail-data";
+import { formatRelativeTime } from "@/utils/date-utils";
 
 // 좌표 변환을 위한 타입
 interface Coordinate {
@@ -406,29 +407,24 @@ const TrailMapV3: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ duration: 0.3, delay: 0.1 }}
-                        className="relative max-w-xs"
+                        className="relative"
                       >
-                        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3 relative">
-                          <div className="absolute bottom-0 left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white transform translate-y-full"></div>
+                        <div className="bg-black text-white shadow-lg px-5 py-4 relative inline-block min-w-[160px] max-w-[240px]"
+                             style={{ borderRadius: '0 16px 16px 16px' }}>
                           <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-gray-800">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-sm font-medium text-white truncate">
                                 {comment.author_nickname}
                               </span>
-                              <span className="text-xs text-gray-500">
-                                {comment.distance_marker?.toFixed(1)}km
+                              <span className="text-sm text-gray-300 flex-shrink-0">
+                                {comment.distance_marker ? `${comment.distance_marker.toFixed(1)}km` : '0km'}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-700 leading-relaxed">
+                            <p className="text-sm text-white leading-relaxed">
                               {comment.message}
                             </p>
-                            <div className="text-xs text-gray-400">
-                              {new Date(comment.created_at).toLocaleDateString("ko-KR", {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
+                            <div className="text-sm text-gray-400">
+                              {formatRelativeTime(comment.created_at)}
                             </div>
                           </div>
                         </div>

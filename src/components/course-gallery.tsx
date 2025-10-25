@@ -66,36 +66,28 @@ export function CourseGallery({
 
         {/* 사진이 있을 때 */}
         {photos.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-4">
             {photos.map((photo, index) => (
               <motion.div
                 key={photo.id}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="relative aspect-square cursor-pointer group overflow-hidden rounded-lg"
+                className="w-full cursor-pointer group overflow-hidden rounded-lg"
                 onClick={() => setSelectedPhoto(photo)}
               >
                 <Image
                   src={photo.file_url}
                   alt={photo.caption || `코스 사진 ${index + 1}`}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-110"
+                  width={800}
+                  height={400}
+                  className="w-full h-48 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                 />
-
-                {/* 호버 오버레이 */}
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="bg-white rounded-full p-2">
-                      <ImageIcon className="w-5 h-5 text-gray-600" />
-                    </div>
-                  </div>
-                </div>
 
                 {/* 캡션 (있는 경우) */}
                 {photo.caption && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3">
-                    <p className="text-white text-xs line-clamp-2">
+                  <div className="mt-2">
+                    <p className="text-gray-700 text-sm">
                       {photo.caption}
                     </p>
                   </div>
