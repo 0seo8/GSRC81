@@ -10,6 +10,8 @@ import { CourseCommentsList } from "@/components/course-comments-list";
 import { CourseGallery } from "@/components/course-gallery";
 import { getCourseComments, CourseComment } from "@/lib/comments";
 import { getCoursePhotos, CoursePhoto } from "@/lib/course-photos";
+import { Button } from "@/components/ui/button";
+import { Square, Eye, Navigation, MapPin } from "lucide-react";
 
 const CourseDetailMap = dynamic(
   () => import("@/components/course-detail-map"),
@@ -112,22 +114,24 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-lola-50">
-        {/* 상단 지도 영역 */}
-        <div className="h-[70vh] relative">
-          <CourseDetailMap courseId={courseId} />
+        {/* 상단 지도 영역 - 헤더 공간 확보 */}
+        <div className="h-[60vh] relative p-4 pt-16">
+          <div className="h-full rounded-2xl overflow-hidden">
+            <CourseDetailMap courseId={courseId} />
+          </div>
         </div>
 
         {/* 하단 컨텐츠 */}
-        <div className="flex-1 bg-lola-50">
+        <div className="h-[40vh] bg-lola-50 overflow-y-auto">
           <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
             {/* 코스 정보 섹션 */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-bold text-gray-900">
+              <div className="mb-6">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
                   {course.title}
                 </h1>
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">BY GSRC81</span>
+                <div className="text-right">
+                  <span className="text-sm font-medium text-gray-600">BY GSRC81</span>
                 </div>
               </div>
 
@@ -180,9 +184,32 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               />
             </div>
 
-            {/* 사진 갤러리 섹션 */}
+            {/* GSRC81 Running crew 팀 사진 섹션 */}
             <div className="space-y-4">
-              <CourseGallery photos={coursePhotos} loading={loadingPhotos} />
+              <div className="bg-white rounded-lg overflow-hidden shadow-sm">
+                <img 
+                  src="/images/gsrc81-team.jpg" 
+                  alt="GSRC81 Running crew" 
+                  className="w-full h-64 object-cover"
+                  onError={(e) => {
+                    // 이미지가 없을 경우 기본 이미지나 placeholder 표시
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+                <div className="hidden bg-gray-100 h-64 flex items-center justify-center">
+                  <div className="text-center text-gray-500">
+                    <p className="text-lg font-bold">GSRC81</p>
+                    <p className="text-sm">Running crew!</p>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <div className="text-center">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">GSRC81</h3>
+                    <p className="text-gray-600 italic">Running crew!</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

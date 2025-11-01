@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Menu, X, Navigation } from "lucide-react";
 import { PWAInstallButton } from "@/components/pwa-install-button";
 
@@ -10,26 +11,25 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
+  
+  // 모든 페이지에서 헤더 표시
 
   return (
     <div className="min-h-screen bg-lola-50">
-      {/* 공통 헤더 - 투명 배경 */}
+      {/* 공통 헤더 - 모든 페이지에서 표시 */}
       <header className="fixed top-4 left-4 right-4 z-50 bg-transparent">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-black">GSRC81 MAPS</h1>
-          <div className="flex items-center space-x-4">
-            <span className="text-black text-sm">MENU</span>
-            <button
-              className="p-2 bg-transparent rounded-full"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? (
-                <X className="w-5 h-5 text-gray-700" />
-              ) : (
-                <Menu className="w-5 h-5 text-gray-700" />
-              )}
-            </button>
-          </div>
+        <div className="relative flex items-center justify-center">
+          {/* 중앙 정렬된 GSRC81 MAPS */}
+          <h1 className="text-lg font-semibold text-gray-900">GSRC81 MAPS</h1>
+          
+          {/* 우측 상단 MENU 텍스트 */}
+          <button
+            className="absolute right-0 text-sm font-medium text-gray-900"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            MENU
+          </button>
         </div>
       </header>
 

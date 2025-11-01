@@ -26,11 +26,25 @@ import { getFlightModeComments, CourseComment } from "@/lib/comments";
 interface CourseDetailMapProps {
   courseId: string;
   className?: string;
+  hideControls?: boolean;
+  onAnimationToggle?: () => void;
+  onLocationRouteToggle?: () => void;
+  isAnimating?: boolean;
+  isFullRouteView?: boolean;
+  savedProgress?: number;
+  locationButtonState?: any;
 }
 
 const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
   courseId,
   className = "",
+  hideControls = false,
+  onAnimationToggle: externalAnimationToggle,
+  onLocationRouteToggle: externalLocationRouteToggle,
+  isAnimating: externalIsAnimating,
+  isFullRouteView: externalIsFullRouteView,
+  savedProgress: externalSavedProgress,
+  locationButtonState: externalLocationButtonState,
 }) => {
   const [trailData, setTrailData] = useState<TrailData | null>(null);
   const [loading, setLoading] = useState(true);
