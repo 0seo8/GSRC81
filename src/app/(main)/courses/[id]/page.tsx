@@ -25,7 +25,7 @@ const CourseDetailMap = dynamic(
         </div>
       </div>
     ),
-  },
+  }
 );
 
 interface CourseDetailPageProps {
@@ -127,37 +127,39 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
             {/* 코스 정보 섹션 */}
             <div className="space-y-4">
               <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
                   {course.title}
                 </h1>
                 <div className="text-right">
-                  <span className="text-sm font-medium text-gray-600">BY GSRC81</span>
+                  <span className="text-xs font-medium text-gray-600">
+                    BY GSRC81
+                  </span>
                 </div>
               </div>
 
               {/* 통계 정보 */}
-              <div className="grid grid-cols-4 gap-4 py-4 border-b border-gray-200">
+              <div className="grid grid-cols-4 gap-4 py-4 border-t border-b border-black">
                 <div className="text-center">
-                  <div className="text-sm text-gray-500">거리</div>
-                  <div className="text-lg font-semibold">
+                  <div className="text-xs text-gray-500">거리</div>
+                  <div className="text-xs font-semibold">
                     {course.distance_km}km
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm text-gray-500">시간</div>
-                  <div className="text-lg font-semibold">
+                  <div className="text-xs text-gray-500">시간</div>
+                  <div className="text-xs font-semibold">
                     약 {course.avg_time_min || 30}분
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm text-gray-500">고도</div>
-                  <div className="text-lg font-semibold">
+                  <div className="text-xs text-gray-500">고도</div>
+                  <div className="text-xs font-semibold">
                     {course.elevation_gain || 32}m
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm text-gray-500">난이도</div>
-                  <div className="text-lg font-semibold">
+                  <div className="text-xs text-gray-500">난이도</div>
+                  <div className="text-xs font-semibold">
                     {course.difficulty === "easy"
                       ? "쉬움"
                       : course.difficulty === "medium"
@@ -177,7 +179,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
             </div>
 
             {/* 댓글 섹션 */}
-            <div className="space-y-4">
+            <div className="border-t border-black py-6">
               <CourseCommentsList
                 comments={comments}
                 loading={loadingComments}
@@ -185,27 +187,26 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
             </div>
 
             {/* GSRC81 Running crew 팀 사진 섹션 */}
-            <div className="space-y-4">
+            <div className="border-t border-b border-black py-6">
               <div className="bg-white rounded-lg overflow-hidden shadow-sm">
-                <img 
-                  src="/images/gsrc81-team.jpg" 
-                  alt="GSRC81 Running crew" 
+                <img
+                  src="/images/gsrc81-team.jpg"
+                  alt="GSRC81 Running crew"
                   className="w-full h-64 object-cover"
                   onError={(e) => {
                     // 이미지가 없을 경우 기본 이미지나 placeholder 표시
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    e.currentTarget.style.display = "none";
+                    e.currentTarget.nextElementSibling?.classList.remove(
+                      "hidden"
+                    );
                   }}
                 />
-                <div className="hidden bg-gray-100 h-64 flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <p className="text-lg font-bold">GSRC81</p>
-                    <p className="text-sm">Running crew!</p>
-                  </div>
-                </div>
+                <div className="hidden bg-gray-100 h-64 flex items-center justify-center"></div>
                 <div className="p-4">
                   <div className="text-center">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">GSRC81</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">
+                      GSRC81
+                    </h3>
                     <p className="text-gray-600 italic">Running crew!</p>
                   </div>
                 </div>
