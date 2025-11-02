@@ -7,11 +7,7 @@ import { useEffect, useState } from "react";
 import { Course } from "@/types";
 import { getCourseById } from "@/lib/courses-data";
 import { CourseCommentsList } from "@/components/course-comments-list";
-import { CourseGallery } from "@/components/course-gallery";
 import { getCourseComments, CourseComment } from "@/lib/comments";
-import { getCoursePhotos, CoursePhoto } from "@/lib/course-photos";
-import { Button } from "@/components/ui/button";
-import { Square, Eye, Navigation, MapPin } from "lucide-react";
 
 const CourseDetailMap = dynamic(
   () => import("@/components/course-detail-map"),
@@ -39,9 +35,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState<CourseComment[]>([]);
-  const [coursePhotos, setCoursePhotos] = useState<CoursePhoto[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
-  const [loadingPhotos, setLoadingPhotos] = useState(false);
 
   useEffect(() => {
     async function loadCourse() {
@@ -52,10 +46,9 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         const courseData = await getCourseById(resolvedParams.id);
         setCourse(courseData);
 
-        // 댓글과 사진도 함께 로드
+        // 댓글 로드
         if (courseData) {
           loadComments(resolvedParams.id);
-          loadCoursePhotos(resolvedParams.id);
         }
       } catch (error) {
         console.error("Failed to load course:", error);
@@ -81,18 +74,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     }
   }
 
-  // 사진 로드 함수
-  async function loadCoursePhotos(courseId: string) {
-    try {
-      setLoadingPhotos(true);
-      const photosData = await getCoursePhotos(courseId);
-      setCoursePhotos(photosData);
-    } catch (error) {
-      console.error("Failed to load photos:", error);
-    } finally {
-      setLoadingPhotos(false);
-    }
-  }
 
   if (loading) {
     return (

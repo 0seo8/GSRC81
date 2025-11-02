@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
-import { Menu, X, Navigation } from "lucide-react";
+import { Navigation } from "lucide-react";
 import { PWAInstallButton } from "@/components/pwa-install-button";
 
 interface MainLayoutProps {
@@ -11,9 +10,6 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const pathname = usePathname();
-  
-  // 모든 페이지에서 헤더 표시
 
   return (
     <div className="min-h-screen bg-lola-50">
