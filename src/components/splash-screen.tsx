@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -9,22 +10,24 @@ interface SplashScreenProps {
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [isComplete, setIsComplete] = useState(false);
+  const [isTextComplete, setIsTextComplete] = useState(false);
+  const [showLogo, setShowLogo] = useState(false);
 
-  const textSequence = [
+  const textLines = [
     "RUN",
-    "RUN OUR ROUTE,",
-    "RUN OUR ROUTE, MAKE",
-    "RUN OUR ROUTE, MAKE YOUR STORY.",
+    "OUR ROUTE,", 
+    "MAKE",
+    "YOUR STORY.",
   ];
 
   useEffect(() => {
     const timers = [
-      setTimeout(() => setCurrentStep(1), 800),
-      setTimeout(() => setCurrentStep(2), 1600),
-      setTimeout(() => setCurrentStep(3), 2400),
-      setTimeout(() => setIsComplete(true), 3200),
-      setTimeout(() => onComplete(), 4500),
+      setTimeout(() => setCurrentStep(1), 1000),
+      setTimeout(() => setCurrentStep(2), 2000),
+      setTimeout(() => setCurrentStep(3), 3000),
+      setTimeout(() => setIsTextComplete(true), 4200), // 텍스트 완성
+      setTimeout(() => setShowLogo(true), 5000),       // 로고 표시
+      setTimeout(() => onComplete(), 7000),            // 로그인으로 전환
     ];
 
     return () => timers.forEach(clearTimeout);
@@ -38,39 +41,69 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       transition={{ duration: 0.5 }}
     >
       {/* Progressive Text Animation */}
-      <div className="text-center mb-12">
-        <motion.h1
-          className="text-white text-3xl md:text-4xl font-bold leading-tight"
-          key={currentStep}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        >
-          {textSequence[currentStep]}
-        </motion.h1>
-      </div>
+      <AnimatePresence>
+        {!showLogo && (
+          <motion.div 
+            className="text-center mb-12 min-h-[200px] flex flex-col justify-center"
+            exit={{ 
+              opacity: 0, 
+              y: -100, 
+              transition: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }
+            }}
+          >
+            <div className="text-landing-slogan text-white leading-tight space-y-2">
+              {textLines.map((line, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ 
+                    opacity: index <= currentStep ? 1 : 0,
+                    y: index <= currentStep ? 0 : 30
+                  }}
+                  transition={{ 
+                    duration: 0.8, 
+                    ease: [0.25, 0.1, 0.25, 1],
+                    delay: index === currentStep ? 0 : 0
+                  }}
+                  className="overflow-hidden"
+                >
+                  {line}
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* GSRC81 MAPS Logo */}
       <AnimatePresence>
-        {isComplete && (
+        {showLogo && (
           <motion.div
             className="text-center"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
+            initial={{ opacity: 0, scale: 0.9, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ 
+              duration: 1.0, 
+              ease: [0.25, 0.1, 0.25, 1]
+            }}
           >
-            <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mb-4 mx-auto">
-              <span className="text-black font-bold text-2xl">G</span>
+            <div className="mb-6">
+              <Image
+                src="/logo.png"
+                alt="GSRC81 MAPS Logo"
+                width={296}
+                height={187}
+                className="mx-auto"
+                priority
+              />
             </div>
-            <h2 className="text-white text-xl font-semibold">GSRC81 MAPS</h2>
-            <p className="text-gray-400 text-sm mt-2">러닝 코스 가이드</p>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Loading indicator */}
       <AnimatePresence>
-        {isComplete && (
+        {showLogo && (
           <motion.div
             className="absolute bottom-20 left-1/2 transform -translate-x-1/2"
             initial={{ opacity: 0 }}

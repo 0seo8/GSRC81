@@ -1,19 +1,50 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { SplashScreen } from "@/components/splash-screen";
 import { useOnboarding } from "@/hooks/use-onboarding";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
-  const { isOnboardingComplete, isLoading, completeOnboarding } =
-    useOnboarding();
+  const router = useRouter();
+  const { isOnboardingComplete, isLoading: onboardingLoading, completeOnboarding } = useOnboarding();
+  const { isAuthenticated, isVerified, isLoading: authLoading, kakaoUserId } = useAuth();
+  
   const handleKakaoLogin = () => {
     const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI}&response_type=code`;
     window.location.href = kakaoAuthUrl;
   };
 
+  const handleSplashComplete = () => {
+    completeOnboarding();
+    // 스플래시 완료 후 인증 상태에 따른 라우팅
+    if (isAuthenticated && kakaoUserId) {
+      if (isVerified) {
+        router.push("/map");
+      } else {
+        router.push(`/verify?uid=${kakaoUserId}`);
+      }
+    }
+    // 로그인 안된 경우는 현재 페이지(로그인)에 그대로 있음
+  };
+
+  // 인증 상태 체크 후 자동 라우팅 (onboarding 완료된 경우)
+  useEffect(() => {
+    if (isOnboardingComplete && !authLoading) {
+      if (isAuthenticated && kakaoUserId) {
+        if (isVerified) {
+          router.push("/map");
+        } else {
+          router.push(`/verify?uid=${kakaoUserId}`);
+        }
+      }
+    }
+  }, [isOnboardingComplete, authLoading, isAuthenticated, isVerified, kakaoUserId, router]);
+
   // Show loading state while checking onboarding status
-  if (isLoading) {
+  if (onboardingLoading || authLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-white">Loading...</div>
@@ -23,7 +54,7 @@ export default function LoginPage() {
 
   // Show splash screen for first-time users
   if (!isOnboardingComplete) {
-    return <SplashScreen onComplete={completeOnboarding} />;
+    return <SplashScreen onComplete={handleSplashComplete} />;
   }
 
   return (
@@ -37,15 +68,17 @@ export default function LoginPage() {
           </h1>
         </div>
 
-        {/* Brand Message */}
+        {/* Brand Logo */}
         <div className="mb-16">
           <div className="text-center">
-            <h2 className="text-black text-4xl sm:text-5xl font-black leading-tight mb-6">
-              <div>RUN</div>
-              <div>OUR ROUTE,</div>
-              <div>MAKE</div>
-              <div>YOUR STORY.</div>
-            </h2>
+            <Image
+              src="/logo.png"
+              alt="GSRC81 MAPS - RUN OUR ROUTE, MAKE YOUR STORY"
+              width={296}
+              height={187}
+              className="mx-auto"
+              priority
+            />
           </div>
         </div>
 

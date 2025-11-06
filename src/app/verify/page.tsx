@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 
 function VerifyContent() {
@@ -12,10 +12,65 @@ function VerifyContent() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // 페이지 진입 시 자동으로 인증 상태 체크
+  useEffect(() => {
+    const checkExistingUser = async () => {
+      if (!kakaoUserId) return;
+      
+      const { data: existingUser } = await supabase
+        .from("access_links")
+        .select("*")
+        .eq("kakao_user_id", kakaoUserId)
+        .single();
+
+      if (existingUser) {
+        const authData = {
+          authenticated: true,
+          timestamp: Date.now(),
+          type: "kakao",
+          kakaoUserId: kakaoUserId,
+        };
+
+        document.cookie = `gsrc81-auth=${JSON.stringify(authData)}; Max-Age=86400; path=/; SameSite=Lax`;
+        
+        setTimeout(() => {
+          router.push("/map");
+        }, 100);
+      }
+    };
+
+    checkExistingUser();
+  }, [kakaoUserId, router]);
+
   const handleVerify = async () => {
     setLoading(true);
     setError("");
 
+    // 1️⃣ 먼저 이미 인증된 사용자인지 확인  
+    const { data: existingUser } = await supabase
+      .from("access_links")
+      .select("*")
+      .eq("kakao_user_id", kakaoUserId)
+      .single();
+
+    if (existingUser) {
+      // 이미 인증 완료된 사용자 - 쿠키 설정 후 리다이렉트
+      const authData = {
+        authenticated: true,
+        timestamp: Date.now(),
+        type: "kakao",
+        kakaoUserId: kakaoUserId,
+      };
+
+      document.cookie = `gsrc81-auth=${JSON.stringify(authData)}; Max-Age=86400; path=/; SameSite=Lax`;
+      
+      setTimeout(() => {
+        router.push("/map");
+      }, 100);
+      return;
+    }
+
+    // 2️⃣ 접근 코드 유효성 확인
     const { data, error } = await supabase
       .from("access_links")
       .select("*")
@@ -28,22 +83,29 @@ function VerifyContent() {
       return;
     }
 
-    // kakao_user_id 연결 및 활성화
-    await supabase
+    // 새로운 레코드 생성 (기존 레코드 업데이트가 아니라)
+    const { error: insertError } = await supabase
       .from("access_links")
-      .update({
+      .insert({
+        access_code: code,
         kakao_user_id: kakaoUserId,
-        kakao_nickname: data.kakao_nickname ?? null,
+        kakao_nickname: null,
         is_active: true,
-        updated_at: new Date().toISOString(),
       })
-      .eq("id", data.id);
+      .select();
+
+    if (insertError) {
+      setError("❌ 인증 처리 중 오류가 발생했습니다.");
+      setLoading(false);
+      return;
+    }
 
     // 카카오 로그인 성공 상태를 쿠키에 저장
     const authData = {
       authenticated: true,
       timestamp: Date.now(),
       type: "kakao",
+      kakaoUserId: kakaoUserId,
     };
 
     // 쿠키에 저장 (24시간)
@@ -90,7 +152,12 @@ function VerifyContent() {
               onChange={(e) => setCode(e.target.value)}
               className="w-full border border-gray-300 rounded-xl p-4 text-center text-lg font-medium bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="접근 코드를 입력하세요"
-              maxLength={10}
+              maxLength={20}
+              inputMode="text"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              lang="en"
             />
           </div>
 

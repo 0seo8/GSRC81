@@ -131,10 +131,10 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* Figma 기반 폰트 시스템 */
-  --font-poppins: "Poppins", sans-serif;
+  /* 정확한 폰트 시스템 */
+  --font-poppins: var(--font-poppins);
+  --font-inter: var(--font-inter);
   --font-noto-sans: "Noto Sans", sans-serif;
-  --font-inter: "Inter", sans-serif;
 }
 
 :root {
@@ -212,6 +212,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-inter);
   }
 }
 
@@ -347,6 +348,15 @@
   }
 
   /* Figma 기반 텍스트 스타일 */
+  
+  /* 랜딩 페이지 메인 슬로건 */
+  .text-landing-slogan {
+    font-family: var(--font-poppins);
+    font-weight: 700;
+    font-size: 2.8125rem; /* 45px */
+    line-height: 1.4;
+  }
+
   .text-header {
     font-family: var(--font-poppins);
     font-weight: 700;

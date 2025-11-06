@@ -1,27 +1,33 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isVerified: boolean;
   isLoading: boolean;
   error: string | null;
+  kakaoUserId: string | null;
   login: (password: string) => Promise<boolean>;
   logout: () => void;
+  checkVerificationStatus: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [kakaoUserId, setKakaoUserId] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
   }, []);
 
-  const checkAuth = () => {
+  const checkAuth = async () => {
     try {
       const authCookie = document.cookie
         .split("; ")
@@ -29,12 +35,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (authCookie) {
         const authData = JSON.parse(
-          decodeURIComponent(authCookie.split("=")[1]),
+          decodeURIComponent(authCookie.split("=")[1])
         );
         const isValid = Date.now() - authData.timestamp < 24 * 60 * 60 * 1000;
 
         if (isValid && authData.authenticated) {
           setIsAuthenticated(true);
+
+          // 카카오 사용자 ID가 있다면 인증 완료 여부도 체크
+          if (authData.kakaoUserId) {
+            setKakaoUserId(authData.kakaoUserId);
+            const verified = await checkVerificationStatusForUser(
+              authData.kakaoUserId
+            );
+            setIsVerified(verified);
+          }
         }
       }
     } catch (error) {
@@ -42,6 +57,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const checkVerificationStatusForUser = async (
+    userId: string
+  ): Promise<boolean> => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result: any = await supabase
+        .from("access_links")
+        .select("*")
+        .eq("kakao_user_id", userId);
+
+      return !result.error && result.data && result.data.length > 0;
+    } catch (error) {
+      console.error("Verification check error:", error);
+      return false;
+    }
+  };
+
+  const checkVerificationStatus = async (): Promise<boolean> => {
+    if (!kakaoUserId) return false;
+    return checkVerificationStatusForUser(kakaoUserId);
   };
 
   const login = async (password: string): Promise<boolean> => {
@@ -80,6 +117,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     document.cookie = "gsrc81-auth=; Max-Age=0; path=/";
     setIsAuthenticated(false);
+    setIsVerified(false);
+    setKakaoUserId(null);
     setError(null);
   };
 
@@ -87,10 +126,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         isAuthenticated,
+        isVerified,
         isLoading,
         error,
+        kakaoUserId,
         login,
         logout,
+        checkVerificationStatus,
       }}
     >
       {children}

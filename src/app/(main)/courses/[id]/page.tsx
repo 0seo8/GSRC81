@@ -74,7 +74,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     }
   }
 
-
   if (loading) {
     return (
       <ProtectedRoute>
@@ -121,8 +120,10 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               {/* 통계 정보 */}
               <div className="grid grid-cols-4 gap-4 py-4 border-t border-b border-black">
                 <div className="text-center">
-                  <div className="text-xs text-gray-500">거리</div>
-                  <div className="text-xs font-semibold">
+                  <div className="text-xs font-semibold text-gray-500">
+                    거리
+                  </div>
+                  <div className="text-xsfont-semibold">
                     {course.distance_km}km
                   </div>
                 </div>

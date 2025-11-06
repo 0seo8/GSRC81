@@ -89,6 +89,7 @@ export async function GET(req: Request) {
       authenticated: true,
       timestamp: Date.now(),
       type: "kakao",
+      kakaoUserId: id.toString(),
     };
 
     // 쿠키에 인증 정보 저장 (24시간)
