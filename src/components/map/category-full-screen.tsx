@@ -181,16 +181,13 @@ export function CategoryFullScreen({
             </div>
 
             {/* 코스 카드들 - PDF 시안별 구조 */}
-            <div className={`flex-1 px-4 pb-4 ${filteredCourses.length >= 3 ? 'overflow-y-auto' : 'overflow-hidden'} min-h-0`}>
+            <div
+              className={`flex-1 ${filteredCourses.length >= 3 ? "overflow-y-auto" : "overflow-hidden"} min-h-0`}
+            >
               <div
                 className="relative w-full"
                 style={{
-                  height:
-                    filteredCourses.length === 1
-                      ? "130px"  // 1개: 130px
-                      : filteredCourses.length === 2
-                        ? "250px"  // 2개: 180px + 70px = 250px
-                        : "350px",  // 3개 이상: 스크롤 영역
+                  height: "250px", // 카드 개수와 상관없이 항상 250px 고정
                 }}
               >
                 {filteredCourses.map((course, index) => {
@@ -201,7 +198,7 @@ export function CategoryFullScreen({
 
                   // PDF 시안에 따른 카드 스타일 결정 - 스택 구조
                   let cardHeight, cardBottom, borderRadius, zIndex;
-                  
+
                   if (filteredCourses.length === 1) {
                     // 1개: 130px 높이, 전체 라운드 45px (9페이지)
                     cardHeight = "130px";
@@ -237,9 +234,9 @@ export function CategoryFullScreen({
                       borderRadius = "45px 45px 0 0";
                       zIndex = 2;
                     } else {
-                      // 세번째카드 이후(맨위): 130px, 상단 좌우 라운드, 10cm만 보임
+                      // 세번째카드 이후(맨위): 130px, 상단 좌우 라운드, 조금만 보임
                       cardHeight = "130px";
-                      cardBottom = `${-100 + (index - 2) * 30}px`; // 위로 올라가되 10cm만 보이도록
+                      cardBottom = `${-100 + (index - 2) * 25}px`; // 원래대로 -100px, 간격 25px로 조정
                       borderRadius = "45px 45px 0 0";
                       zIndex = 2 + index;
                     }
@@ -287,11 +284,13 @@ export function CategoryFullScreen({
                             {course.difficulty === "hard" && "어려움"}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <div className="text-4xl font-bold text-black">
-                            {Math.round(course.distance_km)}
+                        <div className="text-right flex flex-col items-end">
+                          <div className="flex items-baseline">
+                            <span className="text-4xl font-bold text-black">
+                              {Math.round(course.distance_km)}
+                            </span>
+                            <span className="text-lg text-black ml-1">km</span>
                           </div>
-                          <div className="text-lg text-black">km</div>
                         </div>
                       </div>
                     </motion.div>
