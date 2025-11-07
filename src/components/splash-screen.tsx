@@ -10,7 +10,6 @@ interface SplashScreenProps {
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [isTextComplete, setIsTextComplete] = useState(false);
   const [showLogo, setShowLogo] = useState(false);
 
   const textLines = [
@@ -25,7 +24,6 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       setTimeout(() => setCurrentStep(1), 1000),
       setTimeout(() => setCurrentStep(2), 2000),
       setTimeout(() => setCurrentStep(3), 3000),
-      setTimeout(() => setIsTextComplete(true), 4200), // 텍스트 완성
       setTimeout(() => setShowLogo(true), 5000),       // 로고 표시
       setTimeout(() => onComplete(), 7000),            // 로그인으로 전환
     ];

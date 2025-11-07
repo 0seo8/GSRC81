@@ -130,6 +130,9 @@ const TrailMap: React.FC<TrailMapProps> = ({
 
   // 전체 루트 보기 상태 추적
   const [isFullRouteView, setIsFullRouteView] = useState(false);
+  
+  // 애니메이션 시작 트리거
+  const shouldStartAnimation = useRef(false);
 
   const [viewState, setViewState] = useState({
     longitude: 129.0,
@@ -213,7 +216,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
     if (isFullRouteView) {
       // 현재 전체보기 상태 → 애니메이션 시작
       setIsFullRouteView(false);
-      startTrailAnimation();
+      shouldStartAnimation.current = true;
     } else {
       // 현재 애니메이션 상태 → 전체보기로 전환
       setIsFullRouteView(true);
@@ -768,6 +771,14 @@ const TrailMap: React.FC<TrailMapProps> = ({
     };
   }, [trailData, currentAnimationPoint, animationProgress, isAnimating]);
 
+  // 애니메이션 시작 요청 처리
+  useEffect(() => {
+    if (shouldStartAnimation.current && !isAnimating && trailData) {
+      shouldStartAnimation.current = false;
+      startTrailAnimation();
+    }
+  }, [isFullRouteView, isAnimating, trailData, startTrailAnimation]);
+
   // 컴포넌트 언마운트 시 애니메이션 정리
   useEffect(() => {
     return () => {
@@ -960,7 +971,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
         },
       });
     }
-  }, [trailData, isAnimating, animationProgress, startTrailAnimation]);
+  }, [trailData, isAnimating, animationProgress]);
 
   // 3D 모드 변경 시 지형 적용
   useEffect(() => {

@@ -194,7 +194,23 @@ export const useTrailAnimation = (
           setSavedProgress(0);
 
           setTimeout(() => {
-            showFullRoute();
+            // Show full route after animation completes
+            setIsFullRouteView(true);
+            setAnimationProgress(1);
+            const bounds = trailData.stats.bounds;
+            mapRef.current?.getMap().fitBounds(
+              [
+                [bounds.minLng, bounds.minLat],
+                [bounds.maxLng, bounds.maxLat],
+              ],
+              {
+                padding: { top: 80, bottom: 80, left: 80, right: 80 },
+                pitch: 0,
+                bearing: 0,
+                duration: 1000,
+                essential: true,
+              },
+            );
           }, FLIGHT_CONFIG.COMPLETION_DELAY);
         }, 600);
       }
@@ -276,7 +292,7 @@ export const useTrailAnimation = (
       }
     }
     setIsAnimating(false);
-  }, [animationProgress, mapRef]);
+  }, [animationProgress]);
 
   return {
     isAnimating,

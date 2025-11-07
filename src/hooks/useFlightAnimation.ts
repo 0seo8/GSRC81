@@ -251,7 +251,23 @@ export function useFlightAnimation(
     } else if (progress >= 1) {
       setState((prev) => ({ ...prev, isAnimating: false }));
       setTimeout(() => {
-        showFullRoute();
+        // Show full route after animation completes
+        if (gpxData?.bounds && mapRef.current) {
+          const map = mapRef.current.getMap();
+          map.fitBounds(
+            [
+              [gpxData.bounds.minLng, gpxData.bounds.minLat],
+              [gpxData.bounds.maxLng, gpxData.bounds.maxLat],
+            ],
+            {
+              padding: { top: 80, bottom: 80, left: 80, right: 80 },
+              pitch: 0,
+              bearing: 0,
+              duration: 1000,
+              essential: true,
+            },
+          );
+        }
       }, 1000);
     }
   }, [gpxData, mapRef, courseNotes, finalConfig]);

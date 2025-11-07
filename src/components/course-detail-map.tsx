@@ -22,7 +22,6 @@ import { useKmMarkers } from "./map/trail-map/hooks/use-km-markers";
 import { MapControls } from "./map/trail-map/components/map-controls";
 import { CommentModal } from "./comment-modal";
 import { getFlightModeComments, CourseComment } from "@/lib/comments";
-import { LocationButtonState } from "./map/trail-map/types";
 
 interface CourseDetailMapProps {
   courseId: string;

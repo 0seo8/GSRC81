@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, memo } from "react";
 import mapboxgl from "mapbox-gl";
 import { type CourseWithComments } from "@/lib/courses-data";
 import { MarkerSkeleton } from "./marker-skeleton";
-import { NumberMarker } from "./number-marker";
 
 type Course = CourseWithComments;
 
