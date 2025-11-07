@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, memo } from "react";
 import mapboxgl from "mapbox-gl";
 import { type CourseWithComments } from "@/lib/courses-data";
 import { MarkerSkeleton } from "./marker-skeleton";
+import { NumberMarker } from "./number-marker";
 
 type Course = CourseWithComments;
 
@@ -225,137 +226,61 @@ const CourseMarkerComponent = function CourseMarker({
           ? "course-cluster-marker"
           : "course-marker";
 
-        if (isCluster) {
-          // 클러스터 색상과 크기를 카테고리와 개수에 따라 조정
-          const count = cluster.count;
-          const size = count >= 10 ? 40 : count >= 5 ? 36 : 32;
-          const fontSize = count >= 10 ? 16 : count >= 5 ? 14 : 12;
+        // NumberMarker를 사용해서 HTML 생성
+        const markerNumber = isCluster ? cluster.count : 1;
+        const markerSize = isCluster 
+          ? (cluster.count >= 10 ? 40 : cluster.count >= 5 ? 35 : 30) 
+          : 25;
 
-          // 클러스터의 첫 번째 코스 카테고리로 색상 결정
-          const firstCourse = cluster.courses[0];
-          const categoryKey = firstCourse.category_key || "jingwan";
-          const getCategoryColor = (categoryKey: string) => {
-            switch (categoryKey) {
-              case "jingwan":
-                return "#000000"; // 진관동러닝 - 검정
-              case "track":
-                return "#D04836"; // 트랙러닝 - 빨간색
-              case "trail":
-                return "#78A893"; // 트레일러닝 - 초록색
-              case "road":
-                return "#7A7A7A"; // 로드러닝 - 회색
-              default:
-                return "#6b7280"; // 기본값
-            }
-          };
-          const bgColor = getCategoryColor(categoryKey);
-
-          // PDF 스타일 핀 마커 (클러스터)
-          markerElement.innerHTML = `
-            <svg width="${size + 4}" height="${size + 8}" viewBox="0 0 ${size + 4} ${size + 8}" xmlns="http://www.w3.org/2000/svg">
-              <path d="M${(size + 4) / 2} ${size + 6} 
-                       C${(size + 4) / 2 - 4} ${size + 2} 
-                       2 ${(size + 4) / 2} 
-                       2 ${(size + 4) / 4}
-                       C2 ${(size + 4) / 8} 
-                       ${(size + 4) / 8} 2 
-                       ${(size + 4) / 2} 2
-                       C${((size + 4) * 7) / 8} 2 
-                       ${size + 2} ${(size + 4) / 8} 
-                       ${size + 2} ${(size + 4) / 4}
-                       C${size + 2} ${(size + 4) / 2} 
-                       ${(size + 4) / 2 + 4} ${size + 2} 
-                       ${(size + 4) / 2} ${size + 6} Z" 
-                    fill="${bgColor}" 
-                    stroke="white" 
-                    stroke-width="2"/>
-              <text x="${(size + 4) / 2}" y="${(size + 4) / 3}" 
-                    text-anchor="middle" 
-                    dominant-baseline="central" 
-                    fill="white" 
-                    font-family="system-ui, -apple-system, sans-serif"
-                    font-weight="bold" 
-                    font-size="${fontSize}px">${count}</text>
+        // NumberMarker 컴포넌트의 HTML을 문자열로 생성
+        const markerHeight = (markerSize * 31) / 25;
+        markerElement.innerHTML = `
+          <div style="position: relative; display: inline-block;">
+            <svg width="${markerSize}" height="${markerHeight}" viewBox="0 0 25 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3.66117 3.66116C8.54272 -1.22039 16.4573 -1.22039 21.3388 3.66116V3.66116C26.2204 8.54271 26.2204 16.4573 21.3388 21.3388L12.5 30.1777L3.66117 21.3388C-1.22039 16.4573 -1.22039 8.54271 3.66117 3.66116V3.66116Z" fill="black"/>
             </svg>
-          `;
+            <div style="
+              position: absolute; 
+              top: 0; 
+              left: 0; 
+              right: 0; 
+              bottom: 0; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
+              color: white; 
+              font-weight: bold; 
+              font-family: Poppins, system-ui, sans-serif;
+              font-size: ${markerSize * 0.4}px;
+              padding-bottom: ${markerSize * 0.16}px;
+            ">
+              ${markerNumber}
+            </div>
+          </div>
+        `;
 
-          markerElement.style.cssText = `
-            cursor: pointer;
-            position: absolute;
-            transform: translate(-50%, -100%);
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-            z-index: 10;
-          `;
-        } else {
-          // 개별 마커 스타일 - 카테고리별 색상
-          const course = cluster.courses[0];
-          const getCategoryColor = (categoryKey: string) => {
-            switch (categoryKey) {
-              case "jingwan":
-                return "#000000"; // 진관동러닝 - 검정
-              case "track":
-                return "#D04836"; // 트랙러닝 - 빨간색
-              case "trail":
-                return "#78A893"; // 트레일러닝 - 초록색
-              case "road":
-                return "#7A7A7A"; // 로드러닝 - 회색
-              default:
-                return "#6b7280"; // 기본값
-            }
-          };
-
-          // categoryKey가 없는 경우 기본값으로 진관동러닝 처리
-          const categoryKey = course.category_key || "jingwan";
-          const markerColor = getCategoryColor(categoryKey);
-
-          // 개별 마커는 항상 1로 표시 (겹치지 않는 경우)
-          const markerNumber = 1;
-
-          // PDF 스타일 핀 마커 (개별) - 번호 포함
-          markerElement.innerHTML = `
-            <svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
-              <path d="M16 38 
-                       C12 34 
-                       2 24 
-                       2 16
-                       C2 8 
-                       8 2 
-                       16 2
-                       C24 2 
-                       30 8 
-                       30 16
-                       C30 24 
-                       20 34 
-                       16 38 Z" 
-                    fill="${markerColor}" 
-                    stroke="white" 
-                    stroke-width="2"/>
-              <text x="16" y="18" 
-                    text-anchor="middle" 
-                    dominant-baseline="central" 
-                    fill="white" 
-                    font-family="system-ui, -apple-system, sans-serif"
-                    font-weight="bold" 
-                    font-size="14px">${markerNumber}</text>
-            </svg>
-          `;
-
-          markerElement.style.cssText = `
-            cursor: pointer;
-            position: absolute;
-            transform: translate(-50%, -100%);
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-            z-index: 5;
-            display: block !important;
-            visibility: visible !important;
-          `;
-        }
+        markerElement.style.cssText = `
+          cursor: pointer;
+          position: absolute;
+          transform: translate(-50%, -100%);
+          filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+          z-index: ${isCluster ? 10 : 5};
+          display: block !important;
+          visibility: visible !important;
+        `;
 
         // 클릭 이벤트
         markerElement.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
           e.stopImmediatePropagation();
+
+          // 마커를 맵의 중앙으로 이동
+          map.flyTo({
+            center: [cluster.center_lng, cluster.center_lat],
+            duration: 800,
+            essential: true
+          });
 
           if (isCluster) {
             // 클러스터 클릭 - 코스 리스트 표시

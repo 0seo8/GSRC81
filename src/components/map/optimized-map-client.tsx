@@ -37,9 +37,9 @@ export function OptimizedMapClient({
   const displayCourses = useMemo(
     () =>
       allCourses.filter(
-        (course) => (course.category_key || "jingwan") === currentCategory,
+        (course) => (course.category_key || "jingwan") === currentCategory
       ),
-    [allCourses, currentCategory],
+    [allCourses, currentCategory]
   );
 
   const {
@@ -57,7 +57,7 @@ export function OptimizedMapClient({
   const loadCoursesByCategory = useCallback(
     async (categoryKey: string) => {
       const existingCourses = allCourses.filter(
-        (course) => (course.category_key || "jingwan") === categoryKey,
+        (course) => (course.category_key || "jingwan") === categoryKey
       );
 
       if (existingCourses.length === 0) {
@@ -69,7 +69,7 @@ export function OptimizedMapClient({
         }
       }
     },
-    [allCourses],
+    [allCourses]
   );
 
   // 마커 클릭 핸들러
@@ -81,7 +81,7 @@ export function OptimizedMapClient({
       setIsFullscreenOpen(true);
       mapHandleCourseClick(course);
     },
-    [loadCoursesByCategory, mapHandleCourseClick],
+    [loadCoursesByCategory, mapHandleCourseClick]
   );
 
   const handleClusterClick = useCallback(
@@ -92,7 +92,7 @@ export function OptimizedMapClient({
       setIsFullscreenOpen(true);
       mapHandleClusterClick(coursesInCluster);
     },
-    [loadCoursesByCategory, mapHandleClusterClick],
+    [loadCoursesByCategory, mapHandleClusterClick]
   );
 
   // 카드 클릭으로 코스 상세 페이지 이동
@@ -102,7 +102,7 @@ export function OptimizedMapClient({
       setIsFullscreenOpen(false);
       handleCloseDrawer();
     },
-    [router, handleCloseDrawer],
+    [router, handleCloseDrawer]
   );
 
   // 카테고리 변경
@@ -111,7 +111,7 @@ export function OptimizedMapClient({
       await loadCoursesByCategory(categoryKey);
       setCurrentCategory(categoryKey);
     },
-    [loadCoursesByCategory],
+    [loadCoursesByCategory]
   );
 
   // 현재 위치로 이동
@@ -134,7 +134,7 @@ export function OptimizedMapClient({
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 300000,
-      },
+      }
     );
   }, [map]);
 
@@ -156,11 +156,8 @@ export function OptimizedMapClient({
   }
 
   return (
-    <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
-      <div
-        className="flex-1 relative overflow-hidden"
-        style={{ paddingTop: "4rem" }}
-      >
+    <div className="h-screen bg-transparent flex flex-col overflow-hidden">
+      <div className="flex-1 relative overflow-hidden">
         {/* 지도 */}
         <MapboxMap
           accessToken={mapboxToken}
@@ -184,7 +181,7 @@ export function OptimizedMapClient({
         {/* 현재 위치 버튼 */}
         <button
           onClick={handleCurrentLocation}
-          className="absolute top-20 right-4 z-20 bg-white rounded-lg p-3 shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+          className="absolute top-20 right-4 z-20 bg-white rounded-lg p-2 shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors"
           aria-label="현재 위치로 이동"
         >
           <Navigation className="w-5 h-5 text-black" />

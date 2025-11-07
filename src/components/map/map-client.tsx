@@ -146,10 +146,9 @@ export function MapClient({ courses, categories }: MapClientProps) {
   }
 
   return (
-    <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
+    <div className="h-screen bg-transparent flex flex-col overflow-hidden">
       <div
         className="flex-1 relative overflow-hidden"
-        style={{ paddingTop: "4rem" }}
       >
         {/* 헤더 공간 확보 */}
 
