@@ -228,9 +228,7 @@ const CourseMarkerComponent = function CourseMarker({
 
         // NumberMarker를 사용해서 HTML 생성
         const markerNumber = isCluster ? cluster.count : 1;
-        const markerSize = isCluster 
-          ? (cluster.count >= 10 ? 40 : cluster.count >= 5 ? 35 : 30) 
-          : 25;
+        const markerSize = 25; // 모든 마커 크기 동일하게 고정
 
         // NumberMarker 컴포넌트의 HTML을 문자열로 생성
         const markerHeight = (markerSize * 31) / 25;
