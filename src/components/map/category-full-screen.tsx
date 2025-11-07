@@ -47,7 +47,7 @@ export function CategoryFullScreen({
   onCategoryChange,
 }: CategoryFullScreenProps) {
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(
-    categories.findIndex((cat) => cat.key === initialCategory) || 0,
+    categories.findIndex((cat) => cat.key === initialCategory) || 0
   );
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -64,7 +64,7 @@ export function CategoryFullScreen({
 
   // 현재 카테고리의 코스들 필터링
   const filteredCourses = courses.filter(
-    (course) => (course.category_key || "jingwan") === currentCategory?.key,
+    (course) => (course.category_key || "jingwan") === currentCategory?.key
   );
 
   // 카드 네비게이션 함수
@@ -102,7 +102,7 @@ export function CategoryFullScreen({
   // 스와이프 핸들러 - 카테고리와 카드 모두 처리
   const handleSwipe = (
     _event: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo,
+    info: PanInfo
   ) => {
     const swipeThreshold = 50;
 
@@ -174,23 +174,23 @@ export function CategoryFullScreen({
 
               {/* 카테고리 타이틀 - 왼쪽 정렬, 검정색 */}
               <div className="text-left mb-4">
-                <h2 className="text-3xl font-bold  whitespace-pre-line">
-                  {`${currentCategory?.name || "카테고리"}\n러닝`}
+                <h2 className="text-category text-black whitespace-pre-line">
+                  {`${currentCategory?.name}\n러닝`}
                 </h2>
               </div>
             </div>
 
-            {/* 코스 카드들 - PDF 10페이지 스타일 스택 */}
-            <div className="flex-1 px-4 pb-4 overflow-hidden min-h-0">
+            {/* 코스 카드들 - PDF 시안별 구조 */}
+            <div className={`flex-1 px-4 pb-4 ${filteredCourses.length >= 3 ? 'overflow-y-auto' : 'overflow-hidden'} min-h-0`}>
               <div
                 className="relative w-full"
                 style={{
                   height:
                     filteredCourses.length === 1
-                      ? "160px"
+                      ? "130px"  // 1개: 130px
                       : filteredCourses.length === 2
-                        ? "270px"
-                        : `${160 + (filteredCourses.length - 1) * 110}px`,
+                        ? "250px"  // 2개: 180px + 70px = 250px
+                        : "350px",  // 3개 이상: 스크롤 영역
                 }}
               >
                 {filteredCourses.map((course, index) => {
@@ -199,21 +199,51 @@ export function CategoryFullScreen({
                       index % currentDesign.cardColors.length
                     ];
 
-                  // 현재 카드 기준으로 상대적 인덱스 계산
-                  const relativeIndex = index - currentCardIndex;
-                  const maxVisible = Math.min(5, filteredCourses.length); // PDF 규칙: 최대 5개까지
-                  const isVisible =
-                    relativeIndex >= 0 && relativeIndex < maxVisible;
-
-                  if (!isVisible) return null;
-
-                  // 카드 개수에 따른 조건부 스타일링
-                  const isSingleCard = filteredCourses.length === 1;
-                  const stackOffset = isSingleCard ? 0 : relativeIndex * 110; // 1개면 스택 없음
-                  const scale = 1; // 모든 카드 동일한 크기
-                  const zIndex = relativeIndex + 1;
-
-                  // opacity 제거 - 모든 카드가 선명하게 보이도록
+                  // PDF 시안에 따른 카드 스타일 결정 - 스택 구조
+                  let cardHeight, cardBottom, borderRadius, zIndex;
+                  
+                  if (filteredCourses.length === 1) {
+                    // 1개: 130px 높이, 전체 라운드 45px (9페이지)
+                    cardHeight = "130px";
+                    cardBottom = "0px";
+                    borderRadius = "45px";
+                    zIndex = 1;
+                  } else if (filteredCourses.length === 2) {
+                    if (index === 0) {
+                      // 첫번째카드(맨아래): 180px, 상단 좌우 라운드, 바닥에서 70px 떨어짐
+                      cardHeight = "180px";
+                      cardBottom = "70px";
+                      borderRadius = "45px 45px 0 0";
+                      zIndex = 1;
+                    } else if (index === 1) {
+                      // 두번째카드(위): 130px, 모든 라운드 45px, 맨 위
+                      cardHeight = "130px";
+                      cardBottom = "0px";
+                      borderRadius = "45px";
+                      zIndex = 2;
+                    }
+                  } else {
+                    // 3개 이상 (11페이지)
+                    if (index === 0) {
+                      // 첫번째카드(맨아래): 180px, 상단 좌우 라운드, 바닥에서 70px 떨어짐
+                      cardHeight = "180px";
+                      cardBottom = "70px";
+                      borderRadius = "45px 45px 0 0";
+                      zIndex = 1;
+                    } else if (index === 1) {
+                      // 두번째카드(중간): 130px, 상단 좌우 라운드
+                      cardHeight = "130px";
+                      cardBottom = "0px";
+                      borderRadius = "45px 45px 0 0";
+                      zIndex = 2;
+                    } else {
+                      // 세번째카드 이후(맨위): 130px, 상단 좌우 라운드, 10cm만 보임
+                      cardHeight = "130px";
+                      cardBottom = `${-100 + (index - 2) * 30}px`; // 위로 올라가되 10cm만 보이도록
+                      borderRadius = "45px 45px 0 0";
+                      zIndex = 2 + index;
+                    }
+                  }
 
                   return (
                     <motion.div
@@ -222,35 +252,24 @@ export function CategoryFullScreen({
                       animate={{
                         opacity: 1,
                         y: 0,
-                        scale: scale,
+                        scale: 1,
                       }}
                       transition={{
                         duration: 0.3,
                         ease: "easeOut",
                       }}
-                      drag={relativeIndex === 0 ? "y" : false} // 맨 앞 카드만 드래그 가능
-                      dragConstraints={{ top: -100, bottom: 100 }}
-                      onDragStart={() => setIsDragging(true)}
-                      onDragEnd={(e, info) => {
-                        setIsDragging(false);
-                        handleSwipe(e, info);
-                      }}
-                      className="absolute left-0 right-0 rounded-[45px] p-6 cursor-pointer"
+                      className="absolute left-0 right-0 p-6 cursor-pointer"
                       style={{
                         backgroundColor: cardColor,
-                        top: `${stackOffset}px`, // 다시 top 기준으로
+                        bottom: cardBottom,
+                        height: cardHeight,
+                        borderRadius: borderRadius,
                         zIndex: zIndex,
-                        height: "160px",
-                        boxShadow: `0 ${4 + relativeIndex * 2}px ${12 + relativeIndex * 4}px rgba(0,0,0,0.15)`,
-                        transform: `scale(${scale})`,
+                        boxShadow: `0 ${4 + index * 2}px ${12 + index * 4}px rgba(0,0,0,0.15)`,
                       }}
                       onClick={(e) => {
-                        e.stopPropagation(); // 이벤트 전파 방지
-
-                        // 드래그 중이면 클릭 이벤트 무시
+                        e.stopPropagation();
                         if (isDragging) return;
-
-                        // 모든 카드 클릭 시 바로 상세 페이지로 이동
                         onCourseClick(course.id);
                       }}
                     >

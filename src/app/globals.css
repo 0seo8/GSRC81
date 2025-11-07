@@ -372,9 +372,9 @@
   }
 
   .text-category {
-    font-family: var(--font-noto-sans);
+    font-family: "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-weight: 700;
-    font-size: 30px;
+    font-size: 1.875rem; /* 30px */
     line-height: 1.4;
   }
 

@@ -131,23 +131,23 @@ const CourseCardStackComponent = function CourseCardStack({
                 {/* Left: Course Info */}
                 <div className="flex flex-col justify-center">
                   {/* Course Title */}
-                  <h3 className={`${textColor} text-xl font-bold mb-2`}>
+                  <h3 className={`${textColor} text-course mb-2`}>
                     {course.title}
                   </h3>
 
                   {/* Course Details */}
                   <div className="flex items-center space-x-4">
-                    <span className={`${textColor} ${textOpacity} text-sm`}>
+                    <span className={`${textColor} ${textOpacity} text-body`}>
                       {course.distance_km}km
                     </span>
-                    <span className={`${textColor} ${textOpacity} text-sm`}>
+                    <span className={`${textColor} ${textOpacity} text-body`}>
                       {course.avg_time_min}분
                     </span>
-                    <span className={`${textColor} ${textOpacity} text-sm`}>
+                    <span className={`${textColor} ${textOpacity} text-body`}>
                       {getDifficultyText(course.difficulty)}
                     </span>
                     {course.comment_count > 0 && (
-                      <span className={`${textColor} ${textOpacity} text-sm`}>
+                      <span className={`${textColor} ${textOpacity} text-body`}>
                         💬 {course.comment_count}
                       </span>
                     )}
@@ -155,9 +155,12 @@ const CourseCardStackComponent = function CourseCardStack({
                 </div>
 
                 {/* Right: Distance (Large) */}
-                <div className={`${textColor} text-right`}>
-                  <span className="text-2xl font-bold">
-                    {course.distance_km}km
+                <div className={`${textColor} text-right flex flex-col items-end`}>
+                  <span className="text-distance">
+                    {course.distance_km}
+                  </span>
+                  <span className="text-distance-unit">
+                    km
                   </span>
                 </div>
               </div>
