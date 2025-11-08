@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import {
   type CourseWithComments,
@@ -54,7 +54,6 @@ export function CategoryFullScreen({
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(
     categories.findIndex((cat) => cat.key === initialCategory) || 0
   );
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragKey, setDragKey] = useState(0);
   const [dongNames, setDongNames] = useState<string[]>([]);
@@ -62,80 +61,77 @@ export function CategoryFullScreen({
   const currentCategory = categories[currentCategoryIndex];
   const currentDesign =
     CATEGORY_DESIGNS[
-      currentCategory?.key === "all" 
-        ? "jingwan" 
+      currentCategory?.key === "all"
+        ? "jingwan"
         : (currentCategory?.key as keyof typeof CATEGORY_DESIGNS)
     ] || CATEGORY_DESIGNS.jingwan;
 
-  // 현재 카테고리의 코스들 필터링
-  const filteredCourses = currentCategory?.key === "all" 
-    ? courses // 전체 카테고리인 경우 모든 코스
-    : courses.filter(
-        (course) => (course.category_key || "jingwan") === currentCategory?.key
+  // 현재 카테고리의 코스들 필터링 (memoized)
+  const filteredCourses = useMemo(() => {
+    if (currentCategory?.key === "all") {
+      // 전체 카테고리인 경우 선택된 코스들만 표시
+      const targetCourses =
+        selectedCourses && selectedCourses.length > 0
+          ? selectedCourses
+          : selectedCourse
+            ? [selectedCourse]
+            : [];
+      return targetCourses;
+    } else {
+      return courses.filter(
+        (course) =>
+          (course.category_key || "jingwan") === currentCategory?.key
       );
+    }
+  }, [currentCategory?.key, selectedCourses, selectedCourse, courses]);
+
+  // 좌표 조합 키 생성 (memoized)
+  const coordsKey = useMemo(() => {
+    if (currentCategory?.key !== "all" || filteredCourses.length === 0) {
+      return "";
+    }
+    return filteredCourses
+      .map(
+        (course) =>
+          `${course.start_latitude.toFixed(6)},${course.start_longitude.toFixed(6)}`
+      )
+      .sort()
+      .join("|");
+  }, [currentCategory?.key, filteredCourses]);
 
   // 전체 카테고리일 때 선택된 코스들에서 동 이름 추출
   useEffect(() => {
-    if (currentCategory?.key === "all") {
-      // 선택된 코스들만 사용 (단일 선택 또는 클러스터 선택)
-      const targetCourses = selectedCourses && selectedCourses.length > 0 
-        ? selectedCourses 
-        : selectedCourse 
-        ? [selectedCourse] 
-        : [];
-      
-      if (targetCourses.length > 0) {
-        getDongsFromCourses(targetCourses).then(setDongNames);
-      } else {
-        setDongNames([]);
-      }
+    if (coordsKey && filteredCourses.length > 0) {
+      console.log(`🔍 Requesting dongs for coords key: ${coordsKey}`);
+      getDongsFromCourses(filteredCourses).then(setDongNames);
     } else {
       setDongNames([]);
     }
-  }, [currentCategory?.key, selectedCourse, selectedCourses]);
+  }, [coordsKey]); // filteredCourses 제거하여 무한 루프 방지
 
   // 카테고리가 없을 때 안전 장치
   if (!categories || categories.length === 0) {
     return null;
   }
 
-  // 카드 네비게이션 함수
-  const goToPrevCard = () => {
-    if (currentCardIndex > 0) {
-      setCurrentCardIndex(currentCardIndex - 1);
-    }
-  };
-
-  const goToNextCard = () => {
-    if (currentCardIndex < filteredCourses.length - 1) {
-      setCurrentCardIndex(currentCardIndex + 1);
-    }
-  };
-
   // 카테고리 변경 함수
   const goToPrevCategory = () => {
-    console.log('goToPrevCategory called, current index:', currentCategoryIndex);
     if (currentCategoryIndex > 0) {
       const newIndex = currentCategoryIndex - 1;
-      console.log('Changing to previous category, new index:', newIndex, 'category:', categories[newIndex]?.key);
       setCurrentCategoryIndex(newIndex);
-      setCurrentCardIndex(0); // 카테고리 변경 시 첫 번째 카드로 리셋
       onCategoryChange?.(categories[newIndex].key); // 지도에 카테고리 변경 알림
     } else {
-      console.log('Cannot go to previous category - already at first');
+      console.log("Cannot go to previous category - already at first");
     }
   };
 
   const goToNextCategory = () => {
-    console.log('goToNextCategory called, current index:', currentCategoryIndex);
     if (currentCategoryIndex < categories.length - 1) {
       const newIndex = currentCategoryIndex + 1;
-      console.log('Changing to next category, new index:', newIndex, 'category:', categories[newIndex]?.key);
       setCurrentCategoryIndex(newIndex);
-      setCurrentCardIndex(0); // 카테고리 변경 시 첫 번째 카드로 리셋
       onCategoryChange?.(categories[newIndex].key); // 지도에 카테고리 변경 알림
     } else {
-      console.log('Cannot go to next category - already at last');
+      console.log("Cannot go to next category - already at last");
     }
   };
 
@@ -145,34 +141,23 @@ export function CategoryFullScreen({
     info: PanInfo
   ) => {
     const swipeThreshold = 50;
-
-    console.log('Swipe detected:', {
-      offsetX: info.offset.x,
-      currentIndex: currentCategoryIndex,
-      categoriesLength: categories.length,
-      currentCategory: currentCategory?.key
-    });
-
     // 드래그 거리가 임계값보다 작으면 무시
     if (Math.abs(info.offset.x) < swipeThreshold) {
-      console.log('Swipe below threshold, resetting position');
       // 위치 강제 리셋
-      setDragKey(prev => prev + 1);
+      setDragKey((prev) => prev + 1);
       return;
     }
 
     if (info.offset.x > swipeThreshold) {
       // 오른쪽 스와이프 - 이전 카테고리
-      console.log('Right swipe - going to previous category');
       goToPrevCategory();
     } else if (info.offset.x < -swipeThreshold) {
       // 왼쪽 스와이프 - 다음 카테고리
-      console.log('Left swipe - going to next category');
       goToNextCategory();
     }
-    
+
     // 카테고리 변경 후 위치 리셋
-    setDragKey(prev => prev + 1);
+    setDragKey((prev) => prev + 1);
   };
 
   // 헤더 드래그 핸들러 (아래로 드래그하여 닫기)
@@ -221,7 +206,7 @@ export function CategoryFullScreen({
             }}
           >
             {/* 헤더 */}
-            <motion.div 
+            <motion.div
               className="p-4 pb-2 cursor-grab active:cursor-grabbing"
               drag="y"
               dragConstraints={{ top: 0, bottom: 200 }}
@@ -238,12 +223,11 @@ export function CategoryFullScreen({
               {/* 카테고리 타이틀 - 왼쪽 정렬, 검정색 */}
               <div className="text-left mb-4">
                 <h2 className="text-category text-black whitespace-pre-line">
-                  {currentCategory?.key === "all" 
-                    ? dongNames.length > 0 
+                  {currentCategory?.key === "all"
+                    ? dongNames.length > 0
                       ? `${dongNames.join(", ")}\n러닝`
                       : "전체\n러닝"
-                    : `${currentCategory?.name}\n러닝`
-                  }
+                    : `${currentCategory?.name}\n러닝`}
                 </h2>
               </div>
             </motion.div>
@@ -344,7 +328,7 @@ export function CategoryFullScreen({
                             {course.title}
                           </h3>
                           <p className="text-sm text-black mb-1">
-                            {course.description || "로드 러닝 코스"}
+                            {course.category_name} 러닝 코스
                           </p>
                           <p className="text-sm text-black">
                             {course.difficulty === "easy" && "쉬움"}
@@ -364,26 +348,6 @@ export function CategoryFullScreen({
                     </motion.div>
                   );
                 })}
-
-                {/* 코스가 없을 때 - 빈 상태이지만 카테고리 네비게이션은 유지 */}
-                {filteredCourses.length === 0 && (
-                  <div className="text-center py-16">
-                    <div className="mb-8">
-                      <div className="w-16 h-16 mx-auto mb-4 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                        <span className="text-2xl">🏃‍♂️</span>
-                      </div>
-                      <h3 className="text-xl font-bold text-white mb-2">
-                        {currentCategory?.name || "카테고리"} 러닝 코스
-                      </h3>
-                      <p className="text-white text-opacity-80">
-                        이 카테고리에는 아직 등록된 코스가 없습니다.
-                      </p>
-                      <p className="text-white text-opacity-60 text-sm mt-2">
-                        다른 카테고리를 확인해보세요!
-                      </p>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </motion.div>

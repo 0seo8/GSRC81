@@ -41,6 +41,7 @@ export interface CourseWithComments extends Course {
   start_latitude: number;
   start_longitude: number;
   category_key?: string;
+  category_name?: string;
 }
 
 // Supabase select 결과 레코드 타입
@@ -55,22 +56,18 @@ interface SupabaseCourseRow {
   cover_image_url?: string;
   created_at: string;
   is_active: boolean;
-  course_categories?: { key?: string } | { key?: string }[] | null;
+  course_categories?: { key?: string; name?: string } | { key?: string; name?: string }[] | null;
   course_comments?: { count: number }[] | null;
 }
 
 export async function getCourses(
-  categoryKey?: string,
+  categoryKey?: string
 ): Promise<CourseWithComments[]> {
   const maxRetries = 3;
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(
-        `🔍 getCourses: 시도 ${attempt}/${maxRetries}, categoryKey: ${categoryKey || 'all'}`,
-      );
-
       const { data, error } = await supabaseServer
         .from(TABLES.COURSES)
         .select(
@@ -85,9 +82,9 @@ export async function getCourses(
           cover_image_url,
           created_at,
           is_active,
-          course_categories(key),
+          course_categories(key, name),
           course_comments(count)
-        `,
+        `
         )
         .eq("is_active", true)
         .order("created_at", { ascending: false });
@@ -106,12 +103,9 @@ export async function getCourses(
       }
 
       if (!data) {
-        console.log('⚠️ getCourses: 데이터 없음');
+        console.log("⚠️ getCourses: 데이터 없음");
         return [];
       }
-      
-      console.log('✅ getCourses: 데이터 수신 성공:', data.length, '개');
-      console.log('📊 getCourses: 원본 데이터:', data.slice(0, 2));
 
       const rows = (data ?? []) as SupabaseCourseRow[];
       const coursesWithCommentCount: CourseWithComments[] = rows.map(
@@ -121,27 +115,24 @@ export async function getCourses(
           category_key: Array.isArray(course.course_categories)
             ? (course.course_categories[0]?.key ?? "jingwan")
             : (course.course_categories?.key ?? "jingwan"), // JOIN된 카테고리 키 사용, 없으면 기본값
-        }),
+          category_name: Array.isArray(course.course_categories)
+            ? (course.course_categories[0]?.name ?? "진관")
+            : (course.course_categories?.name ?? "진관"), // JOIN된 카테고리 이름 사용, 없으면 기본값
+        })
       );
-
-      console.log('🔍 getCourses: 변환된 데이터:', coursesWithCommentCount.map(c => ({ id: c.id, title: c.title, category_key: c.category_key })));
-      console.log('🔍 getCourses: 요청된 카테고리:', categoryKey, '타겟 카테고리:', categoryKey || "jingwan");
 
       // categoryKey가 없으면 모든 코스 반환 (전체 보기)
       if (!categoryKey) {
-        console.log('✅ getCourses: 전체 코스 반환:', coursesWithCommentCount.length, '개');
         return coursesWithCommentCount;
       }
 
       // 카테고리 필터링
       const filteredCourses = coursesWithCommentCount.filter(
-        (course) => course.category_key === categoryKey,
+        (course) => course.category_key === categoryKey
       );
 
-      console.log(`Successfully fetched ${filteredCourses.length} courses`);
       return filteredCourses;
     } catch (error) {
-      console.error(`Network error on attempt ${attempt}:`, error);
       lastError = error instanceof Error ? error : new Error(String(error));
 
       if (attempt === maxRetries) {

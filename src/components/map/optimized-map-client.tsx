@@ -28,14 +28,14 @@ export function OptimizedMapClient({
 }: OptimizedMapClientProps) {
   // 전체 카테고리 추가
   const allCategories = [
-    { 
-      id: "all", 
-      key: "all", 
-      name: "전체", 
+    {
+      id: "all",
+      key: "all",
+      name: "전체",
       description: "모든 코스",
       sort_order: 0,
       is_active: true,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     },
     ...categories,
   ];
@@ -47,17 +47,14 @@ export function OptimizedMapClient({
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
 
   // 현재 카테고리의 코스만 필터링 (memoized)
-  const displayCourses = useMemo(
-    () => {
-      if (currentCategory === "all") {
-        return allCourses; // 전체 노출
-      }
-      return allCourses.filter(
-        (course) => (course.category_key || "jingwan") === currentCategory
-      );
-    },
-    [allCourses, currentCategory]
-  );
+  const displayCourses = useMemo(() => {
+    if (currentCategory === "all") {
+      return allCourses; // 전체 노출
+    }
+    return allCourses.filter(
+      (course) => (course.category_key || "jingwan") === currentCategory
+    );
+  }, [allCourses, currentCategory]);
 
   const {
     map,
@@ -79,7 +76,7 @@ export function OptimizedMapClient({
       if (categoryKey === "all") {
         return; // 전체 코스는 이미 allCourses에 있음
       }
-      
+
       const existingCourses = allCourses.filter(
         (course) => (course.category_key || "jingwan") === categoryKey
       );
@@ -155,7 +152,6 @@ export function OptimizedMapClient({
   // 현재 위치로 이동
   const handleCurrentLocation = useCallback(() => {
     if (!map || !navigator.geolocation) return;
-
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -185,12 +181,6 @@ export function OptimizedMapClient({
 
   if (!mapboxToken) {
     return <MapTokenError />;
-  }
-
-  if (displayCourses.length === 0 && allCourses.length === 0) {
-    return (
-      <MapEmptyState mapboxToken={mapboxToken} onMapLoad={handleMapLoad} />
-    );
   }
 
   return (
@@ -225,23 +215,6 @@ export function OptimizedMapClient({
         >
           <Navigation className="w-5 h-5 text-black" />
         </button>
-
-        {/* 빈 카테고리 안내 */}
-        {map && optimisticCourses.length === 0 && allCourses.length > 0 && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-            <div className="bg-white rounded-full p-4 shadow-lg border border-gray-200">
-              <div className="text-center">
-                <div className="text-2xl mb-2">🏃‍♂️</div>
-                <p className="text-sm text-gray-600 whitespace-nowrap">
-                  이 지역에 코스가 없습니다
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  다른 카테고리를 확인해보세요
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* 카테고리 풀스크린 */}
         <CategoryFullScreen
