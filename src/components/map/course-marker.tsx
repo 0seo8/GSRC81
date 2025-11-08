@@ -18,6 +18,7 @@ interface CourseCluster {
 interface CourseMarkerProps {
   map: mapboxgl.Map;
   courses: Course[];
+  currentCategory?: string;
   onCourseClick?: (course: Course) => void;
   onClusterClick?: (courses: Course[]) => void;
 }
@@ -57,6 +58,7 @@ function getClusterDistance(zoom: number): number {
 const CourseMarkerComponent = function CourseMarker({
   map,
   courses,
+  currentCategory = "jingwan",
   onCourseClick,
   onClusterClick,
 }: CourseMarkerProps) {
@@ -219,6 +221,31 @@ const CourseMarkerComponent = function CourseMarker({
       clusters.forEach((cluster) => {
         const isCluster = cluster.count > 1;
 
+        // 카테고리별 마커 색상 결정
+        const getCategoryMarkerColor = (categoryKey: string) => {
+          switch (categoryKey) {
+            case "jingwan":
+              return "#78A893"; // 진관동러닝 - 초록색
+            case "track":
+              return "#D04836"; // 트랙러닝 - 빨간색
+            case "trail":
+              return "#78A893"; // 트레일러닝 - 초록색
+            case "road":
+              return "#7A7A7A"; // 로드러닝 - 회색
+            case "all":
+              return "#000000"; // 전체 카테고리 - 검정색
+            default:
+              return "#78A893"; // 기본값 (진관동러닝)
+          }
+        };
+
+        // 클러스터의 대표 카테고리 결정
+        // "all" 카테고리일 때는 모든 마커를 검정색으로 통일
+        const representativeCategory = currentCategory === "all" 
+          ? "all" 
+          : (cluster.courses[0]?.category_key || "jingwan");
+        const markerColor = getCategoryMarkerColor(representativeCategory);
+
         // 마커 엘리먼트 생성
         const markerElement = document.createElement("div");
         markerElement.className = isCluster
@@ -234,7 +261,7 @@ const CourseMarkerComponent = function CourseMarker({
         markerElement.innerHTML = `
           <div style="position: relative; display: inline-block;">
             <svg width="${markerSize}" height="${markerHeight}" viewBox="0 0 25 31" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3.66117 3.66116C8.54272 -1.22039 16.4573 -1.22039 21.3388 3.66116V3.66116C26.2204 8.54271 26.2204 16.4573 21.3388 21.3388L12.5 30.1777L3.66117 21.3388C-1.22039 16.4573 -1.22039 8.54271 3.66117 3.66116V3.66116Z" fill="black"/>
+              <path d="M3.66117 3.66116C8.54272 -1.22039 16.4573 -1.22039 21.3388 3.66116V3.66116C26.2204 8.54271 26.2204 16.4573 21.3388 21.3388L12.5 30.1777L3.66117 21.3388C-1.22039 16.4573 -1.22039 8.54271 3.66117 3.66116V3.66116Z" fill="${markerColor}"/>
             </svg>
             <div style="
               position: absolute; 
@@ -372,7 +399,7 @@ const CourseMarkerComponent = function CourseMarker({
         styleLoadHandlerRef.current = null;
       }
     };
-  }, [map, courses, onCourseClick, onClusterClick, zoomLevel]);
+  }, [map, courses, currentCategory, onCourseClick, onClusterClick, zoomLevel]);
 
   // 스켈레톤 위치 계산 (코스의 시작점들)
   const skeletonPositions = courses.map((course) => ({

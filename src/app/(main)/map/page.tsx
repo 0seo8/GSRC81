@@ -7,10 +7,10 @@ import { MapClientWrapper } from "@/components/map/map-client-wrapper";
 
 export default async function MapPage() {
   try {
-    // 카테고리와 초기 코스를 병렬로 로드 (진관동러닝만)
+    // 카테고리와 전체 코스를 병렬로 로드
     const [categories, courses] = await Promise.all([
       getCourseCategories(),
-      getCourses("jingwan"),
+      getCourses(), // 전체 코스 로드
     ]);
 
     return (

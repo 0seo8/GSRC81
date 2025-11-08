@@ -26,19 +26,36 @@ export function OptimizedMapClient({
   courses,
   categories,
 }: OptimizedMapClientProps) {
+  // 전체 카테고리 추가
+  const allCategories = [
+    { 
+      id: "all", 
+      key: "all", 
+      name: "전체", 
+      description: "모든 코스",
+      sort_order: 0,
+      is_active: true,
+      created_at: new Date().toISOString()
+    },
+    ...categories,
+  ];
   const router = useRouter();
   const [allCourses, setAllCourses] = useState<CourseWithComments[]>(courses);
-  const [currentCategory, setCurrentCategory] = useState<string>("jingwan");
+  const [currentCategory, setCurrentCategory] = useState<string>("all"); // 전체로 시작
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
 
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
 
   // 현재 카테고리의 코스만 필터링 (memoized)
   const displayCourses = useMemo(
-    () =>
-      allCourses.filter(
+    () => {
+      if (currentCategory === "all") {
+        return allCourses; // 전체 노출
+      }
+      return allCourses.filter(
         (course) => (course.category_key || "jingwan") === currentCategory
-      ),
+      );
+    },
     [allCourses, currentCategory]
   );
 
@@ -56,6 +73,11 @@ export function OptimizedMapClient({
   // 카테고리별 코스 동적 로딩
   const loadCoursesByCategory = useCallback(
     async (categoryKey: string) => {
+      // "all" 카테고리는 이미 로드된 전체 코스 사용
+      if (categoryKey === "all") {
+        return; // 전체 코스는 이미 allCourses에 있음
+      }
+      
       const existingCourses = allCourses.filter(
         (course) => (course.category_key || "jingwan") === categoryKey
       );
@@ -75,24 +97,38 @@ export function OptimizedMapClient({
   // 마커 클릭 핸들러
   const handleCourseClick = useCallback(
     async (course: CourseWithComments) => {
-      const categoryKey = course.category_key || "jingwan";
-      await loadCoursesByCategory(categoryKey);
-      setCurrentCategory(categoryKey);
-      setIsFullscreenOpen(true);
-      mapHandleCourseClick(course);
+      if (currentCategory === "all") {
+        // 전체 모드에서는 카테고리 전환하지 않음
+        setIsFullscreenOpen(true);
+        mapHandleCourseClick(course);
+      } else {
+        // 특정 카테고리 모드에서는 기존 동작
+        const categoryKey = course.category_key || "jingwan";
+        await loadCoursesByCategory(categoryKey);
+        setCurrentCategory(categoryKey);
+        setIsFullscreenOpen(true);
+        mapHandleCourseClick(course);
+      }
     },
-    [loadCoursesByCategory, mapHandleCourseClick]
+    [currentCategory, loadCoursesByCategory, mapHandleCourseClick]
   );
 
   const handleClusterClick = useCallback(
     async (coursesInCluster: CourseWithComments[]) => {
-      const categoryKey = coursesInCluster[0]?.category_key || "jingwan";
-      await loadCoursesByCategory(categoryKey);
-      setCurrentCategory(categoryKey);
-      setIsFullscreenOpen(true);
-      mapHandleClusterClick(coursesInCluster);
+      if (currentCategory === "all") {
+        // 전체 모드에서는 카테고리 전환하지 않음
+        setIsFullscreenOpen(true);
+        mapHandleClusterClick(coursesInCluster);
+      } else {
+        // 특정 카테고리 모드에서는 기존 동작
+        const categoryKey = coursesInCluster[0]?.category_key || "jingwan";
+        await loadCoursesByCategory(categoryKey);
+        setCurrentCategory(categoryKey);
+        setIsFullscreenOpen(true);
+        mapHandleClusterClick(coursesInCluster);
+      }
     },
-    [loadCoursesByCategory, mapHandleClusterClick]
+    [currentCategory, loadCoursesByCategory, mapHandleClusterClick]
   );
 
   // 카드 클릭으로 코스 상세 페이지 이동
@@ -141,7 +177,7 @@ export function OptimizedMapClient({
   // 풀스크린 닫기
   const handleCloseFullscreen = useCallback(() => {
     setIsFullscreenOpen(false);
-    setCurrentCategory("jingwan");
+    setCurrentCategory("all"); // 전체로 닫기
     handleCloseDrawer();
   }, [handleCloseDrawer]);
 
@@ -173,6 +209,7 @@ export function OptimizedMapClient({
           <CourseMarker
             map={map}
             courses={optimisticCourses}
+            currentCategory={currentCategory}
             onCourseClick={handleCourseClick}
             onClusterClick={handleClusterClick}
           />
@@ -209,7 +246,7 @@ export function OptimizedMapClient({
           isOpen={isFullscreenOpen}
           onClose={handleCloseFullscreen}
           courses={allCourses}
-          categories={categories}
+          categories={allCategories}
           initialCategory={currentCategory}
           onCourseClick={handleCourseDetailNavigation}
           onCategoryChange={handleCategoryChange}

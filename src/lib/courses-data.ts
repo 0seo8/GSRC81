@@ -68,7 +68,7 @@ export async function getCourses(
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(
-        `Attempting to fetch courses (attempt ${attempt}/${maxRetries})`,
+        `🔍 getCourses: 시도 ${attempt}/${maxRetries}, categoryKey: ${categoryKey || 'all'}`,
       );
 
       const { data, error } = await supabaseServer
@@ -106,8 +106,12 @@ export async function getCourses(
       }
 
       if (!data) {
+        console.log('⚠️ getCourses: 데이터 없음');
         return [];
       }
+      
+      console.log('✅ getCourses: 데이터 수신 성공:', data.length, '개');
+      console.log('📊 getCourses: 원본 데이터:', data.slice(0, 2));
 
       const rows = (data ?? []) as SupabaseCourseRow[];
       const coursesWithCommentCount: CourseWithComments[] = rows.map(
@@ -120,10 +124,18 @@ export async function getCourses(
         }),
       );
 
-      // 카테고리 필터링 (기본값: "jingwan")
-      const targetCategory = categoryKey || "jingwan";
+      console.log('🔍 getCourses: 변환된 데이터:', coursesWithCommentCount.map(c => ({ id: c.id, title: c.title, category_key: c.category_key })));
+      console.log('🔍 getCourses: 요청된 카테고리:', categoryKey, '타겟 카테고리:', categoryKey || "jingwan");
+
+      // categoryKey가 없으면 모든 코스 반환 (전체 보기)
+      if (!categoryKey) {
+        console.log('✅ getCourses: 전체 코스 반환:', coursesWithCommentCount.length, '개');
+        return coursesWithCommentCount;
+      }
+
+      // 카테고리 필터링
       const filteredCourses = coursesWithCommentCount.filter(
-        (course) => course.category_key === targetCategory,
+        (course) => course.category_key === categoryKey,
       );
 
       console.log(`Successfully fetched ${filteredCourses.length} courses`);

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import {
   type CourseWithComments,
   type CourseCategory,
 } from "@/lib/courses-data";
+import { getDongsFromCourses } from "@/lib/location-utils";
 
 interface CategoryFullScreenProps {
   isOpen: boolean;
@@ -51,21 +52,37 @@ export function CategoryFullScreen({
   );
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [dragKey, setDragKey] = useState(0);
+  const [dongNames, setDongNames] = useState<string[]>([]);
 
   const currentCategory = categories[currentCategoryIndex];
   const currentDesign =
-    CATEGORY_DESIGNS[currentCategory?.key as keyof typeof CATEGORY_DESIGNS] ||
-    CATEGORY_DESIGNS.jingwan;
+    CATEGORY_DESIGNS[
+      currentCategory?.key === "all" 
+        ? "jingwan" 
+        : (currentCategory?.key as keyof typeof CATEGORY_DESIGNS)
+    ] || CATEGORY_DESIGNS.jingwan;
+
+  // 현재 카테고리의 코스들 필터링
+  const filteredCourses = currentCategory?.key === "all" 
+    ? courses // 전체 카테고리인 경우 모든 코스
+    : courses.filter(
+        (course) => (course.category_key || "jingwan") === currentCategory?.key
+      );
+
+  // 전체 카테고리일 때 동 이름 추출
+  useEffect(() => {
+    if (currentCategory?.key === "all" && filteredCourses.length > 0) {
+      getDongsFromCourses(filteredCourses).then(setDongNames);
+    } else {
+      setDongNames([]);
+    }
+  }, [currentCategory?.key, filteredCourses]);
 
   // 카테고리가 없을 때 안전 장치
   if (!categories || categories.length === 0) {
     return null;
   }
-
-  // 현재 카테고리의 코스들 필터링
-  const filteredCourses = courses.filter(
-    (course) => (course.category_key || "jingwan") === currentCategory?.key
-  );
 
   // 카드 네비게이션 함수
   const goToPrevCard = () => {
@@ -82,54 +99,77 @@ export function CategoryFullScreen({
 
   // 카테고리 변경 함수
   const goToPrevCategory = () => {
+    console.log('goToPrevCategory called, current index:', currentCategoryIndex);
     if (currentCategoryIndex > 0) {
       const newIndex = currentCategoryIndex - 1;
+      console.log('Changing to previous category, new index:', newIndex, 'category:', categories[newIndex]?.key);
       setCurrentCategoryIndex(newIndex);
       setCurrentCardIndex(0); // 카테고리 변경 시 첫 번째 카드로 리셋
       onCategoryChange?.(categories[newIndex].key); // 지도에 카테고리 변경 알림
+    } else {
+      console.log('Cannot go to previous category - already at first');
     }
   };
 
   const goToNextCategory = () => {
+    console.log('goToNextCategory called, current index:', currentCategoryIndex);
     if (currentCategoryIndex < categories.length - 1) {
       const newIndex = currentCategoryIndex + 1;
+      console.log('Changing to next category, new index:', newIndex, 'category:', categories[newIndex]?.key);
       setCurrentCategoryIndex(newIndex);
       setCurrentCardIndex(0); // 카테고리 변경 시 첫 번째 카드로 리셋
       onCategoryChange?.(categories[newIndex].key); // 지도에 카테고리 변경 알림
+    } else {
+      console.log('Cannot go to next category - already at last');
     }
   };
 
-  // 스와이프 핸들러 - 카테고리와 카드 모두 처리
-  const handleSwipe = (
+  // 카테고리 스와이프 핸들러 (좌우 드래그)
+  const handleCategorySwipe = (
     _event: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo
   ) => {
     const swipeThreshold = 50;
 
-    // 드래그 거리가 임계값보다 작으면 클릭으로 간주하여 스와이프 무시
-    const totalDistance = Math.sqrt(info.offset.x ** 2 + info.offset.y ** 2);
-    if (totalDistance < swipeThreshold) {
-      return; // 클릭으로 간주, 스와이프 처리하지 않음
+    console.log('Swipe detected:', {
+      offsetX: info.offset.x,
+      currentIndex: currentCategoryIndex,
+      categoriesLength: categories.length,
+      currentCategory: currentCategory?.key
+    });
+
+    // 드래그 거리가 임계값보다 작으면 무시
+    if (Math.abs(info.offset.x) < swipeThreshold) {
+      console.log('Swipe below threshold, resetting position');
+      // 위치 강제 리셋
+      setDragKey(prev => prev + 1);
+      return;
     }
 
-    // 좌우 스와이프 - 카테고리 변경
-    if (Math.abs(info.offset.x) > Math.abs(info.offset.y)) {
-      if (info.offset.x > swipeThreshold) {
-        // 오른쪽 스와이프 - 이전 카테고리
-        goToPrevCategory();
-      } else if (info.offset.x < -swipeThreshold) {
-        // 왼쪽 스와이프 - 다음 카테고리
-        goToNextCategory();
-      }
-    } else {
-      // 상하 스와이프 - 카드 변경
-      if (info.offset.y < -swipeThreshold) {
-        // 위로 스와이프 - 다음 카드
-        goToNextCard();
-      } else if (info.offset.y > swipeThreshold) {
-        // 아래로 스와이프 - 이전 카드
-        goToPrevCard();
-      }
+    if (info.offset.x > swipeThreshold) {
+      // 오른쪽 스와이프 - 이전 카테고리
+      console.log('Right swipe - going to previous category');
+      goToPrevCategory();
+    } else if (info.offset.x < -swipeThreshold) {
+      // 왼쪽 스와이프 - 다음 카테고리
+      console.log('Left swipe - going to next category');
+      goToNextCategory();
+    }
+    
+    // 카테고리 변경 후 위치 리셋
+    setDragKey(prev => prev + 1);
+  };
+
+  // 헤더 드래그 핸들러 (아래로 드래그하여 닫기)
+  const handleHeaderDrag = (
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
+    const closeThreshold = 100;
+
+    // 아래로 충분히 드래그하면 바텀시트 닫기
+    if (info.offset.y > closeThreshold) {
+      onClose();
     }
   };
 
@@ -148,23 +188,31 @@ export function CategoryFullScreen({
 
           {/* 메인 컨테이너 - 하단에서 올라오는 드로어 스타일 */}
           <motion.div
+            key={`${currentCategory?.key}-${dragKey}`}
             initial={{ opacity: 0, y: "100%" }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0, x: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed bottom-0 left-0 right-0 z-50 flex flex-col max-h-[85vh] rounded-t-[45px]"
             style={{ backgroundColor: currentDesign.backgroundColor }}
             onClick={(e) => e.stopPropagation()}
-            drag
-            dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+            drag="x"
+            dragConstraints={{ left: -100, right: 100 }}
+            dragElastic={0.2}
             onDragStart={() => setIsDragging(true)}
             onDragEnd={(e, info) => {
               setIsDragging(false);
-              handleSwipe(e, info);
+              handleCategorySwipe(e, info);
             }}
           >
             {/* 헤더 */}
-            <div className="p-4 pb-2">
+            <motion.div 
+              className="p-4 pb-2 cursor-grab active:cursor-grabbing"
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 200 }}
+              dragElastic={0.2}
+              onDragEnd={handleHeaderDrag}
+            >
               {/* 드래그 핸들 */}
               <div className="flex justify-center mb-2">
                 <div className="w-10 h-1 bg-white bg-opacity-50 rounded-full"></div>
@@ -175,10 +223,15 @@ export function CategoryFullScreen({
               {/* 카테고리 타이틀 - 왼쪽 정렬, 검정색 */}
               <div className="text-left mb-4">
                 <h2 className="text-category text-black whitespace-pre-line">
-                  {`${currentCategory?.name}\n러닝`}
+                  {currentCategory?.key === "all" 
+                    ? dongNames.length > 0 
+                      ? `${dongNames.join(", ")}\n러닝`
+                      : "전체\n러닝"
+                    : `${currentCategory?.name}\n러닝`
+                  }
                 </h2>
               </div>
-            </div>
+            </motion.div>
 
             {/* 코스 카드들 - PDF 시안별 구조 */}
             <div
