@@ -11,7 +11,7 @@ interface GraphicOverlayProps {
 
 export function GraphicOverlay({
   map,
-  graphicImageUrl = "/images/seoul-graphic-map.png", // 기본 이미지 경로
+  graphicImageUrl, // 기본값 제거
   opacity = 0.8,
 }: GraphicOverlayProps) {
   const [overlayStyle, setOverlayStyle] = useState({
@@ -68,7 +68,7 @@ export function GraphicOverlay({
     };
   }, [map, opacity]);
 
-  if (!map) return null;
+  if (!map || !graphicImageUrl) return null;
 
   return (
     <div

@@ -9,6 +9,7 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   kakaoUserId: string | null;
+  kakaoNickname: string | null;
   login: (password: string) => Promise<boolean>;
   logout: () => void;
   checkVerificationStatus: () => Promise<boolean>;
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [kakaoUserId, setKakaoUserId] = useState<string | null>(null);
+  const [kakaoNickname, setKakaoNickname] = useState<string | null>(null);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -41,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // 카카오 사용자 ID가 있다면 인증 완료 여부도 체크
           if (authData.kakaoUserId) {
             setKakaoUserId(authData.kakaoUserId);
+            setKakaoNickname(authData.kakaoNickname || null);
             const verified = await checkVerificationStatusForUser(
               authData.kakaoUserId
             );
@@ -119,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsAuthenticated(false);
     setIsVerified(false);
     setKakaoUserId(null);
+    setKakaoNickname(null);
     setError(null);
   };
 
@@ -130,6 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         error,
         kakaoUserId,
+        kakaoNickname,
         login,
         logout,
         checkVerificationStatus,

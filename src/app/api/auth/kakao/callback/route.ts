@@ -42,9 +42,24 @@ export async function GET(req: Request) {
       headers: { Authorization: `Bearer ${kakaoAccessToken}` },
     });
     const userData = await userRes.json();
-    console.log("Kakao user data:", JSON.stringify(userData, null, 2));
+    console.log("=== 카카오 사용자 정보 ===");
+    console.log("전체 데이터:", JSON.stringify(userData, null, 2));
+    console.log("ID:", userData.id);
+    console.log("닉네임:", userData.properties?.nickname);
+    console.log("프로필 이미지:", userData.properties?.profile_image);
+    console.log("계정 정보:", userData.kakao_account);
+    if (userData.kakao_account) {
+      console.log("- 이메일:", userData.kakao_account.email);
+      console.log("- 프로필:", userData.kakao_account.profile);
+      if (userData.kakao_account.profile) {
+        console.log("  - 닉네임:", userData.kakao_account.profile.nickname);
+        console.log("  - 프로필 이미지 URL:", userData.kakao_account.profile.profile_image_url);
+      }
+    }
+    console.log("========================");
 
     const { id } = userData;
+    const nickname = userData.properties?.nickname || userData.kakao_account?.profile?.nickname || null;
 
     if (!id) {
       console.error("No user ID found in Kakao response");
@@ -90,6 +105,7 @@ export async function GET(req: Request) {
       timestamp: Date.now(),
       type: "kakao",
       kakaoUserId: id.toString(),
+      kakaoNickname: nickname,
     };
 
     // 쿠키에 인증 정보 저장 (24시간)

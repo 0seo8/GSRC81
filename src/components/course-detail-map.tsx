@@ -563,8 +563,8 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
           </Marker>
         )}
 
-        {/* 댓글 말풍선 마커들 */}
-        {flightComments
+        {/* 댓글 말풍선 마커들 - 비행모드일 때만 표시 */}
+        {isAnimating && flightComments
           .filter((comment) => comment.latitude && comment.longitude)
           .map((comment) => (
             <Marker
@@ -580,35 +580,14 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
                 className="relative max-w-xs"
               >
                 {/* 말풍선 */}
-                <div className="bg-black text-white rounded-lg shadow-lg p-3 relative">
+                <div className="bg-black text-white rounded-lg shadow-lg p-3 relative max-w-[200px]">
                   {/* 말풍선 꼬리 */}
                   <div className="absolute bottom-0 left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-black transform translate-y-full"></div>
 
-                  {/* 댓글 내용 */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-white">
-                        {comment.author_nickname}
-                      </span>
-                      <span className="text-xs text-gray-300">
-                        {comment.distance_marker?.toFixed(1)}km
-                      </span>
-                    </div>
-                    <p className="text-sm text-white leading-relaxed">
-                      {comment.message}
-                    </p>
-                    <div className="text-xs text-gray-300">
-                      {new Date(comment.created_at).toLocaleDateString(
-                        "ko-KR",
-                        {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        },
-                      )}
-                    </div>
-                  </div>
+                  {/* 댓글 내용만 표시 */}
+                  <p className="text-sm text-white leading-relaxed">
+                    {comment.message}
+                  </p>
                 </div>
               </motion.div>
             </Marker>

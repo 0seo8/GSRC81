@@ -367,8 +367,29 @@
   .text-title {
     font-family: var(--font-noto-sans);
     font-weight: 700;
-    font-size: 25px;
+    font-size: 1.5625rem; /* 25px */
     line-height: 1.4;
+  }
+
+  /* Course detail page title with forced two-line layout */
+  .text-course-detail-title {
+    font-family: var(--font-noto-sans);
+    font-weight: 700;
+    font-size: 1.5625rem; /* 25px */
+    line-height: 1.4;
+    word-break: break-all;
+    overflow-wrap: break-word;
+    white-space: normal;
+  }
+
+  /* Course detail description text */
+  .text-course-detail-description {
+    font-family: var(--font-noto-sans);
+    font-weight: 500;
+    font-size: 0.75rem; /* 12px */
+    line-height: 1.4;
+    column-count: 2;
+    column-gap: 0.625rem; /* 10px */
   }
 
   .text-category {

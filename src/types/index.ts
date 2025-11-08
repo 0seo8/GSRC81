@@ -4,6 +4,7 @@ export interface Course {
   id: string;
   title: string;
   description?: string;
+  detail_description?: string; // 상세 설명 필드 추가
   gpx_url?: string;
   gpx_coordinates?: string; // JSON string of coordinates
   start_latitude: number;

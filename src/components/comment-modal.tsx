@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, MessageSquare, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createComment, CreateCommentData } from "@/lib/comments";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CommentModalProps {
   isOpen: boolean;
@@ -25,20 +26,23 @@ export function CommentModal({
   position,
   onCommentAdded,
 }: CommentModalProps) {
+  const { kakaoUserId, kakaoNickname } = useAuth();
   const [message, setMessage] = useState("");
-  const [nickname, setNickname] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!position || !message.trim() || !nickname.trim()) return;
+    if (!position || !message.trim()) return;
+
+    // 로그인된 사용자 닉네임 사용 (카카오 닉네임이 있으면 사용, 없으면 GSRC81 러너)
+    const authorNickname = kakaoNickname || "GSRC81 러너";
 
     setIsSubmitting(true);
     try {
       const commentData: CreateCommentData = {
         course_id: courseId,
-        author_nickname: nickname.trim(),
+        author_nickname: authorNickname,
         message: message.trim(),
         latitude: position.lat,
         longitude: position.lng,
@@ -50,7 +54,6 @@ export function CommentModal({
 
       // 성공적으로 등록된 후 처리
       setMessage("");
-      setNickname("");
       onCommentAdded?.();
       onClose();
     } catch (error) {
@@ -63,7 +66,6 @@ export function CommentModal({
 
   const handleClose = () => {
     setMessage("");
-    setNickname("");
     onClose();
   };
 
@@ -118,26 +120,6 @@ export function CommentModal({
             {/* 폼 */}
             <form onSubmit={handleSubmit} className="px-6 pb-6">
               <div className="space-y-4">
-                {/* 닉네임 입력 */}
-                <div>
-                  <label
-                    htmlFor="nickname"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    닉네임
-                  </label>
-                  <input
-                    id="nickname"
-                    type="text"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    placeholder="닉네임을 입력하세요"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
-                    maxLength={20}
-                    required
-                  />
-                </div>
-
                 {/* 메시지 입력 */}
                 <div>
                   <label
@@ -177,7 +159,7 @@ export function CommentModal({
                 <Button
                   type="submit"
                   className="flex-1 bg-orange-500 hover:bg-orange-600"
-                  disabled={isSubmitting || !message.trim() || !nickname.trim()}
+                  disabled={isSubmitting || !message.trim()}
                 >
                   {isSubmitting ? "등록 중..." : "등록"}
                 </Button>
