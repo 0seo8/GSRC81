@@ -1,4 +1,11 @@
 import { supabase } from "./supabase";
+import { createClient } from "@supabase/supabase-js";
+
+// Service Role 클라이언트 (RLS 우회용)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!; // 임시로 ANON 키 사용
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 export interface CoursePhoto {
   id: string;

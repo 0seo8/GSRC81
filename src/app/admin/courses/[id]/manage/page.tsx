@@ -16,8 +16,10 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, MapPin, MessageSquare, Trash2, AlertCircle } from "lucide-react";
+import { Save, MapPin, MessageSquare, Trash2, AlertCircle, Camera } from "lucide-react";
 import Link from "next/link";
+import { type CoursePhoto } from "@/lib/course-photos";
+import ImageUploader from "@/components/common/ImageUploader";
 
 interface Course {
   id: string;
@@ -68,9 +70,11 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
 
   const [course, setCourse] = useState<Course | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [photos, setPhotos] = useState<CoursePhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // 폼 데이터
   const [formData, setFormData] = useState({
@@ -110,14 +114,15 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
     try {
       setLoading(true);
 
-      // 코스 정보와 댓글을 병렬로 로드
-      const [courseResult, commentsResult] = await Promise.all([
+      // 코스 정보, 댓글, 사진을 병렬로 로드
+      const [courseResult, commentsResult, photosResult] = await Promise.all([
         supabase.from("courses").select("*").eq("id", courseId).single(),
         supabase
           .from("course_comments")
           .select("*")
           .eq("course_id", courseId)
           .order("created_at", { ascending: false }),
+        fetch(`/api/course-photos?course_id=${courseId}`).then(res => res.json()),
       ]);
 
       if (courseResult.error) throw courseResult.error;
@@ -126,6 +131,14 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
       const courseData = courseResult.data;
       setCourse(courseData);
       setComments(commentsResult.data || []);
+      
+      // 사진 데이터 처리 (API 오류 시 빈 배열)
+      if (Array.isArray(photosResult)) {
+        setPhotos(photosResult);
+      } else {
+        console.warn('Photo loading failed:', photosResult);
+        setPhotos([]);
+      }
 
       // GPX 데이터 존재 여부 확인
       setHasGpxData(!!courseData.gpx_data);
@@ -258,6 +271,70 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
     }
   };
 
+  // 사진 업로드 핸들러
+  const handlePhotoUpload = async (url: string) => {
+    if (!courseId) return;
+    
+    try {
+      setUploadingPhoto(true);
+      
+      // API를 통해 데이터베이스에 사진 레코드 생성
+      const response = await fetch('/api/course-photos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          course_id: courseId,
+          file_url: url,
+          caption: "",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '사진 저장에 실패했습니다.');
+      }
+
+      const newPhoto = await response.json();
+      
+      // 사진 목록에 추가
+      setPhotos(prev => [newPhoto, ...prev]);
+      
+      alert("사진이 성공적으로 업로드되었습니다.");
+    } catch (error) {
+      console.error("사진 업로드 실패:", error);
+      alert(`사진 업로드 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  // 사진 삭제 핸들러
+  const handleDeletePhoto = async (photoId: string) => {
+    if (!confirm("이 사진을 삭제하시겠습니까?")) return;
+    
+    try {
+      // API를 통해 데이터베이스에서 사진 삭제
+      const response = await fetch(`/api/course-photos?photo_id=${photoId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '사진 삭제에 실패했습니다.');
+      }
+      
+      // 사진 목록에서 삭제된 항목 제거
+      setPhotos(prev => prev.filter(photo => photo.id !== photoId));
+      
+      alert("사진이 삭제되었습니다.");
+    } catch (error) {
+      console.error("사진 삭제 실패:", error);
+      alert(`사진 삭제 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    }
+  };
+
   const difficultyOptions = [
     { value: "easy", label: "쉬움" },
     { value: "medium", label: "보통" },
@@ -308,10 +385,14 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
             onValueChange={setActiveTab}
             className="space-y-6"
           >
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="info" className="flex items-center">
                 <MapPin className="w-4 h-4 mr-2" />
                 코스 정보
+              </TabsTrigger>
+              <TabsTrigger value="photos" className="flex items-center">
+                <Camera className="w-4 h-4 mr-2" />
+                사진 관리 ({photos.length})
               </TabsTrigger>
               <TabsTrigger value="comments" className="flex items-center">
                 <MessageSquare className="w-4 h-4 mr-2" />
@@ -674,6 +755,75 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                       </Button>
                     </div>
                   </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* 사진 관리 탭 */}
+            <TabsContent value="photos">
+              <Card>
+                <CardHeader>
+                  <CardTitle>사진 관리</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* 사진 업로드 */}
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">새 사진 업로드</h3>
+                    <ImageUploader
+                      onUpload={handlePhotoUpload}
+                      bucket="course-photos"
+                      currentUrl=""
+                    />
+                    {uploadingPhoto && (
+                      <p className="text-sm text-gray-500 mt-2">사진을 업로드하는 중...</p>
+                    )}
+                  </div>
+
+                  {/* 사진 목록 */}
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">등록된 사진</h3>
+                    {photos.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {photos.map((photo) => (
+                          <div key={photo.id} className="relative group">
+                            <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                              <img
+                                src={photo.file_url}
+                                alt={photo.caption || "코스 사진"}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeletePhoto(photo.id)}
+                                className="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            {photo.caption && (
+                              <p className="text-sm text-gray-600 mt-2">{photo.caption}</p>
+                            )}
+                            <p className="text-xs text-gray-400">
+                              {new Date(photo.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <Camera className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          등록된 사진이 없습니다
+                        </h3>
+                        <p className="text-gray-600">
+                          위에서 사진을 업로드하여 코스 갤러리를 만들어보세요.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

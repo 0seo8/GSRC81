@@ -4,8 +4,10 @@ import { notFound } from "next/navigation";
 import { ProtectedRoute } from "@/components/protected-route";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Course } from "@/types";
 import { getCourseById } from "@/lib/courses-data";
+import { getCoursePhotos, type CoursePhoto } from "@/lib/course-photos";
 import { CourseCommentsList } from "@/components/course-comments-list";
 import { getCourseComments, CourseComment } from "@/lib/comments";
 
@@ -36,6 +38,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState<CourseComment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [photos, setPhotos] = useState<CoursePhoto[]>([]);
 
   useEffect(() => {
     async function loadCourse() {
@@ -46,9 +49,10 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         const courseData = await getCourseById(resolvedParams.id);
         setCourse(courseData);
 
-        // 댓글 로드
+        // 댓글과 사진 로드
         if (courseData) {
           loadComments(resolvedParams.id);
+          loadPhotos(resolvedParams.id);
         }
       } catch (error) {
         console.error("Failed to load course:", error);
@@ -74,6 +78,15 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     }
   }
 
+  async function loadPhotos(courseId: string) {
+    try {
+      const photosData = await getCoursePhotos(courseId);
+      setPhotos(photosData);
+    } catch (error) {
+      console.error("Failed to load photos:", error);
+    }
+  }
+
   if (loading) {
     return (
       <ProtectedRoute>
@@ -96,7 +109,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       <div className="min-h-screen" style={{ backgroundColor: "#F5F5F5" }}>
         {/* 상단 지도 영역 - 헤더 공간 확보 */}
         <div style={{ height: "393px" }} className="relative p-4 pt-16">
-          <div className="h-full rounded-2xl overflow-hidden">
+          <div className="h-full overflow-hidden">
             <CourseDetailMap courseId={courseId} />
           </div>
         </div>
@@ -185,24 +198,34 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                 />
               </div>
 
-              {/* GSRC81 Running crew 팀 사진 섹션 */}
-              <div className="border-t border-b border-black py-6">
-                <div className="bg-white rounded-lg overflow-hidden shadow-sm">
-                  <img
-                    src="/images/gsrc81-team.jpg"
-                    alt="GSRC81 Running crew"
-                    className="w-full h-64 object-cover"
-                    onError={(e) => {
-                      // 이미지가 없을 경우 기본 이미지나 placeholder 표시
-                      e.currentTarget.style.display = "none";
-                      e.currentTarget.nextElementSibling?.classList.remove(
-                        "hidden"
-                      );
-                    }}
-                  />
-                  <div className="hidden bg-gray-100 h-64 flex items-center justify-center"></div>
+              {/* 코스 사진 갤러리 */}
+              {photos.length > 0 && (
+                <div className="border-t border-b border-black py-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {photos.map((photo) => (
+                      <div
+                        key={photo.id}
+                        className="bg-white overflow-hidden shadow-sm"
+                      >
+                        <Image
+                          src={photo.file_url}
+                          alt={photo.caption || "코스 사진"}
+                          width={400}
+                          height={400}
+                          className="w-full aspect-square object-cover"
+                        />
+                        {photo.caption && (
+                          <div className="p-3">
+                            <p className="text-sm text-gray-600">
+                              {photo.caption}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

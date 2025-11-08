@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@/components", "@/lib"],
   },
+  // Configure allowed image domains
+  images: {
+    domains: ['iogbdjpvcxtdchmpicma.supabase.co'],
+  },
 };
 
 export default nextConfig;

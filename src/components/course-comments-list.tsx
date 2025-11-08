@@ -46,7 +46,7 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5625rem' }}>
           {comments.map((comment, index) => {
             const isEven = index % 2 === 0;
             
