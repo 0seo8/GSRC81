@@ -16,6 +16,8 @@ interface CategoryFullScreenProps {
   initialCategory?: string;
   onCourseClick: (courseId: string) => void;
   onCategoryChange?: (categoryKey: string) => void;
+  selectedCourse?: CourseWithComments | null;
+  selectedCourses?: CourseWithComments[];
 }
 
 // 카테고리별 디자인 매핑 (PDF 기반)
@@ -46,6 +48,8 @@ export function CategoryFullScreen({
   initialCategory = "jingwan",
   onCourseClick,
   onCategoryChange,
+  selectedCourse,
+  selectedCourses,
 }: CategoryFullScreenProps) {
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(
     categories.findIndex((cat) => cat.key === initialCategory) || 0
@@ -70,14 +74,25 @@ export function CategoryFullScreen({
         (course) => (course.category_key || "jingwan") === currentCategory?.key
       );
 
-  // 전체 카테고리일 때 동 이름 추출
+  // 전체 카테고리일 때 선택된 코스들에서 동 이름 추출
   useEffect(() => {
-    if (currentCategory?.key === "all" && filteredCourses.length > 0) {
-      getDongsFromCourses(filteredCourses).then(setDongNames);
+    if (currentCategory?.key === "all") {
+      // 선택된 코스들만 사용 (단일 선택 또는 클러스터 선택)
+      const targetCourses = selectedCourses && selectedCourses.length > 0 
+        ? selectedCourses 
+        : selectedCourse 
+        ? [selectedCourse] 
+        : [];
+      
+      if (targetCourses.length > 0) {
+        getDongsFromCourses(targetCourses).then(setDongNames);
+      } else {
+        setDongNames([]);
+      }
     } else {
       setDongNames([]);
     }
-  }, [currentCategory?.key, filteredCourses]);
+  }, [currentCategory?.key, selectedCourse, selectedCourses]);
 
   // 카테고리가 없을 때 안전 장치
   if (!categories || categories.length === 0) {

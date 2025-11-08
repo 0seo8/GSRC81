@@ -94,7 +94,7 @@ export const CourseInfo = ({ trailData, savedProgress }: CourseInfoProps) => {
         {/* 개발용 정보 (개발 환경에서만 표시) */}
         {process.env.NODE_ENV === "development" && (
           <div className="text-xs text-gray-400 border-t pt-4">
-            <div>속도: {FLIGHT_CONFIG.BASE_DURATION_PER_POINT}ms/pt</div>
+            <div>속도: {FLIGHT_CONFIG.FLIGHT_SPEED_KMH}km/h</div>
             {savedProgress > 0 && (
               <div>저장된 진행률: {(savedProgress * 100).toFixed(0)}%</div>
             )}

@@ -62,6 +62,8 @@ export function OptimizedMapClient({
   const {
     map,
     optimisticCourses,
+    selectedCourse,
+    selectedCourses,
     handleMapLoad,
     handleCourseClick: mapHandleCourseClick,
     handleClusterClick: mapHandleClusterClick,
@@ -250,6 +252,8 @@ export function OptimizedMapClient({
           initialCategory={currentCategory}
           onCourseClick={handleCourseDetailNavigation}
           onCategoryChange={handleCategoryChange}
+          selectedCourse={selectedCourse}
+          selectedCourses={selectedCourses}
         />
       </div>
     </div>

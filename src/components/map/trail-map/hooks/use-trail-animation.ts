@@ -94,13 +94,17 @@ export const useTrailAnimation = (
 
     const map = mapRef.current.getMap();
 
-    // 코스 길이에 관계없이 일정한 속도로 애니메이션
+    // 거리 기반으로 일정한 속도 계산
     const pointCount = points.length;
+    const totalDistanceKm = trailData.stats.totalDistance;
+    
+    // 거리 기반 duration 계산 (시속 2.5km)
+    const hoursNeeded = totalDistanceKm / FLIGHT_CONFIG.FLIGHT_SPEED_KMH;
+    const calculatedDuration = hoursNeeded * 3600 * 1000; // 밀리초로 변환
+    
+    // 최소/최대 시간으로 제한
     const totalDuration = Math.min(
-      Math.max(
-        pointCount * FLIGHT_CONFIG.BASE_DURATION_PER_POINT,
-        FLIGHT_CONFIG.MIN_TOTAL_DURATION,
-      ),
+      Math.max(calculatedDuration, FLIGHT_CONFIG.MIN_TOTAL_DURATION),
       FLIGHT_CONFIG.MAX_TOTAL_DURATION,
     );
 
