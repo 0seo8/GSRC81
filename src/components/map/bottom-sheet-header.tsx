@@ -29,8 +29,8 @@ export function BottomSheetHeader({
   return (
     <motion.div
       className="p-4 pb-2 cursor-grab active:cursor-grabbing"
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 200 }}
+      drag
+      dragConstraints={{ left: -100, right: 100, top: 0, bottom: 200 }}
       dragElastic={0.2}
       onDragEnd={onHeaderDrag}
     >

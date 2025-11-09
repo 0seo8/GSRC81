@@ -114,11 +114,6 @@ export function CategoryFullScreen({
             className="fixed bottom-0 left-0 right-0 z-50 flex flex-col max-h-[85vh] rounded-t-[45px]"
             style={{ backgroundColor: currentDesign.backgroundColor }}
             onClick={(e) => e.stopPropagation()}
-            drag="x"
-            dragConstraints={{ left: -100, right: 100 }}
-            dragElastic={0.2}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
           >
             {/* 헤더 */}
             <BottomSheetHeader

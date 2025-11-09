@@ -50,6 +50,9 @@ export function RefactoredCourseCardStack({
       className={`flex-1 ${
         hasOverflow ? "overflow-y-auto" : "overflow-hidden"
       } min-h-0`}
+      style={{ 
+        touchAction: hasOverflow ? 'pan-y' : 'none' // 세로 스크롤만 허용
+      }}
     >
       <div
         className="relative w-full"
