@@ -1,7 +1,7 @@
 import { CourseWithComments } from "@/lib/courses-data";
 import { CourseCard } from "./course-card";
 
-interface CourseCardStackProps {
+interface RefactoredCourseCardStackProps {
   courses: CourseWithComments[];
   cardColors: readonly string[];
   isDragging: boolean;
@@ -33,12 +33,12 @@ function EmptyState({ categoryName }: EmptyStateProps) {
   );
 }
 
-export function CourseCardStack({
+export function RefactoredCourseCardStack({
   courses,
   cardColors,
   isDragging,
   onCourseClick,
-}: CourseCardStackProps) {
+}: RefactoredCourseCardStackProps) {
   const hasOverflow = courses.length >= 3;
 
   if (courses.length === 0) {

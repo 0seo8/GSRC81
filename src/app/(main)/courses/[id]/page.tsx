@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Course } from "@/types";
 import { getCourseById } from "@/lib/courses-data";
-import { getCoursePhotos, type CoursePhoto } from "@/lib/course-photos";
+import { type CoursePhoto } from "@/lib/course-photos";
 import { CourseCommentsList } from "@/components/course-comments-list";
 import { getCourseComments, CourseComment } from "@/lib/comments";
 
@@ -80,8 +80,13 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
 
   async function loadPhotos(courseId: string) {
     try {
-      const photosData = await getCoursePhotos(courseId);
-      setPhotos(photosData);
+      const response = await fetch(`/api/course-photos?course_id=${courseId}`);
+      if (response.ok) {
+        const photosData = await response.json();
+        setPhotos(photosData);
+      } else {
+        console.error("Failed to fetch photos:", response.status);
+      }
     } catch (error) {
       console.error("Failed to load photos:", error);
     }

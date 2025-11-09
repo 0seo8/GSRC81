@@ -125,7 +125,7 @@ export function CourseDetailMap({
       coordinates.forEach((coord) => bounds.extend(coord as [number, number]));
       map.current.fitBounds(bounds, {
         padding: 50,
-        maxZoom: 16,
+        maxZoom: 12.85,
         duration: 1000, // 부드러운 애니메이션
       });
 
@@ -346,6 +346,8 @@ export function CourseDetailMap({
       style: "mapbox://styles/mapbox/light-v11", // 라이트 스타일 고정
       center: [126.9185, 37.6361], // 기본 중심점
       zoom: 14,
+      maxZoom: 12.85, // map 페이지와 동일한 최대 줌
+      minZoom: 10, // map 페이지와 동일한 최소 줌
       pitch: 0,
       bearing: 0,
       // ✅ 저비용 최적화 설정
@@ -733,7 +735,7 @@ export function CourseDetailMap({
       );
       map.current.fitBounds(bounds, {
         padding: 50,
-        maxZoom: 16,
+        maxZoom: 12.85,
         duration: 1000,
         pitch: 0, // 기본 뷰로 돌아가기
       });
