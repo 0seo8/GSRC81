@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { CourseWithComments } from "@/lib/courses-data";
-import { 
-  calculateCardLayout, 
-  calculateCardShadow, 
-  getDifficultyText 
+import {
+  calculateCardLayout,
+  calculateCardShadow,
+  getDifficultyText,
 } from "@/utils/card-layout";
 
 interface CourseCardProps {
@@ -56,11 +56,9 @@ export function CourseCard({
     >
       <div className="flex justify-between items-start">
         <div className="flex-1">
-          <h3 className="text-xl font-bold text-black mb-2">
-            {course.title}
-          </h3>
+          <h3 className="text-xl font-bold text-black mb-2">{course.title}</h3>
           <p className="text-sm text-black mb-1">
-            {course.category_name || "러닝 코스"}
+            {course.category_name + "러닝 코스"}
           </p>
           <p className="text-sm text-black">
             {getDifficultyText(course.difficulty)}
