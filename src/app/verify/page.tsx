@@ -83,18 +83,18 @@ function VerifyContent() {
       return;
     }
 
-    // 새로운 레코드 생성 (기존 레코드 업데이트가 아니라)
-    const { error: insertError } = await supabase
+    // kakao_user_id 연결 및 활성화
+    const { error: updateError } = await supabase
       .from("access_links")
-      .insert({
-        access_code: code,
+      .update({
         kakao_user_id: kakaoUserId,
         kakao_nickname: null,
         is_active: true,
+        updated_at: new Date().toISOString(),
       })
-      .select();
+      .eq("id", data.id);
 
-    if (insertError) {
+    if (updateError) {
       setError("❌ 인증 처리 중 오류가 발생했습니다.");
       setLoading(false);
       return;

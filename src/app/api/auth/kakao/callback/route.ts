@@ -75,11 +75,12 @@ export async function GET(req: Request) {
     );
 
     // 3️⃣ access_links에서 기존 유저 확인
-    const { data: existingUser } = await supabase
+    const { data: existingUsers } = await supabase
       .from("access_links")
       .select("*")
-      .eq("kakao_user_id", id.toString())
-      .single();
+      .eq("kakao_user_id", id.toString());
+    
+    const existingUser = existingUsers && existingUsers.length > 0 ? existingUsers[0] : null;
 
     if (!existingUser) {
       // 최초 로그인 → 접근 코드 입력 페이지로 리다이렉트
@@ -110,9 +111,10 @@ export async function GET(req: Request) {
 
     // 쿠키에 인증 정보 저장 (24시간)
     response.cookies.set("gsrc81-auth", JSON.stringify(authData), {
-      maxAge: 24 * 60 * 60 * 1000, // 24시간
+      maxAge: 24 * 60 * 60, // 24시간 (초 단위)
       httpOnly: false, // 클라이언트에서 접근 가능하도록
       sameSite: "lax",
+      path: "/",
     });
 
     return response;
