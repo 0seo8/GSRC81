@@ -40,14 +40,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (isValid && authData.authenticated) {
           setIsAuthenticated(true);
 
-          // 카카오 사용자 ID가 있다면 인증 완료 여부도 체크
+          // 카카오 사용자 정보 설정 (콜백에서 이미 검증 완료)
           if (authData.kakaoUserId) {
             setKakaoUserId(authData.kakaoUserId);
             setKakaoNickname(authData.kakaoNickname || null);
-            const verified = await checkVerificationStatusForUser(
-              authData.kakaoUserId
-            );
-            setIsVerified(verified);
+            setIsVerified(true); // 콜백에서 이미 검증된 사용자만 여기 도달
           }
         }
       }

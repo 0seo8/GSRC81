@@ -45,16 +45,28 @@ export function CourseCardStack({
     return <EmptyState />;
   }
 
+  // 카드 수에 따른 동적 높이 계산
+  const calculateStackHeight = () => {
+    if (courses.length === 1) {
+      return 130; // 단일 카드 높이
+    } else if (courses.length === 2) {
+      return 130 + 70; // 첫 번째 카드 + 두 번째 카드 노출 부분
+    } else {
+      // 3개 이상: 첫 번째 + 두 번째 + 나머지 카드들의 점진적 노출
+      return 130 + 70 + 60 + (courses.length - 2) * 30;
+    }
+  };
+
   return (
     <div
       className={`flex-1 ${
         hasOverflow ? "overflow-y-auto" : "overflow-hidden"
       } min-h-0`}
     >
-      <div
+      <div 
         className="relative w-full"
         style={{
-          height: "250px", // 카드 개수와 상관없이 항상 250px 고정
+          height: `${calculateStackHeight()}px`, // 동적 높이 계산
         }}
       >
         {courses.map((course, index) => {

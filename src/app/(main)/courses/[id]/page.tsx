@@ -208,10 +208,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                 <div className="border-t border-b border-black py-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {photos.map((photo) => (
-                      <div
-                        key={photo.id}
-                        className="bg-white overflow-hidden shadow-sm"
-                      >
+                      <div key={photo.id} className="bg-white overflow-hidden ">
                         <Image
                           src={photo.file_url}
                           alt={photo.caption || "코스 사진"}

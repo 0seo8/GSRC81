@@ -8,7 +8,7 @@ export async function GET(req: Request) {
 
     if (!code)
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=no_code`,
+        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=no_code`
       );
 
     // 1️⃣ 카카오 OAuth 토큰 요청
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
       console.error("No access token received");
       console.error("Token data:", JSON.stringify(tokenData, null, 2));
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=no_token`,
+        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=no_token`
       );
     }
 
@@ -53,25 +53,31 @@ export async function GET(req: Request) {
       console.log("- 프로필:", userData.kakao_account.profile);
       if (userData.kakao_account.profile) {
         console.log("  - 닉네임:", userData.kakao_account.profile.nickname);
-        console.log("  - 프로필 이미지 URL:", userData.kakao_account.profile.profile_image_url);
+        console.log(
+          "  - 프로필 이미지 URL:",
+          userData.kakao_account.profile.profile_image_url
+        );
       }
     }
     console.log("========================");
 
     const { id } = userData;
-    const nickname = userData.properties?.nickname || userData.kakao_account?.profile?.nickname || null;
+    const nickname =
+      userData.properties?.nickname ||
+      userData.kakao_account?.profile?.nickname ||
+      null;
 
     if (!id) {
       console.error("No user ID found in Kakao response");
       console.error("Full userData:", JSON.stringify(userData, null, 2));
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=invalid_user`,
+        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=invalid_user`
       );
     }
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
     // 3️⃣ access_links에서 기존 유저 확인
@@ -79,26 +85,27 @@ export async function GET(req: Request) {
       .from("access_links")
       .select("*")
       .eq("kakao_user_id", id.toString());
-    
-    const existingUser = existingUsers && existingUsers.length > 0 ? existingUsers[0] : null;
+
+    const existingUser =
+      existingUsers && existingUsers.length > 0 ? existingUsers[0] : null;
 
     if (!existingUser) {
       // 최초 로그인 → 접근 코드 입력 페이지로 리다이렉트
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/verify?uid=${id}`,
+        `${process.env.NEXT_PUBLIC_SITE_URL}/verify?uid=${id}`
       );
     }
 
     if (!existingUser.is_active) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=not_active`,
+        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=not_active`
       );
     }
 
     // 4️⃣ 이미 등록된 유저 → 바로 로그인 성공
     // 쿠키로 인증 상태 설정
     const response = NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/map`,
+      `${process.env.NEXT_PUBLIC_SITE_URL}/map`
     );
 
     const authData = {
@@ -121,7 +128,7 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error("Kakao callback error:", error);
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=callback_error`,
+      `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=callback_error`
     );
   }
 }

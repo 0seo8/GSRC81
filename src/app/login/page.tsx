@@ -1,115 +1,122 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { SplashScreen } from "@/components/splash-screen";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { useAuth } from "@/contexts/AuthContext";
+import { FigmaButton } from "@/components/ui/figma-button";
+import { useAuthRedirect } from "@/hooks/use-auth-redirect";
+
+const CONSTANTS = {
+  LOGO: {
+    WIDTH: 296,
+    HEIGHT: 187,
+    SRC: "/logo.png",
+    ALT: "GSRC81 MAPS - RUN OUR ROUTE, MAKE YOUR STORY"
+  },
+  SPACING: {
+    LOGO_BOTTOM: "mb-12",
+    BRAND_BOTTOM: "mb-16", 
+    TERMS_TOP: "mt-6",
+    SAFE_AREA: "h-8"
+  },
+  COLORS: {
+    BACKGROUND: "bg-gray-100",
+    TEXT_SECONDARY: "text-gray-500",
+    TEXT_PRIMARY: "text-black"
+  },
+  TEXT: {
+    TITLE: "GSRC81 MAPS",
+    LOGIN_BUTTON: "카카오톡 계정으로 계속하기",
+    TERMS_KO: "카카오톡으로 로그인하면 GSRC81의 회칙 및 개인정보 처리방침에 동의하게 됩니다.",
+    TERMS_EN: "By logging in with KakaoTalk, you confirm that you agree to GSRC81's Terms of Service and Privacy Policy.",
+    LOADING: "Loading..."
+  },
+  ROUTES: {
+    MAP: "/map"
+  }
+};
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { isOnboardingComplete, isLoading: onboardingLoading, completeOnboarding } = useOnboarding();
-  const { isAuthenticated, isVerified, isLoading: authLoading, kakaoUserId } = useAuth();
+  const { completeOnboarding } = useOnboarding();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [showSplash, setShowSplash] = useState(true);
   
+  const { redirect } = useAuthRedirect(isAuthenticated, authLoading, CONSTANTS.ROUTES.MAP);
+
   const handleKakaoLogin = () => {
     const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI}&response_type=code`;
     window.location.href = kakaoAuthUrl;
   };
 
   const handleSplashComplete = () => {
+    setShowSplash(false);
     completeOnboarding();
-    // 스플래시 완료 후 인증 상태에 따른 라우팅
-    if (isAuthenticated && kakaoUserId) {
-      if (isVerified) {
-        router.push("/map");
-      } else {
-        router.push(`/verify?uid=${kakaoUserId}`);
-      }
-    }
-    // 로그인 안된 경우는 현재 페이지(로그인)에 그대로 있음
+    redirect();
   };
 
-  // 인증 상태 체크 후 자동 라우팅 (onboarding 완료된 경우)
   useEffect(() => {
-    if (isOnboardingComplete && !authLoading) {
-      if (isAuthenticated && kakaoUserId) {
-        if (isVerified) {
-          router.push("/map");
-        } else {
-          router.push(`/verify?uid=${kakaoUserId}`);
-        }
-      }
+    if (!showSplash) {
+      redirect();
     }
-  }, [isOnboardingComplete, authLoading, isAuthenticated, isVerified, kakaoUserId, router]);
+  }, [showSplash, redirect]);
 
-  // Show loading state while checking onboarding status
-  if (onboardingLoading || authLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+        <div className="text-white">{CONSTANTS.TEXT.LOADING}</div>
       </div>
     );
   }
 
-  // Show splash screen for first-time users
-  if (!isOnboardingComplete) {
+  // 항상 스플래시를 먼저 표시 (매번 인트로 애니메이션)
+  if (showSplash) {
     return <SplashScreen onComplete={handleSplashComplete} />;
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex flex-col">
-      {/* Main Content */}
+    <div className={`min-h-screen ${CONSTANTS.COLORS.BACKGROUND} flex flex-col`}>
       <div className="flex-1 flex flex-col justify-center items-center px-6">
-        {/* Logo */}
-        <div className="mb-12">
-          <h1 className="text-black text-lg font-semibold tracking-wide text-center">
-            GSRC81 MAPS
+        <div className={CONSTANTS.SPACING.LOGO_BOTTOM}>
+          <h1 className={`${CONSTANTS.COLORS.TEXT_PRIMARY} text-lg font-semibold tracking-wide text-center`}>
+            {CONSTANTS.TEXT.TITLE}
           </h1>
         </div>
 
-        {/* Brand Logo */}
-        <div className="mb-16">
+        <div className={CONSTANTS.SPACING.BRAND_BOTTOM}>
           <div className="text-center">
             <Image
-              src="/logo.png"
-              alt="GSRC81 MAPS - RUN OUR ROUTE, MAKE YOUR STORY"
-              width={296}
-              height={187}
+              src={CONSTANTS.LOGO.SRC}
+              alt={CONSTANTS.LOGO.ALT}
+              width={CONSTANTS.LOGO.WIDTH}
+              height={CONSTANTS.LOGO.HEIGHT}
               className="mx-auto"
               priority
             />
           </div>
         </div>
 
-        {/* Kakao Login Section */}
         <div className="w-full max-w-sm">
-          {/* Kakao Login Button */}
-          <button
-            onClick={handleKakaoLogin}
-            className="w-full bg-[#FEE500] hover:bg-[#FDD835] text-black font-semibold py-4 px-6 rounded-xl shadow-sm transition-colors duration-200 mb-4"
-          >
-            카카오톡 계정으로 계속하기
-          </button>
+          <FigmaButton variant="default" onClick={handleKakaoLogin}>
+            {CONSTANTS.TEXT.LOGIN_BUTTON}
+          </FigmaButton>
 
-          {/* Terms Agreement */}
-          <div className="px-2">
-            <p className="text-gray-600 text-sm text-center leading-relaxed mb-2">
+          <div className={`px-2 ${CONSTANTS.SPACING.TERMS_TOP}`}>
+            <p className={`${CONSTANTS.COLORS.TEXT_SECONDARY} text-xs text-center leading-relaxed mb-2`}>
               카카오톡으로 로그인하면{" "}
-              <span className="font-medium">GSRC81의 회칙</span> 및{" "}
-              <span className="font-medium">개인정보 처리방침</span>에 동의하게
-              됩니다.
+              <span className={`font-medium ${CONSTANTS.COLORS.TEXT_PRIMARY}`}>GSRC81의 회칙</span> 및{" "}
+              <span className={`font-medium ${CONSTANTS.COLORS.TEXT_PRIMARY}`}>개인정보 처리방침</span>
+              에 동의하게 됩니다.
             </p>
-            <p className="text-gray-500 text-xs text-center leading-relaxed">
-              By logging in with KakaoTalk, you confirm that you agree to
-              GSRC81&apos;s Terms of Service and Privacy Policy.
+            <p className={`${CONSTANTS.COLORS.TEXT_SECONDARY} text-xs text-center leading-relaxed`}>
+              {CONSTANTS.TEXT.TERMS_EN}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Bottom Safe Area */}
-      <div className="h-8"></div>
+      <div className={CONSTANTS.SPACING.SAFE_AREA}></div>
     </div>
   );
 }
