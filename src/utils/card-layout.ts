@@ -46,64 +46,44 @@ export function calculateCardLayout(
     }
   }
 
-  // 3개 이상 - 위 위 아래 구조
+  // 3개 이상 - 2개 패턴 확장 (맨 아래만 130px+전체라운드, 나머지는 180px+상단라운드)
   if (totalCourses === 3) {
     if (courseIndex === 0) {
-      // 위 카드 1: 가장 위에 위치, 4모서리 둥근
+      // 카드3: 180px, 맨 위에 위치, 상단만 라운드
       return {
-        height: "8.125rem", // 130px ÷ 16
-        bottom: "15.625rem", // 250px ÷ 16 (두 번째 + 세 번째 카드 위에)
-        borderRadius: "2.8125rem", // 4모서리 둥근
-        zIndex: 3,
+        height: "11.25rem", // 180px ÷ 16 = 11.25rem
+        bottom: "8.75rem", // 140px ÷ 16 = 8.75rem
+        borderRadius: "2.8125rem 2.8125rem 0 0",
+        zIndex: 1, // 낮은 z-index
       };
     } else if (courseIndex === 1) {
-      // 위 카드 2: 중간에 위치, 두모서리 둥근
+      // 카드2: 180px, 중간에 위치, 상단만 라운드
       return {
-        height: "11.25rem", // 180px ÷ 16
-        bottom: "4.375rem", // 70px ÷ 16 (세 번째 카드 위에)
-        borderRadius: "2.8125rem 2.8125rem 0 0", // 두모서리 둥근
+        height: "11.25rem", // 180px ÷ 16 = 11.25rem
+        bottom: "4.375rem", // 70px ÷ 16
+        borderRadius: "2.8125rem 2.8125rem 0 0",
         zIndex: 2,
       };
     } else {
-      // 아래 카드 3: 바텀에 붙음, 일부만 보임, 4모서리 둥근
+      // 카드1: 130px, 바텀0에 딱 붙음, 전체 라운드 (2개일때와 동일)
       return {
-        height: "11.25rem", // 180px ÷ 16
+        height: "8.125rem", // 130px ÷ 16 = 8.125rem
         bottom: "0",
-        borderRadius: "2.8125rem", // 4모서리 둥근
-        zIndex: 1,
+        borderRadius: "2.8125rem",
+        zIndex: 3, // 높은 z-index
       };
     }
   }
 
-  // 4개 이상 - 3개와 동일한 구조, 추가 카드들은 아래로 계속 쌓임
-  if (courseIndex === 0) {
-    // 위 카드 1: 가장 위에 위치, 4모서리 둥근 (3개와 동일)
-    return {
-      height: "8.125rem", // 130px ÷ 16
-      bottom: "15.625rem", // 250px ÷ 16
-      borderRadius: "2.8125rem", // 4모서리 둥근
-      zIndex: totalCourses,
-    };
-  } else if (courseIndex === 1) {
-    // 위 카드 2: 중간에 위치, 두모서리 둥근 (3개와 동일)
-    return {
-      height: "11.25rem", // 180px ÷ 16
-      bottom: "4.375rem", // 70px ÷ 16
-      borderRadius: "2.8125rem 2.8125rem 0 0", // 두모서리 둥근
-      zIndex: totalCourses - 1,
-    };
-  } else {
-    // 아래 카드들: 계속 쌓임, 스크롤로 보임
-    const isLastCard = courseIndex === totalCourses - 1;
-    const cardOffset = (courseIndex - 2) * 11.25; // 3번째 카드부터 180px씩 아래로
-    
-    return {
-      height: "11.25rem", // 180px ÷ 16
-      bottom: `${-cardOffset}rem`, // 음수로 아래쪽에 배치
-      borderRadius: "2.8125rem", // 4모서리 둥근
-      zIndex: totalCourses - courseIndex,
-    };
-  }
+  // 4개 이상 - 모든 카드가 130px 높이로 70px씩 겹쳐진 스택 구조
+  const cardBottom = courseIndex * 4.375; // 70px ÷ 16 = 4.375rem씩 위로
+  
+  return {
+    height: "8.125rem", // 130px ÷ 16 = 8.125rem (모든 카드 동일 높이)
+    bottom: `${cardBottom}rem`, // 70px씩 위로 쌓임
+    borderRadius: "2.8125rem", // 4모서리 둥근
+    zIndex: totalCourses - courseIndex, // 위에 있을수록 낮은 z-index
+  };
 }
 
 /**

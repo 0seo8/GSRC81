@@ -1,5 +1,4 @@
-import { motion } from "framer-motion";
-import { PanInfo } from "framer-motion";
+import { useState, useRef } from "react";
 
 interface BottomSheetHeaderProps {
   categoryName?: string;
@@ -7,7 +6,7 @@ interface BottomSheetHeaderProps {
   isAllCategory: boolean;
   onHeaderDrag: (
     event: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo
+    info: { offset: { x: number; y: number }; velocity: { x: number; y: number } }
   ) => void;
 }
 
@@ -26,13 +25,71 @@ export function BottomSheetHeader({
     return `${categoryName}\n러닝`;
   };
 
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [startTime, setStartTime] = useState(0);
+  const isDragging = useRef(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setStartPos({ x: touch.clientX, y: touch.clientY });
+    setStartTime(Date.now());
+    isDragging.current = true;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isDragging.current) return;
+    
+    const touch = e.changedTouches[0];
+    const endTime = Date.now();
+    const deltaTime = endTime - startTime;
+    
+    const offset = {
+      x: touch.clientX - startPos.x,
+      y: touch.clientY - startPos.y
+    };
+    
+    const velocity = {
+      x: offset.x / deltaTime * 1000, // pixels per second
+      y: offset.y / deltaTime * 1000
+    };
+    
+    onHeaderDrag(e.nativeEvent, { offset, velocity });
+    isDragging.current = false;
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setStartPos({ x: e.clientX, y: e.clientY });
+    setStartTime(Date.now());
+    isDragging.current = true;
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (!isDragging.current) return;
+    
+    const endTime = Date.now();
+    const deltaTime = endTime - startTime;
+    
+    const offset = {
+      x: e.clientX - startPos.x,
+      y: e.clientY - startPos.y
+    };
+    
+    const velocity = {
+      x: offset.x / deltaTime * 1000,
+      y: offset.y / deltaTime * 1000
+    };
+    
+    onHeaderDrag(e.nativeEvent, { offset, velocity });
+    isDragging.current = false;
+  };
+
   return (
-    <motion.div
-      className="p-4 pb-2 cursor-grab active:cursor-grabbing"
-      drag
-      dragConstraints={{ left: -100, right: 100, top: 0, bottom: 200 }}
-      dragElastic={0.2}
-      onDragEnd={onHeaderDrag}
+    <div
+      className="px-6 py-4 pb-2 select-none"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
     >
       {/* 드래그 핸들 */}
       <div className="flex justify-center mb-2">
@@ -45,6 +102,6 @@ export function BottomSheetHeader({
           {getTitle()}
         </h2>
       </div>
-    </motion.div>
+    </div>
   );
 }

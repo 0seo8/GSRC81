@@ -14,6 +14,15 @@ export function RefactoredCourseCardStack({
   isDragging,
   onCourseClick,
 }: RefactoredCourseCardStackProps) {
+  // 디버깅용 로그
+  if (courses.length > 0 && courses[0]?.category_name?.includes("트레일")) {
+    console.log("RefactoredCourseCardStack - Trail courses:", {
+      coursesLength: courses.length,
+      courseIds: courses.map(c => c.id),
+      courseTitles: courses.map(c => c.title)
+    });
+  }
+  
   const hasOverflow = courses.length >= 3;
 
   if (courses.length === 0) {
@@ -27,12 +36,12 @@ export function RefactoredCourseCardStack({
     } else if (courses.length === 2) {
       return "15.625rem"; // 11.25rem + 4.375rem = 15.625rem (180px + 70px ÷ 16)
     } else if (courses.length === 3) {
-      return "23.75rem"; // 8.125rem + 15.625rem = 23.75rem (130px + 250px ÷ 16)
+      return "20rem"; // 8.125rem + 11.25rem + 8.75rem - 8.125rem = 20rem
     } else {
-      // 4개 이상: 추가 카드마다 180px씩 증가
-      const additionalCards = courses.length - 3;
-      const additionalHeight = additionalCards * 11.25; // 180px ÷ 16 = 11.25rem
-      return `${23.75 + additionalHeight}rem`;
+      // 4개 이상: 모든 카드가 130px 높이로 70px씩 겹침
+      const topCardBottom = (courses.length - 1) * 4.375; // 맨 위 카드의 bottom 위치
+      const totalHeight = topCardBottom + 8.125; // 맨 위 카드 bottom + 카드 높이
+      return `${totalHeight}rem`;
     }
   };
 

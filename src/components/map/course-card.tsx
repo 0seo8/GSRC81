@@ -25,6 +25,16 @@ export function CourseCard({
 }: CourseCardProps) {
   const layout = calculateCardLayout(index, totalCourses);
   const shadow = calculateCardShadow(index);
+  
+  // 디버깅용 로그
+  if (course.category_name?.includes("트레일")) {
+    console.log("Trail course data:", {
+      title: course.title,
+      index,
+      totalCourses,
+      layout: layout
+    });
+  }
 
   return (
     <motion.div
