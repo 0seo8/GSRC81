@@ -7,82 +7,73 @@ export interface CardLayout {
 
 /**
  * 코스 개수에 따른 카드 레이아웃 계산 (rem 단위)
- * PDF 시안: 바텀시트 하단부터 딱 붙어서 시작하는 스택 구조 (bottom: 0부터 시작)
- * - 1개: 8.125rem 높이 (130px ÷ 16 = 8.125rem)
- * - 2개: 12.5rem 높이 (200px ÷ 16 = 12.5rem)
- * - 3개+: 16.25rem + 추가 카드마다 1.875rem (260px + 30px ÷ 16)
+ * 사용자 요구사항:
+ * - 1개: 130px(8.125rem), 전체 둥근 모서리
+ * - 2개: 1번째(130px/8.125rem, 전체 둥근) + 2번째(180px/11.25rem, 위쪽만 둥근), 87px(5.4375rem) 간격
+ * - 3개: 1번째(124px/7.75rem, 전체 둥근, 6px만 보임) + 2번째(136px/8.5rem, 위쪽만 둥근) + 3번째(180px/11.25rem, 위쪽만 둥근)
  */
 export function calculateCardLayout(
   courseIndex: number,
   totalCourses: number
 ): CardLayout {
   if (totalCourses === 1) {
-    // 1개: 8.125rem 높이, 전체 라운드 2.8125rem, 바텀0부터 시작
+    // 1개: 130px(8.125rem), 전체 둥근 모서리
     return {
-      height: "8.125rem",
+      height: "8.125rem", // 130px ÷ 16
       bottom: "0",
-      borderRadius: "2.8125rem",
+      borderRadius: "2.8125rem", // 전체 둥근
       zIndex: 1,
     };
   }
 
   if (totalCourses === 2) {
     if (courseIndex === 0) {
-      // 첫번째카드: 180px, 위에 위치, 낮은 z-index, 상단만 라운드
+      // 1번째 카드: 130px(8.125rem), 전체 둥근, 최상단
       return {
-        height: "11.25rem", // 180px ÷ 16 = 11.25rem
-        bottom: "4.375rem", // 70px ÷ 16 = 4.375rem
-        borderRadius: "2.8125rem 2.8125rem 0 0",
-        zIndex: 1, // 낮은 z-index
+        height: "8.125rem", // 130px ÷ 16
+        bottom: "0", 
+        borderRadius: "2.8125rem", // 전체 둥근
+        zIndex: 2, // 위에 표시
       };
     } else {
-      // 두번째카드: 130px, 바텀0에 딱 붙음, 높은 z-index, 전체 라운드
+      // 2번째 카드: 180px(11.25rem), 위쪽만 둥근, 1번째 아래, 87px(5.4375rem) 간격
       return {
-        height: "8.125rem", // 130px ÷ 16 = 8.125rem
-        bottom: "0",
-        borderRadius: "2.8125rem",
-        zIndex: 2, // 높은 z-index
+        height: "11.25rem", // 180px ÷ 16
+        bottom: "5.4375rem", // 87px ÷ 16 = 5.4375rem
+        borderRadius: "2.8125rem 2.8125rem 0 0", // 위쪽만 둥근
+        zIndex: 1, // 아래 표시
       };
     }
   }
 
-  // 3개 이상 - 2개 패턴 확장 (맨 아래만 130px+전체라운드, 나머지는 180px+상단라운드)
-  if (totalCourses === 3) {
+  if (totalCourses >= 3) {
+    // 3개 이상: 87px씩 뒤로 쌓기
     if (courseIndex === 0) {
-      // 카드3: 180px, 맨 위에 위치, 상단만 라운드
+      // 1번째 카드: 130px(8.125rem), 전체 둥근, 최상단
       return {
-        height: "11.25rem", // 180px ÷ 16 = 11.25rem
-        bottom: "8.75rem", // 140px ÷ 16 = 8.75rem
-        borderRadius: "2.8125rem 2.8125rem 0 0",
-        zIndex: 1, // 낮은 z-index
-      };
-    } else if (courseIndex === 1) {
-      // 카드2: 180px, 중간에 위치, 상단만 라운드
-      return {
-        height: "11.25rem", // 180px ÷ 16 = 11.25rem
-        bottom: "4.375rem", // 70px ÷ 16
-        borderRadius: "2.8125rem 2.8125rem 0 0",
-        zIndex: 2,
+        height: "8.125rem", // 130px ÷ 16
+        bottom: "0",
+        borderRadius: "2.8125rem", // 전체 둥근
+        zIndex: totalCourses, // 가장 높은 z-index
       };
     } else {
-      // 카드1: 130px, 바텀0에 딱 붙음, 전체 라운드 (2개일때와 동일)
+      // 2번째 이상 카드: 180px(11.25rem), 위쪽만 둥근, 87px씩 뒤로
+      const cardBottom = courseIndex * 5.4375; // 87px ÷ 16 = 5.4375rem씩 뒤로
       return {
-        height: "8.125rem", // 130px ÷ 16 = 8.125rem
-        bottom: "0",
-        borderRadius: "2.8125rem",
-        zIndex: 3, // 높은 z-index
+        height: "11.25rem", // 180px ÷ 16
+        bottom: `${cardBottom}rem`, // 87px씩 뒤로
+        borderRadius: "2.8125rem 2.8125rem 0 0", // 위쪽만 둥근
+        zIndex: totalCourses - courseIndex, // 뒤로 갈수록 낮은 z-index
       };
     }
   }
 
-  // 4개 이상 - 모든 카드가 130px 높이로 70px씩 겹쳐진 스택 구조
-  const cardBottom = courseIndex * 4.375; // 70px ÷ 16 = 4.375rem씩 위로
-  
+  // 기본값 (도달하지 않는 코드)
   return {
-    height: "8.125rem", // 130px ÷ 16 = 8.125rem (모든 카드 동일 높이)
-    bottom: `${cardBottom}rem`, // 70px씩 위로 쌓임
-    borderRadius: "2.8125rem", // 4모서리 둥근
-    zIndex: totalCourses - courseIndex, // 위에 있을수록 낮은 z-index
+    height: "8.125rem",
+    bottom: "0",
+    borderRadius: "2.8125rem",
+    zIndex: 1,
   };
 }
 

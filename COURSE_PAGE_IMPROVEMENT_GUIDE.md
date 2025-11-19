@@ -34,7 +34,7 @@
 
 ```typescript
 // 현재: 화면의 50%
-- <div className="h-[50vh] relative">
+- <div className="h-[65vh] relative">
 
 // 변경: 화면의 70% (전체 화면 느낌)
 + <div className="h-[70vh] relative">

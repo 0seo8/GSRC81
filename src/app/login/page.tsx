@@ -6,7 +6,6 @@ import { SplashScreen } from "@/components/splash-screen";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { useAuth } from "@/contexts/AuthContext";
 import { FigmaButton } from "@/components/ui/figma-button";
-import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 const CONSTANTS = {
   LOGO: {
@@ -40,32 +39,38 @@ const CONSTANTS = {
 
 export default function LoginPage() {
   const { completeOnboarding } = useOnboarding();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, kakaoLogin } = useAuth();
   const [showSplash, setShowSplash] = useState(true);
   
-  const { redirect } = useAuthRedirect(isAuthenticated, authLoading, CONSTANTS.ROUTES.MAP);
-
   const handleKakaoLogin = () => {
-    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI}&response_type=code`;
-    window.location.href = kakaoAuthUrl;
+    kakaoLogin();
   };
 
   const handleSplashComplete = () => {
     setShowSplash(false);
     completeOnboarding();
-    redirect();
   };
 
+  // 로그인 성공시 리다이렉트
   useEffect(() => {
-    if (!showSplash) {
-      redirect();
+    if (!authLoading && isAuthenticated && !showSplash) {
+      window.location.href = CONSTANTS.ROUTES.MAP;
     }
-  }, [showSplash, redirect]);
+  }, [authLoading, isAuthenticated, showSplash]);
 
   if (authLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-white">{CONSTANTS.TEXT.LOADING}</div>
+      </div>
+    );
+  }
+
+  // 인증되었고 스플래시도 끝났으면 리다이렉트
+  if (isAuthenticated && !showSplash) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white">Redirecting...</div>
       </div>
     );
   }

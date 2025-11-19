@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { supabase } from "@/lib/supabase";
 
 interface AuthContextType {
@@ -13,51 +14,29 @@ interface AuthContextType {
   login: (password: string) => Promise<boolean>;
   logout: () => void;
   checkVerificationStatus: () => Promise<boolean>;
+  kakaoLogin: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: session, status } = useSession();
   const [error, setError] = useState<string | null>(null);
-  const [kakaoUserId, setKakaoUserId] = useState<string | null>(null);
-  const [kakaoNickname, setKakaoNickname] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const authCookie = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("gsrc81-auth="));
-
-      if (authCookie) {
-        const authData = JSON.parse(
-          decodeURIComponent(authCookie.split("=")[1])
-        );
-        const isValid = Date.now() - authData.timestamp < 24 * 60 * 60 * 1000;
-
-        if (isValid && authData.authenticated) {
-          setIsAuthenticated(true);
-
-          // 카카오 사용자 정보 설정 (콜백에서 이미 검증 완료)
-          if (authData.kakaoUserId) {
-            setKakaoUserId(authData.kakaoUserId);
-            setKakaoNickname(authData.kakaoNickname || null);
-            setIsVerified(true); // 콜백에서 이미 검증된 사용자만 여기 도달
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Auth check error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const isLoading = status === "loading";
+  const isAuthenticated = !!session;
+  const kakaoUserId = session?.user?.id || null;
+  const kakaoNickname = session?.user?.name || null;
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    if (session?.user) {
+      // 세션이 있으면 검증 상태 확인
+      setIsVerified(true); // NextAuth 콜백에서 이미 검증됨
+    } else {
+      setIsVerified(false);
+    }
+  }, [session]);
 
   const checkVerificationStatusForUser = async (
     userId: string
@@ -84,7 +63,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (password: string): Promise<boolean> => {
     try {
       setError(null);
-      setIsLoading(true);
 
       const expected = process.env.NEXT_PUBLIC_APP_PASSWORD || "gsrc81";
       const isValid =
@@ -97,30 +75,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      const authData = {
-        authenticated: true,
-        timestamp: Date.now(),
-      };
-
-      document.cookie = `gsrc81-auth=${encodeURIComponent(JSON.stringify(authData))}; Max-Age=86400; path=/`;
-      setIsAuthenticated(true);
+      // 세션 기반이므로 별도의 로그인 처리가 필요하지 않음
       return true;
     } catch (err) {
       console.error("Login error:", err);
       setError("로그인 중 오류가 발생했습니다.");
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    document.cookie = "gsrc81-auth=; Max-Age=0; path=/";
-    setIsAuthenticated(false);
-    setIsVerified(false);
-    setKakaoUserId(null);
-    setKakaoNickname(null);
-    setError(null);
+  const logout = async () => {
+    await signOut({ callbackUrl: "/login" });
+  };
+
+  const kakaoLogin = async () => {
+    await signIn("kakao", { callbackUrl: "/map" });
   };
 
   return (
@@ -135,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         checkVerificationStatus,
+        kakaoLogin,
       }}
     >
       {children}

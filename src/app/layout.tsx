@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Inter, Noto_Sans, Poppins } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { AdminProvider } from "@/contexts/AdminContext";
-import { SafeAreaProvider } from "@/providers/safe-area-provider";
+import { Providers } from "@/components/providers";
+
+const notoSans = Noto_Sans({
+  variable: "--font-noto-sans",
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+});
 
 const inter = Inter({
   variable: "--font-inter",
@@ -59,24 +63,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className={`${inter.variable} ${poppins.variable} antialiased`}>
-        <SafeAreaProvider>
-          <AuthProvider>
-            <AdminProvider>
-              {children}
-              <Toaster
-                position="top-center"
-                toastOptions={{
-                  duration: 3000,
-                  style: {
-                    background: "#fff",
-                    border: "1px solid #e5e7eb",
-                  },
-                }}
-              />
-            </AdminProvider>
-          </AuthProvider>
-        </SafeAreaProvider>
+      <body
+        className={`${notoSans.variable} ${inter.variable} ${poppins.variable} antialiased`}
+      >
+        <Providers>
+          {children}
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                background: "#fff",
+                border: "1px solid #e5e7eb",
+              },
+            }}
+          />
+        </Providers>
       </body>
     </html>
   );

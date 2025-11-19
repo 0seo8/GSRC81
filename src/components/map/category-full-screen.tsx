@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import {
   type CourseWithComments,
   type CourseCategory,
@@ -71,13 +71,12 @@ export function CategoryFullScreen({
   });
 
   // 드래그 핸들링 훅
-  const { isDragging, dragKey, handleHeaderDrag, snapManager } =
-    useBottomSheetDrag({
-      onClose,
-      onCategoryChange: handleCategoryChange,
-      currentCategoryIndex,
-      totalCategories: categories.length,
-    });
+  const { isDragging, handleHeaderDrag } = useBottomSheetDrag({
+    onClose,
+    onCategoryChange: handleCategoryChange,
+    currentCategoryIndex,
+    totalCategories: categories.length,
+  });
 
   // 디자인 설정
   const currentDesign = getCategoryDesign(currentCategory?.key);
@@ -96,15 +95,14 @@ export function CategoryFullScreen({
 
           {/* 바텀시트 메인 컨테이너 */}
           <div
-            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[45px] overflow-hidden"
+            className="fixed bottom-2 left-2 right-2 z-50 rounded-t-[45px] flex flex-col h-[60vh]"
             style={{
-              height: "65vh",
               backgroundColor: currentDesign.backgroundColor,
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 헤더 - 상단에 고정 */}
-            <div className="absolute top-0 left-0 right-0 z-10">
+            {/* 헤더 */}
+            <div className="shrink-0">
               <BottomSheetHeader
                 categoryName={currentCategory?.name}
                 dongNames={dongNames}
@@ -113,8 +111,8 @@ export function CategoryFullScreen({
               />
             </div>
 
-            {/* 코스 카드 스택 - 바텀0부터 시작하는 절대 위치 레이아웃 */}
-            <div className="absolute bottom-0 left-0 right-0 w-full">
+            {/* 카드 스크롤 영역 */}
+            <div className="flex-1 overflow-y-auto px-0 pb-0">
               <RefactoredCourseCardStack
                 courses={filteredCourses}
                 cardColors={currentDesign.cardColors}

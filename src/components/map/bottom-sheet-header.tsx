@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { PanInfo } from "framer-motion";
 
 interface BottomSheetHeaderProps {
   categoryName?: string;
@@ -6,7 +7,7 @@ interface BottomSheetHeaderProps {
   isAllCategory: boolean;
   onHeaderDrag: (
     event: MouseEvent | TouchEvent | PointerEvent,
-    info: { offset: { x: number; y: number }; velocity: { x: number; y: number } }
+    info: PanInfo
   ) => void;
 }
 
@@ -38,22 +39,36 @@ export function BottomSheetHeader({
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!isDragging.current) return;
-    
+
     const touch = e.changedTouches[0];
     const endTime = Date.now();
-    const deltaTime = endTime - startTime;
-    
+    const deltaTime = Math.max(endTime - startTime, 1); // 최소 1ms로 설정하여 0으로 나누기 방지
+
     const offset = {
       x: touch.clientX - startPos.x,
-      y: touch.clientY - startPos.y
+      y: touch.clientY - startPos.y,
     };
-    
+
     const velocity = {
-      x: offset.x / deltaTime * 1000, // pixels per second
-      y: offset.y / deltaTime * 1000
+      x: (offset.x / deltaTime) * 1000, // pixels per second
+      y: (offset.y / deltaTime) * 1000,
     };
-    
-    onHeaderDrag(e.nativeEvent, { offset, velocity });
+
+    const point = {
+      x: touch.clientX,
+      y: touch.clientY,
+    };
+
+    const delta = offset;
+
+    const panInfo: PanInfo = {
+      offset,
+      velocity,
+      point,
+      delta,
+    };
+
+    onHeaderDrag(e.nativeEvent, panInfo);
     isDragging.current = false;
   };
 
@@ -65,21 +80,35 @@ export function BottomSheetHeader({
 
   const handleMouseUp = (e: React.MouseEvent) => {
     if (!isDragging.current) return;
-    
+
     const endTime = Date.now();
-    const deltaTime = endTime - startTime;
-    
+    const deltaTime = Math.max(endTime - startTime, 1); // 최소 1ms로 설정하여 0으로 나누기 방지
+
     const offset = {
       x: e.clientX - startPos.x,
-      y: e.clientY - startPos.y
+      y: e.clientY - startPos.y,
     };
-    
+
     const velocity = {
-      x: offset.x / deltaTime * 1000,
-      y: offset.y / deltaTime * 1000
+      x: (offset.x / deltaTime) * 1000,
+      y: (offset.y / deltaTime) * 1000,
     };
-    
-    onHeaderDrag(e.nativeEvent, { offset, velocity });
+
+    const point = {
+      x: e.clientX,
+      y: e.clientY,
+    };
+
+    const delta = offset;
+
+    const panInfo: PanInfo = {
+      offset,
+      velocity,
+      point,
+      delta,
+    };
+
+    onHeaderDrag(e.nativeEvent, panInfo);
     isDragging.current = false;
   };
 

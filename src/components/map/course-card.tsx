@@ -25,16 +25,6 @@ export function CourseCard({
 }: CourseCardProps) {
   const layout = calculateCardLayout(index, totalCourses);
   const shadow = calculateCardShadow(index);
-  
-  // 디버깅용 로그
-  if (course.category_name?.includes("트레일")) {
-    console.log("Trail course data:", {
-      title: course.title,
-      index,
-      totalCourses,
-      layout: layout
-    });
-  }
 
   return (
     <motion.div
@@ -49,7 +39,7 @@ export function CourseCard({
         duration: 0.3,
         ease: "easeOut",
       }}
-      className="absolute left-0 right-0 p-[33px] cursor-pointer"
+      className="absolute left-0 right-0 px-[41px] py-[20px] cursor-pointer"
       style={{
         backgroundColor: cardColor,
         bottom: layout.bottom,
@@ -59,15 +49,24 @@ export function CourseCard({
         boxShadow: shadow,
       }}
       onClick={(e) => {
-        e.stopPropagation();
-        if (isDragging) return;
+        // 스크롤 중이 아닐 때만 클릭 이벤트 처리
+        if (isDragging) {
+          e.preventDefault();
+          return;
+        }
         onCourseClick(course.id);
+      }}
+      onTouchStart={(e) => {
+        // 터치 시작 시 스크롤을 방해하지 않도록
+        e.stopPropagation();
       }}
     >
       <div className="flex justify-between items-start">
         <div className="flex-1">
-          <h3 className="font-bold text-black mb-2 text-lg">{course.title}</h3>
-          <p className="font-medium text-black mb-1 text-xs">
+          <h3 className="font-bold text-black mb-[13px] text-lg">
+            {course.title}
+          </h3>
+          <p className="font-medium text-black text-xs">
             {course.category_name + "러닝 코스"}
           </p>
           <p className="font-medium text-black text-xs">

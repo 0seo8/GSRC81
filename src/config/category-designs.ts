@@ -16,7 +16,7 @@ export const CATEGORY_DESIGNS = {
   },
   trail: {
     backgroundColor: "#758169", // 다크 그린
-    cardColors: ["#78A893", "#F5F5F0", "#758169", "#E5E4D4"],
+    cardColors: ["#758169", "#78A893", "#F5F5F0", "#E5E4D4"],
   },
   road: {
     backgroundColor: "#BBBBBB", // 그레이
@@ -27,9 +27,10 @@ export const CATEGORY_DESIGNS = {
 export type CategoryKey = keyof typeof CATEGORY_DESIGNS;
 
 export function getCategoryDesign(categoryKey?: string): CategoryDesign {
-  const key = categoryKey === "all" 
-    ? "jingwan" 
-    : (categoryKey as CategoryKey) || "jingwan";
-  
+  const key =
+    categoryKey === "all"
+      ? "jingwan"
+      : (categoryKey as CategoryKey) || "jingwan";
+
   return CATEGORY_DESIGNS[key] || CATEGORY_DESIGNS.jingwan;
 }
