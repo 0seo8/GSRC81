@@ -13,6 +13,7 @@ interface CourseCardProps {
   cardColor: string;
   isDragging: boolean;
   onCourseClick: (courseId: string) => void;
+  isExpanded?: boolean;
 }
 
 export function CourseCard({
@@ -22,9 +23,25 @@ export function CourseCard({
   cardColor,
   isDragging,
   onCourseClick,
+  isExpanded = false,
 }: CourseCardProps) {
   const layout = calculateCardLayout(index, totalCourses);
   const shadow = calculateCardShadow(index);
+
+  // 확장 시 모든 카드를 80px(5rem) 위로 이동
+  const getBottomPosition = () => {
+    if (!isExpanded || totalCourses < 3) {
+      return layout.bottom;
+    }
+    // bottom 값에서 숫자 추출
+    const currentBottom = parseFloat(layout.bottom);
+    // NaN 체크
+    if (isNaN(currentBottom)) {
+      return layout.bottom;
+    }
+    // 80px = 5rem을 더함
+    return `${currentBottom + 5}rem`;
+  };
 
   return (
     <motion.div
@@ -34,6 +51,7 @@ export function CourseCard({
         opacity: 1,
         y: 0,
         scale: 1,
+        bottom: getBottomPosition(),
       }}
       transition={{
         duration: 0.3,
@@ -42,7 +60,6 @@ export function CourseCard({
       className="absolute left-0 right-0 px-[41px] py-[20px] cursor-pointer"
       style={{
         backgroundColor: cardColor,
-        bottom: layout.bottom,
         height: layout.height,
         borderRadius: layout.borderRadius,
         zIndex: layout.zIndex,

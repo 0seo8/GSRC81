@@ -6,6 +6,7 @@ interface RefactoredCourseCardStackProps {
   cardColors: readonly string[];
   isDragging: boolean;
   onCourseClick: (courseId: string) => void;
+  isExpanded?: boolean;
 }
 
 export function RefactoredCourseCardStack({
@@ -13,6 +14,7 @@ export function RefactoredCourseCardStack({
   cardColors,
   isDragging,
   onCourseClick,
+  isExpanded = false,
 }: RefactoredCourseCardStackProps) {
   if (courses.length === 0) {
     return null;
@@ -54,6 +56,7 @@ export function RefactoredCourseCardStack({
             cardColor={cardColor}
             isDragging={isDragging}
             onCourseClick={onCourseClick}
+            isExpanded={isExpanded}
           />
         );
       })}

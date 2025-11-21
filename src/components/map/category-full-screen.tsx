@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   type CourseWithComments,
   type CourseCategory,
@@ -71,7 +71,7 @@ export function CategoryFullScreen({
   });
 
   // 드래그 핸들링 훅
-  const { isDragging, handleHeaderDrag } = useBottomSheetDrag({
+  const { isDragging, handleHeaderDrag, snapManager } = useBottomSheetDrag({
     onClose,
     onCategoryChange: handleCategoryChange,
     currentCategoryIndex,
@@ -94,8 +94,17 @@ export function CategoryFullScreen({
           <div className="fixed inset-0 z-40" onClick={onClose} />
 
           {/* 바텀시트 메인 컨테이너 */}
-          <div
-            className="fixed bottom-2 left-2 right-2 z-50 rounded-t-[45px] flex flex-col h-[50vh]"
+          <motion.div
+            className="fixed bottom-2 left-2 right-2 z-50 rounded-t-[45px] flex flex-col"
+            initial={{ height: "60vh" }}
+            animate={{
+              height: snapManager.getSnapHeight(snapManager.snapPoint)
+            }}
+            transition={{
+              type: "spring",
+              damping: 30,
+              stiffness: 300
+            }}
             style={{
               backgroundColor: currentDesign.backgroundColor,
             }}
@@ -118,9 +127,10 @@ export function CategoryFullScreen({
                 cardColors={currentDesign.cardColors}
                 isDragging={isDragging}
                 onCourseClick={onCourseClick}
+                isExpanded={snapManager.snapPoint === "full"}
               />
             </div>
-          </div>
+          </motion.div>
         </>
       )}
     </AnimatePresence>
