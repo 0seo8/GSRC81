@@ -15,11 +15,11 @@ export function useBottomSheetSnap({ onClose }: UseBottomSheetSnapProps) {
       case "closed":
         return "0vh";
       case "medium":
-        return "60vh";
+        return "50vh";
       case "full":
         return "100vh";
       default:
-        return "60vh";
+        return "50vh";
     }
   }, []);
 

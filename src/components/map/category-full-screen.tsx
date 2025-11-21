@@ -95,7 +95,7 @@ export function CategoryFullScreen({
 
           {/* 바텀시트 메인 컨테이너 */}
           <div
-            className="fixed bottom-2 left-2 right-2 z-50 rounded-t-[45px] flex flex-col h-[60vh]"
+            className="fixed bottom-2 left-2 right-2 z-50 rounded-t-[45px] flex flex-col h-[50vh]"
             style={{
               backgroundColor: currentDesign.backgroundColor,
             }}

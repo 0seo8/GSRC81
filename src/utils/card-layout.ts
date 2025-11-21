@@ -47,7 +47,7 @@ export function calculateCardLayout(
   }
 
   if (totalCourses >= 3) {
-    // 3개 이상: 87px씩 뒤로 쌓기
+    // 3개 이상: 첫 번째-두 번째는 75px 겹침, 그 이후는 87px 간격
     if (courseIndex === 0) {
       // 1번째 카드: 130px(8.125rem), 전체 둥근, 최상단
       return {
@@ -56,8 +56,16 @@ export function calculateCardLayout(
         borderRadius: "2.8125rem", // 전체 둥근
         zIndex: totalCourses, // 가장 높은 z-index
       };
+    } else if (courseIndex === 1) {
+      // 2번째 카드: 180px(11.25rem), 위쪽만 둥근, 55px 위치 (첫 번째와 75px 겹침)
+      return {
+        height: "11.25rem", // 180px ÷ 16
+        bottom: "3.4375rem", // 55px ÷ 16 = 3.4375rem
+        borderRadius: "2.8125rem 2.8125rem 0 0", // 위쪽만 둥근
+        zIndex: totalCourses - courseIndex,
+      };
     } else {
-      // 2번째 이상 카드: 180px(11.25rem), 위쪽만 둥근, 87px씩 뒤로
+      // 3번째 이상 카드: 180px(11.25rem), 위쪽만 둥근, 87px씩 뒤로
       const cardBottom = courseIndex * 5.4375; // 87px ÷ 16 = 5.4375rem씩 뒤로
       return {
         height: "11.25rem", // 180px ÷ 16
