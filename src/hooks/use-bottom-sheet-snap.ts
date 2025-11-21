@@ -15,11 +15,11 @@ export function useBottomSheetSnap({ onClose }: UseBottomSheetSnapProps) {
       case "closed":
         return "0vh";
       case "medium":
-        return "60vh"; // 현재 디자인 유지
+        return "50vh"; // 현재 디자인 유지
       case "full":
         return "95vh"; // 상단 여백 고려
       default:
-        return "60vh";
+        return "50vh";
     }
   }, []);
 

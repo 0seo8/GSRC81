@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   type CourseWithComments,
@@ -81,25 +81,40 @@ export function CategoryFullScreen({
   // 디자인 설정
   const currentDesign = getCategoryDesign(currentCategory?.key);
 
+  // 바텀시트가 열릴 때 snapPoint를 medium으로 초기화
+  useEffect(() => {
+    if (isOpen) {
+      snapManager.setSnapPoint("medium");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]); // isOpen이 변경될 때만 실행
+
   // 카테고리가 없을 때 안전 장치
   if (!categories || categories.length === 0) {
     return null;
   }
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {isOpen && (
         <>
           {/* 투명 백드롭 - 바깥 클릭 시 닫기 */}
-          <div className="fixed inset-0 z-40" onClick={onClose} />
+          <motion.div
+            className="fixed inset-0 z-40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
 
           {/* 바텀시트 메인 컨테이너 */}
           <motion.div
             className="fixed bottom-2 left-2 right-2 z-50 rounded-t-[45px] flex flex-col"
-            initial={{ height: "60vh" }}
+            initial={{ height: "0vh" }}
             animate={{
               height: snapManager.getSnapHeight(snapManager.snapPoint)
             }}
+            exit={{ height: "0vh" }}
             transition={{
               type: "spring",
               damping: 30,
