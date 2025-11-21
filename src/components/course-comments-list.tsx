@@ -46,14 +46,16 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
           </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5625rem' }}>
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "1.5625rem" }}
+        >
           {comments.map((comment, index) => {
             const isEven = index % 2 === 0;
-            
+
             return (
-              <div 
-                key={comment.id} 
-                className={`flex items-start space-x-3 ${isEven ? 'flex-row' : 'flex-row-reverse space-x-reverse'}`}
+              <div
+                key={comment.id}
+                className={`flex items-start space-x-3 ${isEven ? "flex-row" : "flex-row-reverse space-x-reverse"}`}
               >
                 {/* 프로필 이미지 */}
                 <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center flex-shrink-0">
@@ -64,11 +66,13 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
 
                 <div className="flex-1 min-w-0">
                   {/* 작성자 정보 (이름, 거리, 시간) */}
-                  <div className={`flex items-center space-x-2 mb-2 ${isEven ? 'justify-start' : 'justify-end'}`}>
+                  <div
+                    className={`flex items-center space-x-2 mb-2 ${isEven ? "justify-start" : "justify-end"}`}
+                  >
                     <span className="font-medium text-black text-sm">
                       {comment.author_nickname}
                     </span>
-                    <span className="text-sm text-black">
+                    <span className="text-sm text-gray-500">
                       {comment.distance_marker
                         ? `${comment.distance_marker.toFixed(1)}km`
                         : "0km"}
@@ -79,20 +83,29 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                   </div>
 
                   {/* 말풍선 댓글 내용 */}
-                  <div 
-                    className={`flex ${isEven ? 'justify-start' : 'justify-end'}`}
+                  <div
+                    className={`flex ${isEven ? "justify-start" : "justify-end"}`}
                     style={{
-                      marginRight: isEven ? '3rem' : '0', /* 48px margin from right for left-aligned */
-                      marginLeft: isEven ? '0' : '3rem'   /* 48px margin from left for right-aligned */
+                      marginRight: isEven
+                        ? "3rem"
+                        : "0" /* 48px margin from right for left-aligned */,
+                      marginLeft: isEven
+                        ? "0"
+                        : "3rem" /* 48px margin from left for right-aligned */,
                     }}
                   >
                     <div
                       className="relative bg-black text-white px-3 py-3 inline-block"
-                      style={{ 
-                        borderRadius: isEven ? "0 18px 18px 18px" : "18px 0px 18px 18px"
+                      style={{
+                        borderRadius: isEven
+                          ? "0 18px 18px 18px"
+                          : "18px 0px 18px 18px",
                       }}
                     >
-                      <p className="leading-relaxed whitespace-pre-wrap" style={{ fontSize: '0.875rem' }}>
+                      <p
+                        className="leading-relaxed whitespace-pre-wrap"
+                        style={{ fontSize: "0.875rem" }}
+                      >
                         {comment.message}
                       </p>
                     </div>

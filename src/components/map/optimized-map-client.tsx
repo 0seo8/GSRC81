@@ -176,7 +176,7 @@ export function OptimizedMapClient({
   // 풀스크린 닫기
   const handleCloseFullscreen = useCallback(() => {
     setIsFullscreenOpen(false);
-    setCurrentCategory("all"); // 전체로 닫기
+    // 카테고리는 유지 (사용자가 선택한 카테고리 보존)
     handleCloseDrawer();
   }, [handleCloseDrawer]);
 
