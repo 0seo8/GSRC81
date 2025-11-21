@@ -9,6 +9,7 @@ import { CourseMarker } from "./course-marker";
 import { CategoryFullScreen } from "./category-full-screen";
 import { MapTokenError } from "./map-token-error";
 import { MapEmptyState } from "./map-empty-state";
+import Image from "next/image";
 import { useMapState } from "@/hooks/use-map-state";
 import { useMapBounds } from "@/hooks/use-map-bounds";
 import {
@@ -210,10 +211,15 @@ export function OptimizedMapClient({
         {/* 현재 위치 버튼 */}
         <button
           onClick={handleCurrentLocation}
-          className="absolute top-20 right-4 z-20 bg-white rounded-lg p-2 shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+          className="absolute top-16 right-4 z-20 bg-white rounded-lg  shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors"
           aria-label="현재 위치로 이동"
         >
-          <Navigation className="w-5 h-5 text-black" />
+          <Image
+            src="/flaticon_icon.png"
+            alt="현재 위치"
+            width={30}
+            height={30}
+          />
         </button>
 
         {/* 카테고리 풀스크린 */}

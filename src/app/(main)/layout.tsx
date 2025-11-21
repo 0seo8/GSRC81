@@ -15,10 +15,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
     <div className="min-h-screen bg-transparent">
       {/* 공통 헤더 - 모든 페이지에서 표시 */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-transparent">
-        <div className="relative flex items-center justify-center px-4 py-3">
+        <div className="relative flex items-center justify-center px-4 py-4">
           {/* 중앙 정렬된 GSRC81 MAPS */}
-          <h1 className="text-[1.0625rem] font-bold font-poppins text-black">GSRC81 MAPS</h1>
-          
+          <h1 className="text-[1.0625rem] font-bold font-poppins text-black">
+            GSRC81 MAPS
+          </h1>
+
           {/* 우측 상단 MENU 텍스트 */}
           <button
             className="absolute right-4 text-[0.625rem] font-medium font-poppins text-black"
