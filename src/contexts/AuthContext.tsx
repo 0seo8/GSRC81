@@ -89,7 +89,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const kakaoLogin = async () => {
-    await signIn("kakao", { callbackUrl: "/map" });
+    // 로그인 후 NextAuth 콜백에서 처리하도록 함
+    const result = await signIn("kakao", { redirect: false });
+
+    if (result?.ok) {
+      // 로그인 성공 후 세션 갱신
+      window.location.reload();
+    }
   };
 
   return (

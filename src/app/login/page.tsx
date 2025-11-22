@@ -39,9 +39,9 @@ const CONSTANTS = {
 
 export default function LoginPage() {
   const { completeOnboarding } = useOnboarding();
-  const { isAuthenticated, isLoading: authLoading, kakaoLogin } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, kakaoLogin, checkVerificationStatus, kakaoUserId } = useAuth();
   const [showSplash, setShowSplash] = useState(true);
-  
+
   const handleKakaoLogin = () => {
     kakaoLogin();
   };
@@ -51,12 +51,22 @@ export default function LoginPage() {
     completeOnboarding();
   };
 
-  // 로그인 성공시 리다이렉트
+  // 로그인 성공시 인증 상태 확인 후 적절한 페이지로 리다이렉트
   useEffect(() => {
-    if (!authLoading && isAuthenticated && !showSplash) {
-      window.location.href = CONSTANTS.ROUTES.MAP;
-    }
-  }, [authLoading, isAuthenticated, showSplash]);
+    const checkAndRedirect = async () => {
+      if (!authLoading && isAuthenticated && !showSplash && kakaoUserId) {
+        const isVerified = await checkVerificationStatus();
+
+        if (isVerified) {
+          window.location.href = CONSTANTS.ROUTES.MAP;
+        } else {
+          window.location.href = `/verify?uid=${kakaoUserId}`;
+        }
+      }
+    };
+
+    checkAndRedirect();
+  }, [authLoading, isAuthenticated, showSplash, kakaoUserId, checkVerificationStatus]);
 
   if (authLoading) {
     return (

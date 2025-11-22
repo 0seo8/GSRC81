@@ -19,10 +19,11 @@ export const authOptions: NextAuthOptions = {
           .eq("kakao_user_id", user.id);
 
         const existingUser = existingUsers && existingUsers.length > 0 ? existingUsers[0] : null;
-        
+
         if (!existingUser) {
-          // 최초 로그인시 verify 페이지로 리다이렉트하기 위해 false 반환
-          return `/verify?uid=${user.id}`;
+          // 최초 로그인시 verify 페이지로 리다이렉트
+          // false를 반환하면 로그인이 차단되므로 true를 반환하고 redirect 콜백에서 처리
+          return true;
         }
 
         if (!existingUser.is_active) {
@@ -32,6 +33,12 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
       return true;
+    },
+    async redirect({ url, baseUrl }) {
+      // 콜백 URL이 제공되면 해당 URL 사용
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
     },
     async jwt({ token, account, profile }) {
       // 카카오 로그인시 프로필 정보를 토큰에 저장

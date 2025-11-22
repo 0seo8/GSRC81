@@ -28,10 +28,11 @@ export function RefactoredCourseCardStack({
       // 2개: 2번째 카드의 bottom + height
       return "16.6875rem"; // 5.4375rem + 11.25rem
     } else {
-      // 3개 이상: 마지막 카드의 bottom + height
+      // 3개 이상: 38px씩 겹침, 카드 높이 150px
       const lastCardIndex = courses.length - 1;
-      const lastCardBottom = lastCardIndex * 5.4375; // 87px 간격
-      const lastCardHeight = 11.25; // 2번째 이상 카드는 모두 11.25rem
+      const overlap = 2.375; // 38px
+      const lastCardBottom = (lastCardIndex - 1) * (9.375 - overlap); // (150 - 38) * (index - 1)
+      const lastCardHeight = 9.375; // 150px
       const totalHeight = lastCardBottom + lastCardHeight;
       return `${totalHeight}rem`;
     }
@@ -41,8 +42,8 @@ export function RefactoredCourseCardStack({
 
   return (
     <div
-      className="relative w-full font-sans mb-0 flex flex-col justify-end"
-      style={{ height: stackHeight, minHeight: "100%" }}
+      className="relative w-full font-sans mb-0"
+      style={{ height: stackHeight }}
     >
       {courses.map((course, index) => {
         const cardColor = cardColors[index % cardColors.length];

@@ -47,31 +47,33 @@ export function calculateCardLayout(
   }
 
   if (totalCourses >= 3) {
-    // 3개 이상: 첫 번째(-80px), 두 번째(0), 세 번째(142px), 그 이후 87px씩 간격
+    // 3개 이상: 38px씩 겹치도록 배치, 카드 높이 150px
     if (courseIndex === 0) {
       // 1번째 카드: 130px(8.125rem), 전체 둥근, 컨테이너 바닥 아래
       return {
-        height: "8.125rem", // 130px ÷ 16
-        bottom: "-5rem", // -80px ÷ 16
+        height: "8.125rem", // 130px
+        bottom: "-5rem", // -80px
         borderRadius: "2.8125rem", // 전체 둥근
         zIndex: totalCourses, // 가장 높은 z-index
       };
     } else if (courseIndex === 1) {
-      // 2번째 카드: 180px(11.25rem), 위쪽만 둥근, 컨테이너 바닥
+      // 2번째 카드: 150px(9.375rem), 위쪽만 둥근, 컨테이너 바닥 (기준점)
       return {
-        height: "11.25rem", // 180px ÷ 16
+        height: "9.375rem", // 150px
         bottom: "0",
         borderRadius: "2.8125rem 2.8125rem 0 0", // 위쪽만 둥근
         zIndex: totalCourses - courseIndex,
       };
     } else {
-      // 3번째 이상 카드: 180px(11.25rem), 위쪽만 둥근, 8.875rem부터 87px씩 간격
-      const cardBottom = 8.875 + (courseIndex - 2) * 5.4375; // 142px부터 87px씩
+      // 3번째 이상 카드: 150px, 38px씩 겹침 (150 - 38 = 112px 간격)
+      // index 2: 112px, index 3: 224px, index 4: 336px...
+      const overlap = 2.375; // 38px
+      const cardBottom = (courseIndex - 1) * (9.375 - overlap); // (150 - 38) * (index - 1)
       return {
-        height: "11.25rem", // 180px ÷ 16
+        height: "9.375rem", // 150px
         bottom: `${cardBottom}rem`,
         borderRadius: "2.8125rem 2.8125rem 0 0", // 위쪽만 둥근
-        zIndex: totalCourses - courseIndex, // 뒤로 갈수록 낮은 z-index
+        zIndex: totalCourses - courseIndex,
       };
     }
   }
