@@ -14,7 +14,7 @@ export interface CardLayout {
  */
 export function calculateCardLayout(
   courseIndex: number,
-  totalCourses: number
+  totalCourses: number,
 ): CardLayout {
   if (totalCourses === 1) {
     // 1개: 130px(8.125rem), 전체 둥근 모서리
@@ -31,7 +31,7 @@ export function calculateCardLayout(
       // 1번째 카드: 130px(8.125rem), 전체 둥근, 최상단
       return {
         height: "8.125rem", // 130px ÷ 16
-        bottom: "0", 
+        bottom: "0",
         borderRadius: "2.8125rem", // 전체 둥근
         zIndex: 2, // 위에 표시
       };
@@ -39,7 +39,7 @@ export function calculateCardLayout(
       // 2번째 카드: 180px(11.25rem), 위쪽만 둥근, 1번째 아래, 87px(5.4375rem) 간격
       return {
         height: "11.25rem", // 180px ÷ 16
-        bottom: "5.4375rem", // 87px ÷ 16 = 5.4375rem
+        bottom: "4.4375rem", // 87px ÷ 16 = 5.4375rem
         borderRadius: "2.8125rem 2.8125rem 0 0", // 위쪽만 둥근
         zIndex: 1, // 아래 표시
       };
