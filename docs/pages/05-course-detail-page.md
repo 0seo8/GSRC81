@@ -38,11 +38,11 @@ Displays comprehensive information about a specific running course including map
 export default async function CourseDetailPage({ params }: Props) {
   const { id: courseId } = await params  // ✅ Async params (Next.js 15)
 
-  // ✅ Parallel data fetching on server
-  const [course, comments, photosResponse] = await Promise.all([
+  // ✅ Parallel data fetching on server (direct Supabase queries)
+  const [course, comments, photos] = await Promise.all([
     getCourseById(courseId),
     getCourseComments(courseId),
-    fetch(`${API_URL}/api/course-photos?course_id=${courseId}`)
+    getCoursePhotos(courseId),  // Direct Supabase client call
   ])
 
   // ... render with data
@@ -67,9 +67,10 @@ export default async function CourseDetailPage({ params }: Props) {
    - Source: Supabase course_comments table
    - Returns: Comment[]
 
-3. /api/course-photos
-   - Source: Supabase course_photos table
+3. getCoursePhotos(id)
+   - Source: Supabase course_photos table (direct query)
    - Returns: CoursePhoto[]
+   - Note: Now uses direct Supabase client instead of API route
 ```
 
 ### Error Handling
