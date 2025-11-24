@@ -1,19 +1,19 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
-import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminProvider } from "@/contexts/AdminContext";
 import { SafeAreaProvider } from "@/providers/safe-area-provider";
+import { GlobalSplash } from "@/components/global-splash";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider>
       <SessionProvider>
-        <AuthProvider>
+        <GlobalSplash>
           <AdminProvider>
             {children}
           </AdminProvider>
-        </AuthProvider>
+        </GlobalSplash>
       </SessionProvider>
     </SafeAreaProvider>
   );

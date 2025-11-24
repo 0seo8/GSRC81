@@ -2,133 +2,92 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
-import { supabase } from "@/lib/supabase";
+import { useSession } from "next-auth/react";
+import { verifyAccessCode, isUserVerified } from "@/lib/auth/verification";
+import { AppHeader } from "@/components/layout/app-header";
 
 function VerifyContent() {
   const params = useSearchParams();
   const router = useRouter();
+  const { data: session, update: updateSession } = useSession();
   const kakaoUserId = params.get("uid");
+
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   // 페이지 진입 시 자동으로 인증 상태 체크
+  // 이미 검증된 사용자라면 /map으로 리다이렉트 (미들웨어가 처리하지 못한 경우)
   useEffect(() => {
     const checkExistingUser = async () => {
-      if (!kakaoUserId) return;
-      
-      const { data: existingUser } = await supabase
-        .from("access_links")
-        .select("*")
-        .eq("kakao_user_id", kakaoUserId)
-        .single();
-
-      if (existingUser) {
-        const authData = {
-          authenticated: true,
-          timestamp: Date.now(),
-          type: "kakao",
-          kakaoUserId: kakaoUserId,
-        };
-
-        document.cookie = `gsrc81-auth=${JSON.stringify(authData)}; Max-Age=86400; path=/; SameSite=Lax`;
-        
-        setTimeout(() => {
-          router.push("/map");
-        }, 100);
+      if (!kakaoUserId) {
+        setChecking(false);
+        return;
       }
+
+      const verified = await isUserVerified(kakaoUserId);
+
+      if (verified) {
+        // 이미 검증됨 → NextAuth 세션 갱신 후 /map으로
+        await updateSession();
+        router.push("/map");
+        router.refresh();
+        return;
+      }
+
+      setChecking(false);
     };
 
     checkExistingUser();
-  }, [kakaoUserId, router]);
+  }, [kakaoUserId, router, updateSession]);
 
   const handleVerify = async () => {
+    if (!kakaoUserId) {
+      setError("잘못된 접근입니다. 다시 로그인해주세요.");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
-    // 1️⃣ 먼저 이미 인증된 사용자인지 확인  
-    const { data: existingUser } = await supabase
-      .from("access_links")
-      .select("*")
-      .eq("kakao_user_id", kakaoUserId)
-      .single();
+    // 접근 코드 검증 및 사용자 연결
+    const result = await verifyAccessCode(code, kakaoUserId);
 
-    if (existingUser) {
-      // 이미 인증 완료된 사용자 - 쿠키 설정 후 리다이렉트
-      const authData = {
-        authenticated: true,
-        timestamp: Date.now(),
-        type: "kakao",
-        kakaoUserId: kakaoUserId,
-      };
-
-      document.cookie = `gsrc81-auth=${JSON.stringify(authData)}; Max-Age=86400; path=/; SameSite=Lax`;
-      
-      setTimeout(() => {
-        router.push("/map");
-      }, 100);
-      return;
-    }
-
-    // 2️⃣ 접근 코드 유효성 확인
-    const { data, error } = await supabase
-      .from("access_links")
-      .select("*")
-      .eq("access_code", code)
-      .single();
-
-    if (error || !data) {
-      setError("❌ 유효하지 않은 접근 코드입니다.");
+    if (!result.success) {
+      setError(`❌ ${result.error}`);
       setLoading(false);
       return;
     }
 
-    // kakao_user_id 연결 및 활성화
-    const { error: updateError } = await supabase
-      .from("access_links")
-      .update({
-        kakao_user_id: kakaoUserId,
-        kakao_nickname: null,
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", data.id);
-
-    if (updateError) {
-      setError("❌ 인증 처리 중 오류가 발생했습니다.");
-      setLoading(false);
-      return;
-    }
-
-    // 카카오 로그인 성공 상태를 쿠키에 저장
-    const authData = {
-      authenticated: true,
-      timestamp: Date.now(),
-      type: "kakao",
-      kakaoUserId: kakaoUserId,
-    };
-
-    // 쿠키에 저장 (24시간)
-    const expires = new Date();
-    expires.setTime(expires.getTime() + 24 * 60 * 60 * 1000); // 24시간
-    document.cookie = `gsrc81-auth=${JSON.stringify(authData)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
-
-    // 로컬스토리지에도 저장 (클라이언트 사이드 체크용)
-    localStorage.setItem("gsrc81-auth", JSON.stringify(authData));
-
+    // 검증 성공 → NextAuth 세션 갱신 후 /map으로
+    await updateSession();
     router.push("/map");
+    router.refresh();
   };
+
+  // 검증 상태 확인 중
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] flex flex-col">
+        <AppHeader background="gray" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto"></div>
+            <p className="text-gray-500 text-sm mt-4">인증 상태 확인 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex flex-col">
+      {/* 공통 헤더 */}
+      <AppHeader background="gray" />
+
       {/* Main Content */}
-      <div className="flex-1 flex flex-col justify-center items-center px-6">
-        {/* Logo */}
-        <div className="mb-12">
-          <h1 className="text-black text-lg font-semibold tracking-wide text-center">
-            GSRC81 MAPS
-          </h1>
-        </div>
+      <div className="flex-1 flex flex-col justify-center items-center px-6 pt-16">
 
         {/* Verification Form */}
         <div className="w-full max-w-sm">
@@ -198,12 +157,12 @@ export default function VerifyPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-black text-lg font-semibold tracking-wide mb-4">
-              GSRC81 MAPS
-            </h1>
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto"></div>
+        <div className="min-h-screen bg-[#F5F5F5] flex flex-col">
+          <AppHeader background="gray" />
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto"></div>
+            </div>
           </div>
         </div>
       }

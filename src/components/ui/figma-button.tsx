@@ -20,7 +20,7 @@ const figmaButtonVariants = cva(
         jingwan: "bg-jingwan-primary text-white hover:bg-jingwan-secondary",
       },
       size: {
-        default: "w-[327px]",
+        default: "w-full",
         sm: "h-8 w-24",
         lg: "h-12 w-40",
         icon: "h-10 w-10",

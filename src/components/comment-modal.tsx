@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MessageSquare, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createComment, CreateCommentData } from "@/lib/comments";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface CommentModalProps {
   isOpen: boolean;
@@ -26,7 +26,7 @@ export function CommentModal({
   position,
   onCommentAdded,
 }: CommentModalProps) {
-  const { kakaoUserId, kakaoNickname } = useAuth();
+  const { data: session } = useSession();
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,7 +36,7 @@ export function CommentModal({
     if (!position || !message.trim()) return;
 
     // 로그인된 사용자 닉네임 사용 (카카오 닉네임이 있으면 사용, 없으면 GSRC81 러너)
-    const authorNickname = kakaoNickname || "GSRC81 러너";
+    const authorNickname = session?.user?.name || "GSRC81 러너";
 
     setIsSubmitting(true);
     try {

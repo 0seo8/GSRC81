@@ -32,7 +32,7 @@ export default async function CourseDetailPage({
     getCourseById(courseId).catch(() => null),
     getCourseComments(courseId).catch(() => []),
     fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL || ""}/api/course-photos?course_id=${courseId}`
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL || ""}/api/course-photos?course_id=${courseId}`,
     )
       .then((res) => (res.ok ? res.json() : []))
       .catch(() => []),
@@ -65,7 +65,7 @@ export default async function CourseDetailPage({
           }}
         >
           <div className="overflow-y-auto h-full">
-            <div className="max-w-2xl mx-auto px-[10px] py-5">
+            <div className="max-w-2xl mx-auto px-[0.625rem] py-5">
               {/* 코스 정보 섹션 */}
               <div className="">
                 <div className="mb-6 flex justify-between items-end">

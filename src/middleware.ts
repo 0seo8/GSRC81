@@ -1,34 +1,69 @@
-import { withAuth } from "next-auth/middleware"
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export default withAuth(
-  function middleware() {
-    // 추가적인 미들웨어 로직이 필요하면 여기에
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        const { pathname } = req.nextUrl;
-        
-        // 인증이 필요한 페이지들
-        const protectedPaths = ["/map", "/courses", "/admin"];
-        const isProtectedPath = protectedPaths.some((path) =>
-          pathname.startsWith(path),
-        );
+// Extend JWT type to include custom fields
+interface ExtendedJWT {
+  kakaoId?: string;
+  isVerified?: boolean;
+}
 
-        // 인증이 필요하지 않은 페이지는 허용
-        if (!isProtectedPath) {
-          return true;
-        }
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-        // 보호된 페이지는 토큰 필요
-        return !!token;
-      },
-    },
-    pages: {
-      signIn: "/login",
-    },
+  // ✅ 1. Root path immediate redirect
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL("/map", req.url));
   }
-)
+
+  // ✅ 2. /login 접근 시 이미 로그인된 사용자 자동 리다이렉트
+  if (pathname === "/login") {
+    const token = await getToken({
+      req,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    if (token) {
+      // 이미 로그인됨 - 인증 여부 체크
+      const extendedToken = token as ExtendedJWT;
+      const isVerified = extendedToken.isVerified === true;
+      const kakaoId = extendedToken.kakaoId;
+
+      if (isVerified) {
+        // 인증 완료 → /map으로
+        return NextResponse.redirect(new URL("/map", req.url));
+      } else {
+        // 미인증 → /verify로
+        return NextResponse.redirect(new URL(`/verify?uid=${kakaoId}`, req.url));
+      }
+    }
+    // 로그인 안 됨 → /login 페이지 표시
+  }
+
+  // ✅ 3. Protected paths check
+  const protectedPaths = ["/map", "/courses"];
+  const isProtectedPath = protectedPaths.some((path) =>
+    pathname.startsWith(path),
+  );
+
+  if (isProtectedPath) {
+    const token = await getToken({
+      req,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    if (!token) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // ✅ 4. Admin routes handled by AdminContext
+  // No need to check here, AdminContext + admin middleware handles it
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
