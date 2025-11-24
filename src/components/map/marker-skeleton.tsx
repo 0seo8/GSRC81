@@ -58,13 +58,13 @@ export function MarkerSkeleton({
 
       // 스켈레톤 스타일
       skeletonElement.style.cssText = `
-        width: 40px;
-        height: 40px;
+        width: 2.5rem;
+        height: 2.5rem;
         background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
         background-size: 200% 100%;
-        border: 3px solid white;
+        border: 0.1875rem solid white;
         border-radius: 50%;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.1);
         position: absolute;
         transform: translate(-50%, -50%);
         opacity: 0.8;

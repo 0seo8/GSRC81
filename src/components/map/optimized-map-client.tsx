@@ -2,61 +2,71 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Navigation } from "lucide-react";
+import Image from "next/image";
 
 import { MapboxMap } from "./mapbox-map";
 import { CourseMarker } from "./course-marker";
 import { CategoryFullScreen } from "./category-full-screen";
 import { MapTokenError } from "./map-token-error";
-import { MapEmptyState } from "./map-empty-state";
-import Image from "next/image";
 import { useMapState } from "@/hooks/use-map-state";
 import { useMapBounds } from "@/hooks/use-map-bounds";
+import { useGeolocation } from "@/hooks/use-geolocation";
 import {
   type CourseWithComments,
   type CourseCategory,
-  getCourses,
 } from "@/lib/courses-data";
+import { addAllCategory } from "@/lib/category-utils";
+import {
+  MAPBOX_TOKEN,
+  EUNPYEONG_CENTER,
+  DEFAULT_ZOOM,
+  MAPBOX_STYLE,
+} from "@/lib/map-constants";
 
 interface OptimizedMapClientProps {
   courses: CourseWithComments[];
   categories: CourseCategory[];
 }
 
+/**
+ * 지도 클라이언트 컴포넌트
+ *
+ * React 권장 패턴 적용:
+ * - 훅 호출 순서 일관성 유지 (조건부 return은 훅 이후)
+ * - 환경변수를 모듈 레벨로 분리
+ * - 유틸리티 함수 분리 (addAllCategory)
+ * - 커스텀 훅으로 관심사 분리 (useGeolocation)
+ * - 상수 파일 분리 (map-constants.ts)
+ */
 export function OptimizedMapClient({
   courses,
   categories,
 }: OptimizedMapClientProps) {
-  // 전체 카테고리 추가
-  const allCategories = [
-    {
-      id: "all",
-      key: "all",
-      name: "전체",
-      description: "모든 코스",
-      sort_order: 0,
-      is_active: true,
-      created_at: new Date().toISOString(),
-    },
-    ...categories,
-  ];
   const router = useRouter();
-  const [allCourses, setAllCourses] = useState<CourseWithComments[]>(courses);
-  const [currentCategory, setCurrentCategory] = useState<string>("all"); // 전체로 시작
+
+  // 현재 선택된 카테고리
+  const [currentCategory, setCurrentCategory] = useState<string>("all");
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+  // 위치 버튼 토글 상태 (false: 초기위치, true: 현재위치)
+  const [isAtCurrentLocation, setIsAtCurrentLocation] = useState(false);
 
-  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
+  // 전체 카테고리 추가 (메모이제이션)
+  const allCategories = useMemo(
+    () => addAllCategory(categories),
+    [categories]
+  );
 
-  // 현재 카테고리의 코스만 필터링 (memoized)
+  // 현재 카테고리의 코스만 필터링
   const displayCourses = useMemo(() => {
     if (currentCategory === "all") {
-      return allCourses; // 전체 노출
+      return courses;
     }
-    return allCourses.filter(
+    return courses.filter(
       (course) => (course.category_key || "jingwan") === currentCategory
     );
-  }, [allCourses, currentCategory]);
+  }, [courses, currentCategory]);
 
+  // 지도 상태 관리
   const {
     map,
     optimisticCourses,
@@ -68,70 +78,58 @@ export function OptimizedMapClient({
     handleCloseDrawer,
   } = useMapState(displayCourses);
 
+  // 지도 bounds 자동 조정
   useMapBounds(map, optimisticCourses);
 
-  // 카테고리별 코스 동적 로딩
-  const loadCoursesByCategory = useCallback(
-    async (categoryKey: string) => {
-      // "all" 카테고리는 이미 로드된 전체 코스 사용
-      if (categoryKey === "all") {
-        return; // 전체 코스는 이미 allCourses에 있음
-      }
-
-      const existingCourses = allCourses.filter(
-        (course) => (course.category_key || "jingwan") === categoryKey
-      );
-
-      if (existingCourses.length === 0) {
-        try {
-          const newCourses = await getCourses(categoryKey);
-          setAllCourses((prev) => [...prev, ...newCourses]);
-        } catch (error) {
-          console.error(`Failed to load ${categoryKey} courses:`, error);
-        }
-      }
+  // 현재 위치 가져오기 (커스텀 훅)
+  const { getCurrentLocation } = useGeolocation({
+    map,
+    onError: (error) => {
+      console.error("위치 정보를 가져올 수 없습니다:", error);
+      // TODO: 사용자에게 토스트/알림으로 에러 표시
     },
-    [allCourses]
-  );
+    onSuccess: () => {
+      setIsAtCurrentLocation(true);
+    },
+  });
 
-  // 마커 클릭 핸들러
+  // 위치 버튼 토글: 현재 위치 ↔ 초기 위치(은평구 중심)
+  const handleLocationToggle = useCallback(() => {
+    if (!map) return;
+
+    if (isAtCurrentLocation) {
+      // 초기 위치로 복귀
+      map.flyTo({
+        center: EUNPYEONG_CENTER,
+        zoom: DEFAULT_ZOOM,
+        duration: 2000,
+      });
+      setIsAtCurrentLocation(false);
+    } else {
+      // 현재 위치로 이동
+      getCurrentLocation();
+    }
+  }, [map, isAtCurrentLocation, getCurrentLocation]);
+
+  // 마커 클릭: 선택된 코스만 바텀시트에 표시
   const handleCourseClick = useCallback(
-    async (course: CourseWithComments) => {
-      if (currentCategory === "all") {
-        // 전체 모드에서는 카테고리 전환하지 않음
-        setIsFullscreenOpen(true);
-        mapHandleCourseClick(course);
-      } else {
-        // 특정 카테고리 모드에서는 기존 동작
-        const categoryKey = course.category_key || "jingwan";
-        await loadCoursesByCategory(categoryKey);
-        setCurrentCategory(categoryKey);
-        setIsFullscreenOpen(true);
-        mapHandleCourseClick(course);
-      }
+    (course: CourseWithComments) => {
+      mapHandleCourseClick(course);
+      setIsFullscreenOpen(true);
     },
-    [currentCategory, loadCoursesByCategory, mapHandleCourseClick]
+    [mapHandleCourseClick]
   );
 
+  // 클러스터 클릭: 클러스터 내 코스들만 바텀시트에 표시
   const handleClusterClick = useCallback(
-    async (coursesInCluster: CourseWithComments[]) => {
-      if (currentCategory === "all") {
-        // 전체 모드에서는 카테고리 전환하지 않음
-        setIsFullscreenOpen(true);
-        mapHandleClusterClick(coursesInCluster);
-      } else {
-        // 특정 카테고리 모드에서는 기존 동작
-        const categoryKey = coursesInCluster[0]?.category_key || "jingwan";
-        await loadCoursesByCategory(categoryKey);
-        setCurrentCategory(categoryKey);
-        setIsFullscreenOpen(true);
-        mapHandleClusterClick(coursesInCluster);
-      }
+    (coursesInCluster: CourseWithComments[]) => {
+      mapHandleClusterClick(coursesInCluster);
+      setIsFullscreenOpen(true);
     },
-    [currentCategory, loadCoursesByCategory, mapHandleClusterClick]
+    [mapHandleClusterClick]
   );
 
-  // 카드 클릭으로 코스 상세 페이지 이동
+  // 코스 상세 페이지 이동
   const handleCourseDetailNavigation = useCallback(
     (courseId: string) => {
       router.push(`/courses/${courseId}`);
@@ -141,46 +139,19 @@ export function OptimizedMapClient({
     [router, handleCloseDrawer]
   );
 
-  // 카테고리 변경
-  const handleCategoryChange = useCallback(
-    async (categoryKey: string) => {
-      await loadCoursesByCategory(categoryKey);
-      setCurrentCategory(categoryKey);
-    },
-    [loadCoursesByCategory]
-  );
+  // 카테고리 변경 (바텀시트에서 호출)
+  const handleCategoryChange = useCallback((categoryKey: string) => {
+    setCurrentCategory(categoryKey);
+  }, []);
 
-  // 현재 위치로 이동
-  const handleCurrentLocation = useCallback(() => {
-    if (!map || !navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        map.flyTo({
-          center: [longitude, latitude],
-          zoom: 12,
-          duration: 1000,
-        });
-      },
-      (error) => {
-        console.error("위치 정보를 가져올 수 없습니다:", error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000,
-      }
-    );
-  }, [map]);
-
-  // 풀스크린 닫기
+  // 바텀시트 닫기
   const handleCloseFullscreen = useCallback(() => {
     setIsFullscreenOpen(false);
-    // 카테고리는 유지 (사용자가 선택한 카테고리 보존)
     handleCloseDrawer();
   }, [handleCloseDrawer]);
 
-  if (!mapboxToken) {
+  // Mapbox 토큰 없으면 에러 표시 (훅 호출 이후)
+  if (!MAPBOX_TOKEN) {
     return <MapTokenError />;
   }
 
@@ -189,12 +160,12 @@ export function OptimizedMapClient({
       <div className="flex-1 relative overflow-hidden">
         {/* 지도 */}
         <MapboxMap
-          accessToken={mapboxToken}
-          center={[126.9285, 37.6176]}
-          zoom={11.5}
+          accessToken={MAPBOX_TOKEN}
+          center={EUNPYEONG_CENTER}
+          zoom={DEFAULT_ZOOM}
           onMapLoad={handleMapLoad}
           className="w-full h-full"
-          style="mapbox://styles/mapbox/light-v11"
+          style={MAPBOX_STYLE}
         />
 
         {/* 코스 마커 */}
@@ -210,9 +181,9 @@ export function OptimizedMapClient({
 
         {/* 현재 위치 버튼 */}
         <button
-          onClick={handleCurrentLocation}
-          className="absolute top-16 right-4 z-20 bg-white rounded-lg  shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-          aria-label="현재 위치로 이동"
+          onClick={handleLocationToggle}
+          className="absolute top-16 right-4 z-20 bg-white rounded-lg shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+          aria-label={isAtCurrentLocation ? "초기 위치로 이동" : "현재 위치로 이동"}
         >
           <Image
             src="/flaticon_icon.png"
@@ -222,11 +193,11 @@ export function OptimizedMapClient({
           />
         </button>
 
-        {/* 카테고리 풀스크린 */}
+        {/* 카테고리 바텀시트 */}
         <CategoryFullScreen
           isOpen={isFullscreenOpen}
           onClose={handleCloseFullscreen}
-          courses={allCourses}
+          courses={courses}
           categories={allCategories}
           initialCategory={currentCategory}
           onCourseClick={handleCourseDetailNavigation}

@@ -1,6 +1,22 @@
 "use client";
 
-export function MapError() {
+interface MapErrorProps {
+  onReset?: () => void;
+}
+
+/**
+ * 지도 로딩 에러 UI
+ * Next.js error.tsx에서 사용하거나 독립적으로 사용 가능
+ */
+export function MapError({ onReset }: MapErrorProps = {}) {
+  const handleRetry = () => {
+    if (onReset) {
+      onReset();
+    } else {
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-lola-50 flex items-center justify-center">
       <div className="text-center">
@@ -10,7 +26,7 @@ export function MapError() {
         </h2>
         <p className="text-gray-600">지도를 불러오는 중 문제가 발생했습니다.</p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={handleRetry}
           className="mt-4 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
         >
           다시 시도
