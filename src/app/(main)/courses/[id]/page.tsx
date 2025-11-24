@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ProtectedRoute } from "@/components/protected-route";
 import Image from "next/image";
 import { Noto_Sans } from "next/font/google";
 import { getCourseById } from "@/lib/courses-data";
@@ -74,8 +73,7 @@ export default async function CourseDetailPage({
   const [firstLine, secondLine] = splitTitleAtMidpoint(course.title);
 
   return (
-    <ProtectedRoute>
-      <div className={`min-h-screen bg-page-bg ${notoSans.className}`}>
+    <div className={`min-h-screen bg-page-bg ${notoSans.className}`}>
         {/* 상단 지도 영역 - 헤더 공간 확보 */}
         <div className="w-full h-map-height pt-14 p-2.5">
           <CourseDetailMapWrapper courseId={courseId} />
@@ -153,7 +151,6 @@ export default async function CourseDetailPage({
             </div>
           </div>
         </div>
-      </div>
-    </ProtectedRoute>
+    </div>
   );
 }
