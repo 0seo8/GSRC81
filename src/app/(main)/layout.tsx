@@ -15,10 +15,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="min-h-screen bg-transparent">
       {/* 공통 헤더 - AppHeader + 우측 메뉴 버튼 */}
-      <AppHeader
-        background="transparent"
-        rightElement={<MenuButton />}
-      />
+      <AppHeader background="transparent" rightElement={<MenuButton />} />
 
       {/* 메인 콘텐츠 */}
       <main className="relative">{children}</main>

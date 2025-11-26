@@ -64,7 +64,7 @@ export function useGeolocation({
         setIsLoading(false);
         onError?.(err);
       },
-      GEOLOCATION_OPTIONS
+      GEOLOCATION_OPTIONS,
     );
   }, [map, onError, onSuccess]);
 

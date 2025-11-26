@@ -10,9 +10,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SafeAreaProvider>
       <SessionProvider>
         <GlobalSplash>
-          <AdminProvider>
-            {children}
-          </AdminProvider>
+          <AdminProvider>{children}</AdminProvider>
         </GlobalSplash>
       </SessionProvider>
     </SafeAreaProvider>

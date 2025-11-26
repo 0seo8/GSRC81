@@ -34,7 +34,9 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL("/map", req.url));
       } else {
         // 미인증 → /verify로
-        return NextResponse.redirect(new URL(`/verify?uid=${kakaoId}`, req.url));
+        return NextResponse.redirect(
+          new URL(`/verify?uid=${kakaoId}`, req.url),
+        );
       }
     }
     // 로그인 안 됨 → /login 페이지 표시

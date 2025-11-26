@@ -63,7 +63,7 @@ export function CourseCardStack({
         hasOverflow ? "overflow-y-auto" : "overflow-hidden"
       } min-h-0`}
     >
-      <div 
+      <div
         className="relative w-full"
         style={{
           height: `${calculateStackHeight()}px`, // 동적 높이 계산

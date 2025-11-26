@@ -48,9 +48,13 @@ const MapboxMapComponent = function MapboxMap({
     map.current.on("load", () => {
       // 지도 배경색 설정
       if (map.current) {
-        map.current.setPaintProperty('background', 'background-color', '#D9D7D4');
+        map.current.setPaintProperty(
+          "background",
+          "background-color",
+          "#D9D7D4",
+        );
       }
-      
+
       // 지도 크기 재조정 (약간의 지연을 두고)
       setTimeout(() => {
         if (map.current) {
@@ -173,7 +177,10 @@ const MapboxMapComponent = function MapboxMap({
 
       {/* 로딩 오버레이 */}
       {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: '#D9D7D4' }}>
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ backgroundColor: "#D9D7D4" }}
+        >
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-2"></div>
             <p className="text-sm text-gray-600">지도 로딩 중...</p>

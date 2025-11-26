@@ -150,7 +150,13 @@ export function CourseDrawer({
 
             <CourseCardStack
               courses={currentCategory?.courses || courses}
-              cardColors={["#FCFC60", "#78A893", "#D04836", "#F5F5F0", "#8F806E"]}
+              cardColors={[
+                "#FCFC60",
+                "#78A893",
+                "#D04836",
+                "#F5F5F0",
+                "#8F806E",
+              ]}
               isDragging={isDragging}
               onCourseClick={onCourseClick}
             />

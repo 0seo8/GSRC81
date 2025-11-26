@@ -84,7 +84,7 @@ export function CommentAddModal({
               <p className="text-sm text-gray-600 mb-4">
                 이 위치에 대한 코멘트를 남겨주세요.
               </p>
-              
+
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
@@ -93,7 +93,7 @@ export function CommentAddModal({
                 maxLength={200}
                 autoFocus
               />
-              
+
               <div className="flex justify-between items-center mt-2">
                 <span className="text-xs text-gray-400">
                   {comment.length}/200

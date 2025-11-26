@@ -1,9 +1,11 @@
 # Admin Courses Page (`/admin/courses`)
 
 ## Overview
+
 Course management interface for admins to upload, edit, and delete running courses via GPX files.
 
 ## Location
+
 - **Path**: `/admin/courses`
 - **File**: `src/app/admin/courses/page.tsx`
 - **Type**: Client Component
@@ -11,6 +13,7 @@ Course management interface for admins to upload, edit, and delete running cours
 ## Functionality
 
 ### Main Features
+
 1. **GPX Upload Form**
    - File upload with drag-and-drop
    - Course metadata input (title, description, difficulty)
@@ -32,14 +35,16 @@ Course management interface for admins to upload, edit, and delete running cours
 ## Data Flow
 
 ### State Management
+
 ```typescript
-const [courses, setCourses] = useState<CourseV2[]>([])
-const [loading, setLoading] = useState(true)
-const [submitting, setSubmitting] = useState(false)
-const [isGPXFormExpanded, setIsGPXFormExpanded] = useState(false)
+const [courses, setCourses] = useState<CourseV2[]>([]);
+const [loading, setLoading] = useState(true);
+const [submitting, setSubmitting] = useState(false);
+const [isGPXFormExpanded, setIsGPXFormExpanded] = useState(false);
 ```
 
 ### GPX Upload Flow
+
 ```mermaid
 graph TD
     A[User selects GPX file] --> B[GPXUploadForm parses file]
@@ -53,31 +58,32 @@ graph TD
 ```
 
 ### GPX Data Processing
+
 ```typescript
 async function handleGPXSubmit(formData: FormData, gpxData: unknown) {
   // 1. Extract GPX data
   const gpx = gpxData as {
-    name: string
-    distance: number
-    startPoint: { lat: number; lng: number }
-    endPoint: { lat: number; lng: number }
-    duration: number
-    elevationGain: number
-    coordinates: Array<{ lat: number; lng: number; ele?: number }>
-  }
+    name: string;
+    distance: number;
+    startPoint: { lat: number; lng: number };
+    endPoint: { lat: number; lng: number };
+    duration: number;
+    elevationGain: number;
+    coordinates: Array<{ lat: number; lng: number; ele?: number }>;
+  };
 
   // 2. Validate required fields
   if (!startPoint || !coordinates.length || !distance) {
-    throw new Error("Invalid GPX data")
+    throw new Error("Invalid GPX data");
   }
 
   // 3. Calculate bounds
   const bounds = {
-    minLat: Math.min(...coordinates.map(c => c.lat)),
-    maxLat: Math.max(...coordinates.map(c => c.lat)),
-    minLng: Math.min(...coordinates.map(c => c.lng)),
-    maxLng: Math.max(...coordinates.map(c => c.lng)),
-  }
+    minLat: Math.min(...coordinates.map((c) => c.lat)),
+    maxLat: Math.max(...coordinates.map((c) => c.lat)),
+    minLng: Math.min(...coordinates.map((c) => c.lng)),
+    maxLng: Math.max(...coordinates.map((c) => c.lng)),
+  };
 
   // 4. Create normalized GPX data
   const normalizedGpxData: UnifiedGPXData = {
@@ -93,26 +99,28 @@ async function handleGPXSubmit(formData: FormData, gpxData: unknown) {
       startPoint: { lat: startPoint.lat, lng: startPoint.lng },
       endPoint: { lat: endPoint.lat, lng: endPoint.lng },
     },
-  }
+  };
 
   // 5. Insert to database
-  await supabase.from("courses").insert([{
-    title: formData.get("title"),
-    description: formData.get("description"),
-    detail_description: formData.get("detail_description"),
-    start_latitude: startPoint.lat,
-    start_longitude: startPoint.lng,
-    distance_km: distance,
-    avg_time_min: duration,
-    difficulty: formData.get("difficulty"),
-    category_id: formData.get("category_id"),
-    tags: JSON.parse(formData.get("tags")),
-    cover_image_url: formData.get("cover_image_url"),
-    elevation_gain: elevationGain,
-    sort_order: 0,
-    gpx_data: normalizedGpxData,
-    is_active: true,
-  }])
+  await supabase.from("courses").insert([
+    {
+      title: formData.get("title"),
+      description: formData.get("description"),
+      detail_description: formData.get("detail_description"),
+      start_latitude: startPoint.lat,
+      start_longitude: startPoint.lng,
+      distance_km: distance,
+      avg_time_min: duration,
+      difficulty: formData.get("difficulty"),
+      category_id: formData.get("category_id"),
+      tags: JSON.parse(formData.get("tags")),
+      cover_image_url: formData.get("cover_image_url"),
+      elevation_gain: elevationGain,
+      sort_order: 0,
+      gpx_data: normalizedGpxData,
+      is_active: true,
+    },
+  ]);
 }
 ```
 
@@ -121,13 +129,16 @@ async function handleGPXSubmit(formData: FormData, gpxData: unknown) {
 ### Critical Issues
 
 1. **Type Safety Problems**
+
    ```typescript
    const gpx = gpxData as { ... }  // ❌ Unsafe type assertion
    ```
+
    - Should use Zod or similar for runtime validation
    - No guarantee gpxData matches expected structure
 
 2. **Error Handling is Poor**
+
    ```typescript
    catch (error) {
      const errorMessage = error instanceof Error
@@ -138,6 +149,7 @@ async function handleGPXSubmit(formData: FormData, gpxData: unknown) {
      alert(`코스 등록 중 오류가 발생했습니다: ${errorMessage}`);
    }
    ```
+
    - Using `alert()` for errors (bad UX)
    - Should use toast notifications or error boundaries
 
@@ -163,9 +175,10 @@ async function handleGPXSubmit(formData: FormData, gpxData: unknown) {
 ### Recommended Refactoring
 
 #### 1. Add Schema Validation (Zod)
+
 ```typescript
 // lib/validation/gpx-schema.ts
-import { z } from 'zod'
+import { z } from "zod";
 
 export const GPXDataSchema = z.object({
   name: z.string().min(1),
@@ -180,28 +193,31 @@ export const GPXDataSchema = z.object({
   }),
   duration: z.number().positive(),
   elevationGain: z.number().nonnegative(),
-  coordinates: z.array(
-    z.object({
-      lat: z.number(),
-      lng: z.number(),
-      ele: z.number().optional(),
-    })
-  ).min(2),
-})
+  coordinates: z
+    .array(
+      z.object({
+        lat: z.number(),
+        lng: z.number(),
+        ele: z.number().optional(),
+      }),
+    )
+    .min(2),
+});
 
-export type GPXData = z.infer<typeof GPXDataSchema>
+export type GPXData = z.infer<typeof GPXDataSchema>;
 
 // Usage in component
-const validatedGPX = GPXDataSchema.parse(gpxData)
+const validatedGPX = GPXDataSchema.parse(gpxData);
 ```
 
 #### 2. Extract GPX Processing Logic
+
 ```typescript
 // lib/gpx/process-gpx.ts
 export function processGPXData(gpxData: unknown): UnifiedGPXData {
-  const validated = GPXDataSchema.parse(gpxData)
+  const validated = GPXDataSchema.parse(gpxData);
 
-  const bounds = calculateBounds(validated.coordinates)
+  const bounds = calculateBounds(validated.coordinates);
 
   return {
     version: "1.1",
@@ -216,83 +232,88 @@ export function processGPXData(gpxData: unknown): UnifiedGPXData {
       startPoint: validated.startPoint,
       endPoint: validated.endPoint,
     },
-  }
+  };
 }
 
 function calculateBounds(coordinates: Coordinate[]): Bounds {
   return {
-    minLat: Math.min(...coordinates.map(c => c.lat)),
-    maxLat: Math.max(...coordinates.map(c => c.lat)),
-    minLng: Math.min(...coordinates.map(c => c.lng)),
-    maxLng: Math.max(...coordinates.map(c => c.lng)),
-  }
+    minLat: Math.min(...coordinates.map((c) => c.lat)),
+    maxLat: Math.max(...coordinates.map((c) => c.lat)),
+    minLng: Math.min(...coordinates.map((c) => c.lng)),
+    maxLng: Math.max(...coordinates.map((c) => c.lng)),
+  };
 }
 ```
 
 #### 3. Use Server Actions (Next.js 15)
+
 ```typescript
 // app/admin/courses/actions.ts
-'use server'
+"use server";
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath } from "next/cache";
 
 export async function createCourse(formData: FormData, gpxData: GPXData) {
   // Validate on server
-  const validated = GPXDataSchema.parse(gpxData)
-  const processedGPX = processGPXData(validated)
+  const validated = GPXDataSchema.parse(gpxData);
+  const processedGPX = processGPXData(validated);
 
   // Insert to database
-  const { error } = await supabase.from("courses").insert([{
-    ...extractFormData(formData),
-    gpx_data: processedGPX,
-    is_active: true,
-  }])
+  const { error } = await supabase.from("courses").insert([
+    {
+      ...extractFormData(formData),
+      gpx_data: processedGPX,
+      is_active: true,
+    },
+  ]);
 
-  if (error) throw error
+  if (error) throw error;
 
   // Revalidate courses page
-  revalidatePath('/admin/courses')
-  revalidatePath('/map')
+  revalidatePath("/admin/courses");
+  revalidatePath("/map");
 
-  return { success: true }
+  return { success: true };
 }
 
 // In component
-import { createCourse } from './actions'
+import { createCourse } from "./actions";
 
 async function handleSubmit(formData: FormData, gpxData: unknown) {
   try {
-    await createCourse(formData, gpxData)
-    toast.success("코스가 등록되었습니다")
+    await createCourse(formData, gpxData);
+    toast.success("코스가 등록되었습니다");
   } catch (error) {
-    toast.error("등록 실패: " + error.message)
+    toast.error("등록 실패: " + error.message);
   }
 }
 ```
 
 #### 4. Better Error UI
+
 ```typescript
 // Instead of alert()
-import { toast } from 'sonner'
+import { toast } from "sonner";
 
 try {
-  await createCourse(formData, gpxData)
-  toast.success("✅ 코스가 성공적으로 등록되었습니다")
-  setIsGPXFormExpanded(false)
+  await createCourse(formData, gpxData);
+  toast.success("✅ 코스가 성공적으로 등록되었습니다");
+  setIsGPXFormExpanded(false);
 } catch (error) {
   if (error instanceof z.ZodError) {
     toast.error("입력 데이터 오류", {
-      description: error.errors.map(e => e.message).join(", ")
-    })
+      description: error.errors.map((e) => e.message).join(", "),
+    });
   } else {
     toast.error("등록 실패", {
-      description: error.message
-    })
+      description: error.message,
+    });
   }
 }
 ```
 
 #### 5. Add Upload Progress
+
 ```typescript
 // GPXUploadForm with progress
 const [uploadProgress, setUploadProgress] = useState(0)
@@ -318,6 +339,7 @@ const [uploadProgress, setUploadProgress] = useState(0)
 ```
 
 #### 6. Hybrid Server/Client Pattern
+
 ```typescript
 // app/admin/courses/page.tsx (Server Component)
 export default async function CoursesPage() {
@@ -345,6 +367,7 @@ export function GPXUploadSection() {
 ## Course Card Component
 
 ### Current Implementation
+
 ```typescript
 <Card key={course.id} className="shadow-xl border-0 py-6 gap-2">
   <CardHeader>...</CardHeader>
@@ -377,6 +400,7 @@ export function GPXUploadSection() {
 ```
 
 ### Improved Version
+
 ```typescript
 // components/admin/CourseCard.tsx
 interface CourseCardProps {
@@ -421,15 +445,18 @@ export function CourseCard({ course, onDelete }: CourseCardProps) {
 ## Responsive Design
 
 ### Current Approach
+
 - Separate mobile/desktop layouts for form
 - Accordion on mobile, always visible on desktop
 
 ### Issues
+
 - Code duplication
 - Hard to maintain
 - Inconsistent behavior
 
 ### Better Approach
+
 ```typescript
 // Single responsive component
 <div className="mb-8">
@@ -486,6 +513,7 @@ export function CourseCard({ course, onDelete }: CourseCardProps) {
    - But be careful with HTML rendering
 
 ## Dependencies
+
 - `@/types/unified` - Type definitions
 - `@/components/admin/GPX-upload-form` - Upload form
 - `@/lib/supabase` - Database client
@@ -493,6 +521,7 @@ export function CourseCard({ course, onDelete }: CourseCardProps) {
 - Icons (lucide-react)
 
 ## Database Operations
+
 - SELECT all courses (including inactive)
 - INSERT new course
 - DELETE course by ID

@@ -12,7 +12,7 @@ interface NumberMarkerProps {
 export function NumberMarker({
   number,
   size = 25,
-  color = "#78A893"
+  color = "#78A893",
 }: NumberMarkerProps) {
   const height = (size * 31) / 25; // 원본 비율 유지 (25:31)
 

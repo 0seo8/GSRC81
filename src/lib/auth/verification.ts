@@ -21,9 +21,7 @@ export interface VerificationResult {
  * @param kakaoUserId - 카카오 사용자 ID
  * @returns 검증 여부
  */
-export async function isUserVerified(
-  kakaoUserId: string,
-): Promise<boolean> {
+export async function isUserVerified(kakaoUserId: string): Promise<boolean> {
   if (!kakaoUserId) return false;
 
   const { data, error } = await supabase

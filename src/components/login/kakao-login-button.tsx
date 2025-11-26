@@ -22,7 +22,12 @@ export function KakaoLoginButton() {
   };
 
   return (
-    <FigmaButton variant="default" size={null} onClick={handleKakaoLogin} className="w-full">
+    <FigmaButton
+      variant="default"
+      size={null}
+      onClick={handleKakaoLogin}
+      className="w-full"
+    >
       {LOGIN_CONFIG.TEXT.LOGIN_BUTTON}
     </FigmaButton>
   );

@@ -19,9 +19,7 @@ const ALL_CATEGORY: CourseCategory = {
  * @param categories - 원본 카테고리 목록
  * @returns "전체" 카테고리가 포함된 카테고리 목록
  */
-export function addAllCategory(
-  categories: CourseCategory[]
-): CourseCategory[] {
+export function addAllCategory(categories: CourseCategory[]): CourseCategory[] {
   return [ALL_CATEGORY, ...categories];
 }
 
@@ -30,7 +28,7 @@ export function addAllCategory(
  */
 export function findCategoryByKey(
   categories: CourseCategory[],
-  key: string
+  key: string,
 ): CourseCategory | undefined {
   return categories.find((cat) => cat.key === key);
 }

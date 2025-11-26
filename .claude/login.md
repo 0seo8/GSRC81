@@ -102,7 +102,7 @@ export async function GET(req: Request) {
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 
   // 3️⃣ access_links에서 기존 유저 확인
@@ -115,7 +115,7 @@ export async function GET(req: Request) {
   if (!existingUser) {
     // 최초 로그인 → 접근 코드 입력 페이지로 리다이렉트
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/verify?uid=${id}`
+      `${process.env.NEXT_PUBLIC_SITE_URL}/verify?uid=${id}`,
     );
   }
 

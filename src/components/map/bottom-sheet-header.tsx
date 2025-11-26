@@ -7,7 +7,7 @@ interface BottomSheetHeaderProps {
   isAllCategory: boolean;
   onHeaderDrag: (
     event: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo
+    info: PanInfo,
   ) => void;
 }
 

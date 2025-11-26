@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   },
   // Configure allowed image domains
   images: {
-    domains: ['iogbdjpvcxtdchmpicma.supabase.co'],
+    domains: ["iogbdjpvcxtdchmpicma.supabase.co"],
   },
 };
 

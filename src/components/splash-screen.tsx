@@ -12,21 +12,16 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [showLogo, setShowLogo] = useState(false);
 
-  const textLines = [
-    "RUN",
-    "OUR ROUTE,", 
-    "MAKE",
-    "YOUR STORY.",
-  ];
+  const textLines = ["RUN", "OUR ROUTE,", "MAKE", "YOUR STORY."];
 
   useEffect(() => {
     const timers = [
-      setTimeout(() => setCurrentStep(1), 600),       // RUN
-      setTimeout(() => setCurrentStep(2), 1200),      // OUR ROUTE,
-      setTimeout(() => setCurrentStep(3), 1800),      // MAKE
-      setTimeout(() => setCurrentStep(4), 2400),      // YOUR STORY.
-      setTimeout(() => setShowLogo(true), 3200),      // 로고 표시
-      setTimeout(() => onComplete(), 4500),           // 로그인으로 전환
+      setTimeout(() => setCurrentStep(1), 600), // RUN
+      setTimeout(() => setCurrentStep(2), 1200), // OUR ROUTE,
+      setTimeout(() => setCurrentStep(3), 1800), // MAKE
+      setTimeout(() => setCurrentStep(4), 2400), // YOUR STORY.
+      setTimeout(() => setShowLogo(true), 3200), // 로고 표시
+      setTimeout(() => onComplete(), 4500), // 로그인으로 전환
     ];
 
     return () => timers.forEach(clearTimeout);
@@ -49,7 +44,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               exit={{
                 opacity: 0,
                 y: -100,
-                transition: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }
+                transition: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] },
               }}
             >
               <div className="text-landing-slogan text-black leading-tight space-y-2">
@@ -59,12 +54,12 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{
                       opacity: index <= currentStep ? 1 : 0,
-                      y: index <= currentStep ? 0 : 30
+                      y: index <= currentStep ? 0 : 30,
                     }}
                     transition={{
                       duration: 0.8,
                       ease: [0.25, 0.1, 0.25, 1],
-                      delay: index === currentStep ? 0 : 0
+                      delay: index === currentStep ? 0 : 0,
                     }}
                     className="overflow-hidden"
                   >
@@ -85,7 +80,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{
                 duration: 0.6,
-                ease: [0.25, 0.1, 0.25, 1]
+                ease: [0.25, 0.1, 0.25, 1],
               }}
             >
               <div className="text-center">

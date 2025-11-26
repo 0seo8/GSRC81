@@ -16,7 +16,14 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, MapPin, MessageSquare, Trash2, AlertCircle, Camera } from "lucide-react";
+import {
+  Save,
+  MapPin,
+  MessageSquare,
+  Trash2,
+  AlertCircle,
+  Camera,
+} from "lucide-react";
 import Link from "next/link";
 import { type CoursePhoto } from "@/lib/course-photos";
 import ImageUploader from "@/components/common/ImageUploader";
@@ -122,7 +129,9 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
           .select("*")
           .eq("course_id", courseId)
           .order("created_at", { ascending: false }),
-        fetch(`/api/course-photos?course_id=${courseId}`).then(res => res.json()),
+        fetch(`/api/course-photos?course_id=${courseId}`).then((res) =>
+          res.json(),
+        ),
       ]);
 
       if (courseResult.error) throw courseResult.error;
@@ -131,12 +140,12 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
       const courseData = courseResult.data;
       setCourse(courseData);
       setComments(commentsResult.data || []);
-      
+
       // 사진 데이터 처리 (API 오류 시 빈 배열)
       if (Array.isArray(photosResult)) {
         setPhotos(photosResult);
       } else {
-        console.warn('Photo loading failed:', photosResult);
+        console.warn("Photo loading failed:", photosResult);
         setPhotos([]);
       }
 
@@ -274,15 +283,15 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
   // 사진 업로드 핸들러
   const handlePhotoUpload = async (url: string) => {
     if (!courseId) return;
-    
+
     try {
       setUploadingPhoto(true);
-      
+
       // API를 통해 데이터베이스에 사진 레코드 생성
-      const response = await fetch('/api/course-photos', {
-        method: 'POST',
+      const response = await fetch("/api/course-photos", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           course_id: courseId,
@@ -293,18 +302,20 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || '사진 저장에 실패했습니다.');
+        throw new Error(errorData.error || "사진 저장에 실패했습니다.");
       }
 
       const newPhoto = await response.json();
-      
+
       // 사진 목록에 추가
-      setPhotos(prev => [newPhoto, ...prev]);
-      
+      setPhotos((prev) => [newPhoto, ...prev]);
+
       alert("사진이 성공적으로 업로드되었습니다.");
     } catch (error) {
       console.error("사진 업로드 실패:", error);
-      alert(`사진 업로드 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+      alert(
+        `사진 업로드 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
+      );
     } finally {
       setUploadingPhoto(false);
     }
@@ -313,25 +324,27 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
   // 사진 삭제 핸들러
   const handleDeletePhoto = async (photoId: string) => {
     if (!confirm("이 사진을 삭제하시겠습니까?")) return;
-    
+
     try {
       // API를 통해 데이터베이스에서 사진 삭제
       const response = await fetch(`/api/course-photos?photo_id=${photoId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || '사진 삭제에 실패했습니다.');
+        throw new Error(errorData.error || "사진 삭제에 실패했습니다.");
       }
-      
+
       // 사진 목록에서 삭제된 항목 제거
-      setPhotos(prev => prev.filter(photo => photo.id !== photoId));
-      
+      setPhotos((prev) => prev.filter((photo) => photo.id !== photoId));
+
       alert("사진이 삭제되었습니다.");
     } catch (error) {
       console.error("사진 삭제 실패:", error);
-      alert(`사진 삭제 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+      alert(
+        `사진 삭제 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
+      );
     }
   };
 
@@ -768,20 +781,26 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                 <CardContent className="space-y-6">
                   {/* 사진 업로드 */}
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">새 사진 업로드</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      새 사진 업로드
+                    </h3>
                     <ImageUploader
                       onUpload={handlePhotoUpload}
                       bucket="course-photos"
                       currentUrl=""
                     />
                     {uploadingPhoto && (
-                      <p className="text-sm text-gray-500 mt-2">사진을 업로드하는 중...</p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        사진을 업로드하는 중...
+                      </p>
                     )}
                   </div>
 
                   {/* 사진 목록 */}
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">등록된 사진</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      등록된 사진
+                    </h3>
                     {photos.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {photos.map((photo) => (
@@ -804,7 +823,9 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                               </Button>
                             </div>
                             {photo.caption && (
-                              <p className="text-sm text-gray-600 mt-2">{photo.caption}</p>
+                              <p className="text-sm text-gray-600 mt-2">
+                                {photo.caption}
+                              </p>
                             )}
                             <p className="text-xs text-gray-400">
                               {new Date(photo.created_at).toLocaleDateString()}

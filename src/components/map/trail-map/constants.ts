@@ -1,7 +1,7 @@
 export const FLIGHT_CONFIG = {
   // 거리 기반 비행 속도 (km/h) - 일정한 속도 유지
   FLIGHT_SPEED_KMH: 2.5, // 시속 2.5km
-  
+
   // 최소/최대 총 애니메이션 시간 (ms)
   MIN_TOTAL_DURATION: 15000, // 15초 (짧은 코스용)
   MAX_TOTAL_DURATION: 90000, // 90초 (긴 코스용)

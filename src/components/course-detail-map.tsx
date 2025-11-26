@@ -564,34 +564,35 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
         )}
 
         {/* 댓글 말풍선 마커들 - 비행모드일 때만 표시 */}
-        {isAnimating && flightComments
-          .filter((comment) => comment.latitude && comment.longitude)
-          .map((comment) => (
-            <Marker
-              key={comment.id}
-              longitude={comment.longitude!}
-              latitude={comment.latitude!}
-              anchor="bottom"
-            >
-              <motion.div
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-                className="relative max-w-xs"
+        {isAnimating &&
+          flightComments
+            .filter((comment) => comment.latitude && comment.longitude)
+            .map((comment) => (
+              <Marker
+                key={comment.id}
+                longitude={comment.longitude!}
+                latitude={comment.latitude!}
+                anchor="bottom"
               >
-                {/* 말풍선 */}
-                <div className="bg-black text-white rounded-lg shadow-lg p-3 relative max-w-[200px]">
-                  {/* 말풍선 꼬리 */}
-                  <div className="absolute bottom-0 left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-black transform translate-y-full"></div>
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                  className="relative max-w-xs"
+                >
+                  {/* 말풍선 */}
+                  <div className="bg-black text-white rounded-lg shadow-lg p-3 relative max-w-[200px]">
+                    {/* 말풍선 꼬리 */}
+                    <div className="absolute bottom-0 left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-black transform translate-y-full"></div>
 
-                  {/* 댓글 내용만 표시 */}
-                  <p className="text-white leading-relaxed font-inter text-[0.625rem]">
-                    {comment.message}
-                  </p>
-                </div>
-              </motion.div>
-            </Marker>
-          ))}
+                    {/* 댓글 내용만 표시 */}
+                    <p className="text-white leading-relaxed font-inter text-[0.625rem]">
+                      {comment.message}
+                    </p>
+                  </div>
+                </motion.div>
+              </Marker>
+            ))}
       </Map>
 
       {/* 댓글 입력 모달 */}

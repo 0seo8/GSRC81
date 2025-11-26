@@ -17,10 +17,7 @@ export function splitTitleAtMidpoint(title: string): [string, string] {
 
   const midIndex = Math.ceil(words.length / 2);
 
-  return [
-    words.slice(0, midIndex).join(" "),
-    words.slice(midIndex).join(" "),
-  ];
+  return [words.slice(0, midIndex).join(" "), words.slice(midIndex).join(" ")];
 }
 
 /**

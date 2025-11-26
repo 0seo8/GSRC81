@@ -74,83 +74,83 @@ export default async function CourseDetailPage({
 
   return (
     <div className={`min-h-screen bg-page-bg ${notoSans.className}`}>
-        {/* 상단 지도 영역 - 헤더 공간 확보 */}
-        <div className="w-full h-map-height pt-14 p-2.5">
-          <CourseDetailMapWrapper courseId={courseId} />
-        </div>
+      {/* 상단 지도 영역 - 헤더 공간 확보 */}
+      <div className="w-full h-map-height pt-14 p-2.5">
+        <CourseDetailMapWrapper courseId={courseId} />
+      </div>
 
-        {/* 하단 컨텐츠 */}
-        <div
-          className="flex-1 bg-page-bg"
-          style={{ minHeight: "calc(100vh - 393px)" }}
-        >
-          <div className="overflow-y-auto h-full">
-            <div className="max-w-2xl mx-auto px-[0.625rem] py-5">
-              {/* 코스 정보 섹션 */}
-              <div>
-                <div className="mb-6 flex justify-between items-end">
-                  <h1 className="text-course-detail-title text-black flex-1">
-                    <div>{firstLine}</div>
-                    {secondLine && <div>{secondLine}</div>}
-                  </h1>
-                  <div className="text-right ml-4">
-                    <div className="text-xs font-medium text-black">BY</div>
-                    <div className="text-xs font-medium text-black">GSRC81</div>
-                  </div>
-                </div>
-
-                {/* 통계 정보 */}
-                <CourseStats
-                  distance={course.distance_km}
-                  time={course.avg_time_min || 30}
-                  elevation={course.elevation_gain || 32}
-                  difficulty={course.difficulty}
-                />
-
-                {/* 코스 설명 */}
-                <div className="space-y-2 px-2">
-                  <div className="text-course-detail-description text-black pt-5 pb-6">
-                    {course.detail_description ||
-                      "진관천을 한 바퀴 왕복해 도는 코스입니다. 정기런 때 뛰는 코스이기도 해요! 접근하기 좋아 자주 벙이 열리는 장소입니다. 모두 같이 즐겁게 달려봐요!"}
-                  </div>
+      {/* 하단 컨텐츠 */}
+      <div
+        className="flex-1 bg-page-bg"
+        style={{ minHeight: "calc(100vh - 393px)" }}
+      >
+        <div className="overflow-y-auto h-full">
+          <div className="max-w-2xl mx-auto px-[0.625rem] py-5">
+            {/* 코스 정보 섹션 */}
+            <div>
+              <div className="mb-6 flex justify-between items-end">
+                <h1 className="text-course-detail-title text-black flex-1">
+                  <div>{firstLine}</div>
+                  {secondLine && <div>{secondLine}</div>}
+                </h1>
+                <div className="text-right ml-4">
+                  <div className="text-xs font-medium text-black">BY</div>
+                  <div className="text-xs font-medium text-black">GSRC81</div>
                 </div>
               </div>
 
-              {/* 댓글 섹션 */}
-              <div className="border-t border-black py-6">
-                <CourseCommentsList comments={comments} loading={false} />
-              </div>
+              {/* 통계 정보 */}
+              <CourseStats
+                distance={course.distance_km}
+                time={course.avg_time_min || 30}
+                elevation={course.elevation_gain || 32}
+                difficulty={course.difficulty}
+              />
 
-              {/* 코스 사진 갤러리 */}
-              {photos.length > 0 && (
-                <div className="border-t border-b border-black py-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {photos.map((photo, index) => (
-                      <div key={photo.id} className="bg-white overflow-hidden">
-                        <Image
-                          src={photo.file_url}
-                          alt={photo.caption || "코스 사진"}
-                          width={400}
-                          height={400}
-                          className="w-full aspect-square object-cover"
-                          loading={index < 3 ? "eager" : "lazy"}
-                          priority={index < 3}
-                        />
-                        {photo.caption && (
-                          <div className="p-3">
-                            <p className="text-sm text-gray-600">
-                              {photo.caption}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+              {/* 코스 설명 */}
+              <div className="space-y-2 px-2">
+                <div className="text-course-detail-description text-black pt-5 pb-6">
+                  {course.detail_description ||
+                    "진관천을 한 바퀴 왕복해 도는 코스입니다. 정기런 때 뛰는 코스이기도 해요! 접근하기 좋아 자주 벙이 열리는 장소입니다. 모두 같이 즐겁게 달려봐요!"}
                 </div>
-              )}
+              </div>
             </div>
+
+            {/* 댓글 섹션 */}
+            <div className="border-t border-black py-6">
+              <CourseCommentsList comments={comments} loading={false} />
+            </div>
+
+            {/* 코스 사진 갤러리 */}
+            {photos.length > 0 && (
+              <div className="border-t border-b border-black py-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {photos.map((photo, index) => (
+                    <div key={photo.id} className="bg-white overflow-hidden">
+                      <Image
+                        src={photo.file_url}
+                        alt={photo.caption || "코스 사진"}
+                        width={400}
+                        height={400}
+                        className="w-full aspect-square object-cover"
+                        loading={index < 3 ? "eager" : "lazy"}
+                        priority={index < 3}
+                      />
+                      {photo.caption && (
+                        <div className="p-3">
+                          <p className="text-sm text-gray-600">
+                            {photo.caption}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
+      </div>
     </div>
   );
 }

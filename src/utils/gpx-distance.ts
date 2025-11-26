@@ -15,7 +15,7 @@ interface GPXPoint {
 export function isWithinGPXRange(
   clickPoint: [number, number], // [longitude, latitude]
   gpxPoints: GPXPoint[],
-  maxDistanceMeters: number = 50
+  maxDistanceMeters: number = 50,
 ): boolean {
   if (gpxPoints.length < 2) {
     return false;
@@ -23,18 +23,16 @@ export function isWithinGPXRange(
 
   try {
     // GPX 포인트들을 GeoJSON LineString으로 변환
-    const lineCoordinates = gpxPoints.map(point => [point.lng, point.lat]);
+    const lineCoordinates = gpxPoints.map((point) => [point.lng, point.lat]);
     const lineString = turf.lineString(lineCoordinates);
 
     // 클릭 지점을 GeoJSON Point로 변환
     const clickPointGeoJSON = turf.point(clickPoint);
 
     // 클릭 지점에서 노선까지의 최단 거리 계산
-    const distance = turf.pointToLineDistance(
-      clickPointGeoJSON,
-      lineString,
-      { units: "meters" }
-    );
+    const distance = turf.pointToLineDistance(clickPointGeoJSON, lineString, {
+      units: "meters",
+    });
 
     return distance <= maxDistanceMeters;
   } catch (error) {
@@ -51,7 +49,7 @@ export function isWithinGPXRange(
  */
 export function findNearestPointOnGPX(
   clickPoint: [number, number],
-  gpxPoints: GPXPoint[]
+  gpxPoints: GPXPoint[],
 ): {
   nearestPoint: [number, number];
   distance: number;
@@ -62,16 +60,21 @@ export function findNearestPointOnGPX(
   }
 
   try {
-    const lineCoordinates = gpxPoints.map(point => [point.lng, point.lat]);
+    const lineCoordinates = gpxPoints.map((point) => [point.lng, point.lat]);
     const lineString = turf.lineString(lineCoordinates);
     const clickPointGeoJSON = turf.point(clickPoint);
 
     // 노선 상의 가장 가까운 지점 찾기
-    const nearestPointOnLine = turf.nearestPointOnLine(lineString, clickPointGeoJSON);
-    
+    const nearestPointOnLine = turf.nearestPointOnLine(
+      lineString,
+      clickPointGeoJSON,
+    );
+
     return {
       nearestPoint: nearestPointOnLine.geometry.coordinates as [number, number],
-      distance: turf.distance(clickPointGeoJSON, nearestPointOnLine, { units: "meters" }),
+      distance: turf.distance(clickPointGeoJSON, nearestPointOnLine, {
+        units: "meters",
+      }),
       routeIndex: nearestPointOnLine.properties.index || 0,
     };
   } catch (error) {

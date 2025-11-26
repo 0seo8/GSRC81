@@ -88,7 +88,6 @@ function VerifyContent() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 pt-16">
-
         {/* Verification Form */}
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">

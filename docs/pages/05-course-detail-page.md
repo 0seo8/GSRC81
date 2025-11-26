@@ -1,9 +1,11 @@
 # Course Detail Page (`/courses/[id]`)
 
 ## Overview
+
 Displays comprehensive information about a specific running course including map, statistics, comments, and photo gallery.
 
 ## Location
+
 - **Path**: `/courses/[id]`
 - **File**: `src/app/(main)/courses/[id]/page.tsx`
 - **Type**: Server Component (Next.js 15 pattern)
@@ -11,6 +13,7 @@ Displays comprehensive information about a specific running course including map
 ## Functionality
 
 ### Main Features
+
 1. **Course Information Display**
    - Title and description
    - Distance, time, elevation, difficulty
@@ -34,22 +37,24 @@ Displays comprehensive information about a specific running course including map
 ## Architecture (Excellent Next.js 15 Pattern!)
 
 ### Server Component Data Fetching
+
 ```typescript
 export default async function CourseDetailPage({ params }: Props) {
-  const { id: courseId } = await params  // ✅ Async params (Next.js 15)
+  const { id: courseId } = await params; // ✅ Async params (Next.js 15)
 
   // ✅ Parallel data fetching on server (direct Supabase queries)
   const [course, comments, photos] = await Promise.all([
     getCourseById(courseId),
     getCourseComments(courseId),
-    getCoursePhotos(courseId),  // Direct Supabase client call
-  ])
+    getCoursePhotos(courseId), // Direct Supabase client call
+  ]);
 
   // ... render with data
 }
 ```
 
 ### Key Strengths
+
 1. **Zero client-side waterfalls** - All data fetched in parallel on server
 2. **Automatic caching** - Next.js caches fetch results
 3. **SEO friendly** - Fully rendered HTML
@@ -58,6 +63,7 @@ export default async function CourseDetailPage({ params }: Props) {
 ## Data Flow
 
 ### Data Sources
+
 ```typescript
 1. getCourseById(id)
    - Source: Supabase courses table
@@ -74,6 +80,7 @@ export default async function CourseDetailPage({ params }: Props) {
 ```
 
 ### Error Handling
+
 ```typescript
 - Course not found → notFound() → 404 page
 - Comments fail → Empty array (graceful degradation)
@@ -83,6 +90,7 @@ export default async function CourseDetailPage({ params }: Props) {
 ## Component Structure
 
 ### Layout Sections
+
 ```
 CourseDetailPage
 ├── ProtectedRoute wrapper
@@ -104,6 +112,7 @@ CourseDetailPage
 ## UI Details
 
 ### Title Rendering (Complex Logic)
+
 ```typescript
 // Splits title at midpoint for 2-line display
 {course.title
@@ -125,6 +134,7 @@ CourseDetailPage
 
 **Issue**: Overly complex rendering logic for simple line break
 **Better approach**:
+
 ```typescript
 const [firstLine, secondLine] = splitAtMidpoint(course.title)
 <div>{firstLine}</div>
@@ -132,6 +142,7 @@ const [firstLine, secondLine] = splitAtMidpoint(course.title)
 ```
 
 ### Stats Grid
+
 ```typescript
 <div className="grid grid-cols-4 gap-4">
   <Stat label="거리" value={`${course.distance_km}km`} />
@@ -150,9 +161,11 @@ const [firstLine, secondLine] = splitAtMidpoint(course.title)
    - Should be extracted to utility function
 
 2. **Hard-coded API URL**
+
    ```typescript
-   fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL || ""}/api/course-photos?...`)
+   fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL || ""}/api/course-photos?...`);
    ```
+
    - Should use proper API client
    - Missing error handling for fetch
 
@@ -162,58 +175,65 @@ const [firstLine, secondLine] = splitAtMidpoint(course.title)
    - Should be consistent
 
 4. **Fallback Values in JSX**
+
    ```typescript
-   {course.detail_description || "진관천을 한 바퀴..."}
+   {
+     course.detail_description || "진관천을 한 바퀴...";
+   }
    ```
+
    - Hard-coded fallback should be in constants or database
 
 5. **Inline Styles**
+
    ```typescript
    style={{ backgroundColor: "#F5F5F5" }}
    ```
+
    - Should use Tailwind classes
 
 6. **Fixed Heights**
    ```typescript
-   className="w-full h-[24.5625rem]"
+   className = "w-full h-[24.5625rem]";
    ```
+
    - Magic numbers should be in design tokens
 
 ### Recommended Refactoring
 
 #### 1. Extract Helper Functions
+
 ```typescript
 // lib/utils/text.ts
 export function splitTitleAtMidpoint(title: string): [string, string] {
-  const words = title.split(" ")
-  const midIndex = Math.ceil(words.length / 2)
-  return [
-    words.slice(0, midIndex).join(" "),
-    words.slice(midIndex).join(" ")
-  ]
+  const words = title.split(" ");
+  const midIndex = Math.ceil(words.length / 2);
+  return [words.slice(0, midIndex).join(" "), words.slice(midIndex).join(" ")];
 }
 
 export function getDifficultyLabel(difficulty: string): string {
-  const labels = { easy: "쉬움", medium: "보통", hard: "어려움" }
-  return labels[difficulty] || "보통"
+  const labels = { easy: "쉬움", medium: "보통", hard: "어려움" };
+  return labels[difficulty] || "보통";
 }
 ```
 
 #### 2. Unified Data Fetching
+
 ```typescript
 // lib/api/course-detail.ts
 export async function getCourseDetail(id: string) {
   const [course, comments, photos] = await Promise.all([
     getCourseById(id),
     getCourseComments(id),
-    getCoursePhotos(id),  // ✅ Use helper instead of fetch
-  ])
+    getCoursePhotos(id), // ✅ Use helper instead of fetch
+  ]);
 
-  return { course, comments, photos }
+  return { course, comments, photos };
 }
 ```
 
 #### 3. Extract Stats Component
+
 ```typescript
 // components/course/CourseStats.tsx
 interface CourseStatsProps {
@@ -236,6 +256,7 @@ export function CourseStats({ distance, time, elevation, difficulty }: CourseSta
 ```
 
 #### 4. Use Design Tokens
+
 ```typescript
 // tailwind.config.ts
 theme: {
@@ -254,13 +275,14 @@ className="h-map-height bg-page-bg"
 ```
 
 #### 5. Add Metadata for SEO
+
 ```typescript
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params
-  const course = await getCourseById(id)
+  const { id } = await params;
+  const course = await getCourseById(id);
 
   if (!course) {
-    return { title: 'Course Not Found' }
+    return { title: "Course Not Found" };
   }
 
   return {
@@ -270,12 +292,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: course.title,
       description: course.description,
       images: course.cover_image_url ? [course.cover_image_url] : [],
-    }
-  }
+    },
+  };
 }
 ```
 
 #### 6. Streaming with Suspense
+
 ```typescript
 export default async function CourseDetailPage({ params }: Props) {
   const { id } = await params
@@ -306,11 +329,13 @@ export default async function CourseDetailPage({ params }: Props) {
 ## Performance Considerations
 
 ### ✅ Strengths
+
 - Server-side rendering for instant content
 - Parallel data fetching
 - Image optimization via Next.js Image
 
 ### ⚠️ Areas for Improvement
+
 1. **Map loading blocks paint**
    - Consider loading map lazily
    - Show skeleton while map initializes
@@ -344,6 +369,7 @@ app/(main)/courses/[id]/
 ```
 
 ## Dependencies
+
 - `next/navigation` - notFound
 - `next/font/google` - Noto Sans
 - `next/image` - Image optimization
@@ -351,9 +377,11 @@ app/(main)/courses/[id]/
 - Custom components (ProtectedRoute, CourseDetailMapWrapper, CourseCommentsList)
 
 ## Environment Variables
+
 - `NEXT_PUBLIC_SUPABASE_URL` (for photos API)
 
 ## Database Tables Used
+
 - `courses` - Course data
 - `course_comments` - Comments with geolocation
 - `course_photos` - User-uploaded photos
@@ -361,6 +389,7 @@ app/(main)/courses/[id]/
 ## Next.js 15 Features Utilized
 
 ### ✅ Currently Using
+
 - **Async Server Components**
 - **Async params** (Next.js 15 requirement)
 - **Parallel data fetching**
@@ -368,6 +397,7 @@ app/(main)/courses/[id]/
 - **Server Component by default**
 
 ### 🆕 Could Add
+
 - **generateMetadata** for dynamic SEO
 - **Streaming** with Suspense boundaries
 - **Server Actions** for comment submission
@@ -376,16 +406,19 @@ app/(main)/courses/[id]/
 ## Testing Recommendations
 
 ### Unit Tests
+
 - Title splitting logic
 - Difficulty label mapping
 - Stats formatting
 
 ### Integration Tests
+
 - Course data fetching
 - 404 handling
 - Comment rendering
 
 ### E2E Tests
+
 - Full page load
 - Map interaction
 - Photo gallery navigation

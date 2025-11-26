@@ -51,10 +51,7 @@ export function OptimizedMapClient({
   const [isAtCurrentLocation, setIsAtCurrentLocation] = useState(false);
 
   // 전체 카테고리 추가 (메모이제이션)
-  const allCategories = useMemo(
-    () => addAllCategory(categories),
-    [categories]
-  );
+  const allCategories = useMemo(() => addAllCategory(categories), [categories]);
 
   // 현재 카테고리의 코스만 필터링
   const displayCourses = useMemo(() => {
@@ -62,7 +59,7 @@ export function OptimizedMapClient({
       return courses;
     }
     return courses.filter(
-      (course) => (course.category_key || "jingwan") === currentCategory
+      (course) => (course.category_key || "jingwan") === currentCategory,
     );
   }, [courses, currentCategory]);
 
@@ -117,7 +114,7 @@ export function OptimizedMapClient({
       mapHandleCourseClick(course);
       setIsFullscreenOpen(true);
     },
-    [mapHandleCourseClick]
+    [mapHandleCourseClick],
   );
 
   // 클러스터 클릭: 클러스터 내 코스들만 바텀시트에 표시
@@ -126,7 +123,7 @@ export function OptimizedMapClient({
       mapHandleClusterClick(coursesInCluster);
       setIsFullscreenOpen(true);
     },
-    [mapHandleClusterClick]
+    [mapHandleClusterClick],
   );
 
   // 코스 상세 페이지 이동
@@ -136,7 +133,7 @@ export function OptimizedMapClient({
       setIsFullscreenOpen(false);
       handleCloseDrawer();
     },
-    [router, handleCloseDrawer]
+    [router, handleCloseDrawer],
   );
 
   // 카테고리 변경 (바텀시트에서 호출)
@@ -183,7 +180,9 @@ export function OptimizedMapClient({
         <button
           onClick={handleLocationToggle}
           className="absolute top-16 right-4 z-20 bg-white rounded-lg shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-          aria-label={isAtCurrentLocation ? "초기 위치로 이동" : "현재 위치로 이동"}
+          aria-label={
+            isAtCurrentLocation ? "초기 위치로 이동" : "현재 위치로 이동"
+          }
         >
           <Image
             src="/flaticon_icon.png"

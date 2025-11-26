@@ -19,9 +19,11 @@ export function useLongPress({ onLongPress, delay = 800 }: UseLongPressProps) {
   const start = useCallback(
     (event: React.TouchEvent | React.MouseEvent) => {
       // 시작 위치 저장
-      const clientX = "touches" in event ? event.touches[0].clientX : event.clientX;
-      const clientY = "touches" in event ? event.touches[0].clientY : event.clientY;
-      
+      const clientX =
+        "touches" in event ? event.touches[0].clientX : event.clientX;
+      const clientY =
+        "touches" in event ? event.touches[0].clientY : event.clientY;
+
       startPosRef.current = { x: clientX, y: clientY };
 
       // 기존 타이머 클리어
@@ -37,7 +39,7 @@ export function useLongPress({ onLongPress, delay = 800 }: UseLongPressProps) {
         }
       }, delay);
     },
-    [onLongPress, delay, triggerVibration]
+    [onLongPress, delay, triggerVibration],
   );
 
   const clear = useCallback(() => {
@@ -53,8 +55,10 @@ export function useLongPress({ onLongPress, delay = 800 }: UseLongPressProps) {
       if (!startPosRef.current) return;
 
       // 현재 위치
-      const clientX = "touches" in event ? event.touches[0].clientX : event.clientX;
-      const clientY = "touches" in event ? event.touches[0].clientY : event.clientY;
+      const clientX =
+        "touches" in event ? event.touches[0].clientX : event.clientX;
+      const clientY =
+        "touches" in event ? event.touches[0].clientY : event.clientY;
 
       // 이동 거리 계산
       const deltaX = Math.abs(clientX - startPosRef.current.x);
@@ -65,7 +69,7 @@ export function useLongPress({ onLongPress, delay = 800 }: UseLongPressProps) {
         clear();
       }
     },
-    [clear]
+    [clear],
   );
 
   return {

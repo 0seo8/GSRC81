@@ -1,6 +1,6 @@
-import type { NextAuthOptions } from "next-auth"
-import KakaoProvider from "next-auth/providers/kakao"
-import { supabase } from "./supabase"
+import type { NextAuthOptions } from "next-auth";
+import KakaoProvider from "next-auth/providers/kakao";
+import { supabase } from "./supabase";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -18,7 +18,8 @@ export const authOptions: NextAuthOptions = {
           .select("*")
           .eq("kakao_user_id", user.id);
 
-        const existingUser = existingUsers && existingUsers.length > 0 ? existingUsers[0] : null;
+        const existingUser =
+          existingUsers && existingUsers.length > 0 ? existingUsers[0] : null;
 
         if (!existingUser) {
           // 최초 로그인시 verify 페이지로 리다이렉트
@@ -51,7 +52,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user && token.kakaoId) {
         // 카카오 사용자 ID를 세션에 추가
         session.user.id = token.kakaoId as string;
-        
+
         // 추가 사용자 정보가 필요하면 여기서 설정
         const { data: userInfo } = await supabase
           .from("access_links")
@@ -74,4 +75,4 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 24 * 60 * 60, // 24시간
   },
-}
+};

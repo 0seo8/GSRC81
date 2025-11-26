@@ -147,9 +147,7 @@ export function MapClient({ courses, categories }: MapClientProps) {
 
   return (
     <div className="h-screen bg-transparent flex flex-col overflow-hidden">
-      <div
-        className="flex-1 relative overflow-hidden"
-      >
+      <div className="flex-1 relative overflow-hidden">
         {/* 헤더 공간 확보 */}
 
         {/* 지도 */}

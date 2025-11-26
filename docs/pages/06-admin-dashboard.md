@@ -1,9 +1,11 @@
 # Admin Dashboard (`/admin`)
 
 ## Overview
+
 Main admin panel for managing courses, viewing statistics, and accessing admin tools.
 
 ## Location
+
 - **Path**: `/admin`
 - **File**: `src/app/admin/page.tsx`
 - **Type**: Client Component
@@ -11,6 +13,7 @@ Main admin panel for managing courses, viewing statistics, and accessing admin t
 ## Functionality
 
 ### Main Features
+
 1. **Statistics Dashboard**
    - Total courses count
    - Total comments count
@@ -33,21 +36,23 @@ Main admin panel for managing courses, viewing statistics, and accessing admin t
 ## Data Flow
 
 ### State Management
+
 ```typescript
-const [courses, setCourses] = useState<Course[]>([])
-const [loading, setLoading] = useState(true)
+const [courses, setCourses] = useState<Course[]>([]);
+const [loading, setLoading] = useState(true);
 const [stats, setStats] = useState({
   totalCourses: 0,
   totalComments: 0,
-  activeUsers: 0  // ⚠️ Hardcoded to 5
-})
+  activeUsers: 0, // ⚠️ Hardcoded to 5
+});
 ```
 
 ### Data Loading
+
 ```typescript
 useEffect(() => {
-  loadDashboardData()
-}, [])
+  loadDashboardData();
+}, []);
 
 async function loadDashboardData() {
   // Fetch courses (last 5)
@@ -55,13 +60,15 @@ async function loadDashboardData() {
     .from("courses")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(5)
+    .limit(5);
 
   // Fetch counts in parallel
   const [courseCount, commentCount] = await Promise.all([
     supabase.from("courses").select("*", { count: "exact", head: true }),
-    supabase.from("course_comments").select("*", { count: "exact", head: true })
-  ])
+    supabase
+      .from("course_comments")
+      .select("*", { count: "exact", head: true }),
+  ]);
 }
 ```
 
@@ -70,17 +77,21 @@ async function loadDashboardData() {
 ### Current Issues
 
 1. **Client Component Unnecessarily**
+
    ```typescript
-   "use client"
+   "use client";
    ```
+
    - Dashboard stats could be server-rendered
    - Only actions need client-side interactivity
    - Causes hydration and slower initial load
 
 2. **Hardcoded Active Users**
+
    ```typescript
    activeUsers: 5, // 임시 값
    ```
+
    - Should query access_links table
    - No real user analytics
 
@@ -104,6 +115,7 @@ async function loadDashboardData() {
 ### Recommended Refactoring
 
 #### 1. Convert to Server Component
+
 ```typescript
 // app/admin/page.tsx
 import { getAdminStats } from '@/lib/admin/stats'
@@ -129,26 +141,31 @@ export default async function AdminDashboard() {
 ```
 
 #### 2. Extract Data Functions
+
 ```typescript
 // lib/admin/stats.ts
 export async function getAdminStats() {
   const [courseCount, commentCount, activeUserCount] = await Promise.all([
     supabase.from("courses").select("*", { count: "exact", head: true }),
-    supabase.from("course_comments").select("*", { count: "exact", head: true }),
-    supabase.from("access_links")
+    supabase
+      .from("course_comments")
+      .select("*", { count: "exact", head: true }),
+    supabase
+      .from("access_links")
       .select("*", { count: "exact", head: true })
-      .eq("is_active", true)
-  ])
+      .eq("is_active", true),
+  ]);
 
   return {
     totalCourses: courseCount.count || 0,
     totalComments: commentCount.count || 0,
-    activeUsers: activeUserCount.count || 0  // ✅ Real data
-  }
+    activeUsers: activeUserCount.count || 0, // ✅ Real data
+  };
 }
 ```
 
 #### 3. Create Reusable Components
+
 ```typescript
 // components/admin/StatsCard.tsx
 interface StatsCardProps {
@@ -178,6 +195,7 @@ export function StatsCard({ icon, label, value, iconBg }: StatsCardProps) {
 ```
 
 #### 4. Unified Responsive Layout
+
 ```typescript
 // Instead of separate mobile/desktop sections
 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -193,6 +211,7 @@ export function StatsCard({ icon, label, value, iconBg }: StatsCardProps) {
 ```
 
 #### 5. Use Link for Navigation
+
 ```typescript
 // Instead of Button with onClick
 import Link from 'next/link'
@@ -208,6 +227,7 @@ import Link from 'next/link'
 ```
 
 #### 6. Add Error Handling
+
 ```typescript
 // app/admin/error.tsx
 'use client'
@@ -238,6 +258,7 @@ export default function AdminError({
 ```
 
 #### 7. Add Loading State
+
 ```typescript
 // app/admin/loading.tsx
 export default function AdminLoading() {
@@ -277,10 +298,12 @@ app/admin/
 ## Mobile vs Desktop UX
 
 ### Current Approach
+
 - Completely different markup for mobile/desktop
 - Duplication of functionality
 
 ### Better Approach
+
 ```typescript
 // Single component with responsive classes
 <nav className="hidden md:block">
@@ -300,6 +323,7 @@ app/admin/
 ## Real-time Features Opportunity
 
 ### Supabase Realtime
+
 ```typescript
 'use client'
 
@@ -343,12 +367,14 @@ export function LiveStats({ initialStats }: { initialStats: Stats }) {
 ## Performance Recommendations
 
 ### Current Performance Issues
+
 1. Client-side data fetching (slow initial render)
 2. No caching strategy
 3. Re-fetches on every mount
 4. No pagination for courses
 
 ### Optimizations
+
 ```typescript
 // 1. Server Component (instant render)
 // 2. Caching with revalidation
@@ -368,6 +394,7 @@ export default async function AdminDashboard({
 ```
 
 ## Dependencies
+
 - `@/contexts/AdminContext` - Admin auth state
 - `@/lib/supabase` - Database client
 - `@/components/ui/*` - UI components
@@ -375,6 +402,7 @@ export default async function AdminDashboard({
 - `next/navigation` - Router
 
 ## Database Tables Used
+
 - `courses` - Course data and count
 - `course_comments` - Comment count
 - `access_links` - Active user count (should be implemented)

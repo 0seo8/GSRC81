@@ -44,37 +44,41 @@ Next.js 15의 서버/클라이언트 분리를 효과적으로 적용한 대표�
 
 ## 2. 위치 및 기본 정보
 
-| 항목 | 값 |
-|------|-----|
-| **Path** | `/map` |
-| **Server Component** | `src/app/(main)/map/page.tsx` |
+| 항목                 | 값                                            |
+| -------------------- | --------------------------------------------- |
+| **Path**             | `/map`                                        |
+| **Server Component** | `src/app/(main)/map/page.tsx`                 |
 | **Client Component** | `src/components/map/optimized-map-client.tsx` |
-| **인증 필요** | ✅ Yes (middleware 자동 체크) |
-| **ISR 재검증** | 1시간 (`revalidate = 3600`) |
+| **인증 필요**        | ✅ Yes (middleware 자동 체크)                 |
+| **ISR 재검증**       | 1시간 (`revalidate = 3600`)                   |
 
 ---
 
 ## 3. 주요 기능
 
 ### 3.1 인터랙티브 지도
+
 - Mapbox GL JS 기반 렌더링
 - 마커 클러스터링 (GPU 가속)
 - 지도 이동/확대/축소 등 실시간 상호작용
 - 한국어 라벨 자동 변환
 
 ### 3.2 코스 관리
+
 - 모든 활성 코스 표시
 - 카테고리별 필터링
 - 마커/클러스터 클릭 시 바텀시트 자동 표시
 - 코스 카드 클릭 시 상세 페이지 이동 (`/courses/[id]`)
 
 ### 3.3 카테고리 네비게이션
+
 - 하단 바텀시트 기반 UI
 - 좌우 스와이프로 카테고리 전환 (무한 루프)
 - 상하 드래그로 높이 조절 (medium 60vh ↔ full 95vh)
 - 카테고리별 배경색/카드색상 자동 적용
 
 ### 3.4 위치 기능
+
 - 현재 위치 버튼 (GPS)
 - 현재 위치로 지도 이동 (zoom 14)
 - Geolocation API 에러 처리
@@ -116,6 +120,7 @@ export default async function MapPage() {
 ```
 
 ### 장점
+
 - ✅ 서버에서 데이터 패칭 → 렌더링 성능 최적화
 - ✅ Mapbox, 상태 관리 등 클라이언트 부담 요소를 분리
 - ✅ Next.js 15 파일 기반 컨벤션으로 로딩/에러 자동 처리
@@ -127,6 +132,7 @@ export default async function MapPage() {
 **적용된 파일들:**
 
 1. **`loading.tsx`** - 자동 Suspense 경계
+
    ```tsx
    export default function Loading() {
      return <MapSkeleton />;
@@ -134,8 +140,9 @@ export default async function MapPage() {
    ```
 
 2. **`error.tsx`** - 자동 Error Boundary
+
    ```tsx
-   'use client';
+   "use client";
 
    export default function Error({ error, reset }) {
      useEffect(() => {
@@ -390,17 +397,20 @@ CategoryFullScreen (바텀시트 열림)
 **라인 수:** 188 lines
 
 #### 역할
+
 지도 페이지의 **루트 클라이언트 컴포넌트**로, 모든 하위 컴포넌트를 조율합니다.
 
 #### Props
+
 ```typescript
 interface OptimizedMapClientProps {
-  courses: CourseWithComments[];      // 서버에서 받은 전체 코스
-  categories: CourseCategory[];       // 서버에서 받은 카테고리
+  courses: CourseWithComments[]; // 서버에서 받은 전체 코스
+  categories: CourseCategory[]; // 서버에서 받은 카테고리
 }
 ```
 
 #### 상태 관리
+
 ```typescript
 const [currentCategory, setCurrentCategory] = useState<string>("all");
 const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
@@ -418,13 +428,14 @@ const {
 ```
 
 #### 데이터 필터링
+
 ```typescript
 const displayCourses = useMemo(() => {
   if (currentCategory === "all") {
     return courses;
   }
   return courses.filter(
-    (course) => (course.category_key || "jingwan") === currentCategory
+    (course) => (course.category_key || "jingwan") === currentCategory,
   );
 }, [courses, currentCategory]);
 ```
@@ -432,39 +443,43 @@ const displayCourses = useMemo(() => {
 #### 핵심 로직
 
 **1) 마커 클릭 처리**
+
 ```typescript
 const handleCourseClick = useCallback(
   (course: CourseWithComments) => {
-    mapHandleCourseClick(course);  // useMapState에서 상태 업데이트
-    setIsFullscreenOpen(true);     // 바텀시트 열기
+    mapHandleCourseClick(course); // useMapState에서 상태 업데이트
+    setIsFullscreenOpen(true); // 바텀시트 열기
   },
-  [mapHandleCourseClick]
+  [mapHandleCourseClick],
 );
 ```
 
 **2) 클러스터 클릭 처리**
+
 ```typescript
 const handleClusterClick = useCallback(
   (coursesInCluster: CourseWithComments[]) => {
     mapHandleClusterClick(coursesInCluster);
     setIsFullscreenOpen(true);
   },
-  [mapHandleClusterClick]
+  [mapHandleClusterClick],
 );
 ```
 
 **3) 카테고리 변경**
+
 ```typescript
 const handleCategoryChange = useCallback((categoryKey: string) => {
-  setCurrentCategory(categoryKey);  // displayCourses useMemo 재계산 트리거
+  setCurrentCategory(categoryKey); // displayCourses useMemo 재계산 트리거
 }, []);
 ```
 
 **4) 바텀시트 닫기**
+
 ```typescript
 const handleCloseFullscreen = useCallback(() => {
   setIsFullscreenOpen(false);
-  handleCloseDrawer();  // selectedCourse/selectedCourses 초기화
+  handleCloseDrawer(); // selectedCourse/selectedCourses 초기화
 }, [handleCloseDrawer]);
 ```
 
@@ -476,17 +491,19 @@ const handleCloseFullscreen = useCallback(() => {
 **라인 수:** 189 lines
 
 #### 역할
+
 Mapbox GL JS를 래핑한 **지도 렌더링 컴포넌트**입니다.
 
 #### Props
+
 ```typescript
 interface MapboxMapProps {
-  accessToken: string;                      // Mapbox 액세스 토큰 (필수)
-  center?: [number, number];                // 초기 중심 좌표 (기본: 서울)
-  zoom?: number;                            // 초기 줌 레벨 (기본: 10)
-  style?: string;                           // Mapbox 스타일 URL
-  className?: string;                       // CSS 클래스
-  onMapLoad?: (map: mapboxgl.Map) => void;  // 지도 로드 완료 콜백
+  accessToken: string; // Mapbox 액세스 토큰 (필수)
+  center?: [number, number]; // 초기 중심 좌표 (기본: 서울)
+  zoom?: number; // 초기 줌 레벨 (기본: 10)
+  style?: string; // Mapbox 스타일 URL
+  className?: string; // CSS 클래스
+  onMapLoad?: (map: mapboxgl.Map) => void; // 지도 로드 완료 콜백
 }
 ```
 
@@ -498,18 +515,19 @@ interface MapboxMapProps {
 map.current = new mapboxgl.Map({
   container: mapContainer.current,
   style: "mapbox://styles/mapbox/light-v11",
-  center: [126.9784, 37.5665],  // 서울 중심
+  center: [126.9784, 37.5665], // 서울 중심
   zoom: 10,
   pitch: 0,
   bearing: 0,
   antialias: true,
-  maxZoom: 12.85,                // 사용자 요구사항에 따른 제한
+  maxZoom: 12.85, // 사용자 요구사항에 따른 제한
   minZoom: 10,
-  preserveDrawingBuffer: true,   // 캔버스 캡처 가능
+  preserveDrawingBuffer: true, // 캔버스 캡처 가능
 });
 ```
 
 **특징:**
+
 - ✅ 한 번만 생성 (dependency: accessToken만)
 - ✅ 줌 레벨 제한으로 UX 일관성 유지
 - ✅ 배경색 `#D9D7D4` (회색톤)
@@ -520,14 +538,15 @@ map.current = new mapboxgl.Map({
 // 모든 name 필드를 한국어 우선으로 변경
 mapInstance.setLayoutProperty(layer.id, "text-field", [
   "coalesce",
-  ["get", "name:ko"],   // 1순위
-  ["get", "name_ko"],   // 2순위
-  ["get", "name_kr"],   // 3순위
-  ["get", "name"],      // fallback
+  ["get", "name:ko"], // 1순위
+  ["get", "name_ko"], // 2순위
+  ["get", "name_kr"], // 3순위
+  ["get", "name"], // fallback
 ]);
 ```
 
 **적용 시점:**
+
 - 초기 로드 후 1초 뒤
 - 스타일 변경 시마다 자동 재적용
 
@@ -572,15 +591,17 @@ export const MapboxMap = memo(MapboxMapComponent);
 **라인 수:** 311 lines (리팩토링 전: 424 lines, 27% 감소)
 
 #### 역할
+
 **Mapbox 네이티브 클러스터링**을 사용하여 코스를 지도에 마커로 표시합니다.
 
 #### Props
+
 ```typescript
 interface CourseMarkerProps {
-  map: mapboxgl.Map;                           // 지도 인스턴스
-  courses: CourseWithComments[];               // 표시할 코스 배열
-  currentCategory?: string;                    // 현재 카테고리 (색상 결정)
-  onCourseClick?: (course: Course) => void;    // 개별 마커 클릭 콜백
+  map: mapboxgl.Map; // 지도 인스턴스
+  courses: CourseWithComments[]; // 표시할 코스 배열
+  currentCategory?: string; // 현재 카테고리 (색상 결정)
+  onCourseClick?: (course: Course) => void; // 개별 마커 클릭 콜백
   onClusterClick?: (courses: Course[]) => void; // 클러스터 클릭 콜백
 }
 ```
@@ -588,6 +609,7 @@ interface CourseMarkerProps {
 #### 리팩토링 개선 사항 (2025-11-25)
 
 **Before (수동 클러스터링):**
+
 - ❌ Haversine 거리 계산으로 수동 클러스터링 (45+ lines)
 - ❌ 줌 레벨별 클러스터 반경 계산 (56+ lines)
 - ❌ HTML 문자열로 마커 생성 (인라인 스타일)
@@ -595,6 +617,7 @@ interface CourseMarkerProps {
 - **424 lines**
 
 **After (네이티브 클러스터링):**
+
 - ✅ Mapbox GeoJSON 소스의 자동 클러스터링
 - ✅ React 컴포넌트로 마커 렌더링 (NumberMarker)
 - ✅ 단순한 moveend/zoomend 이벤트 핸들링
@@ -630,12 +653,13 @@ map.addSource("courses", {
   type: "geojson",
   data: geojsonData.current,
   cluster: true,
-  clusterMaxZoom: 12,    // 줌 12 이상에서는 클러스터링 비활성화
-  clusterRadius: 50,     // 클러스터 반경 50px
+  clusterMaxZoom: 12, // 줌 12 이상에서는 클러스터링 비활성화
+  clusterRadius: 50, // 클러스터 반경 50px
 });
 ```
 
 **장점:**
+
 - GPU 가속 처리로 수천 개 마커도 부드럽게 렌더링
 - 줌/이동 시 자동으로 클러스터 재계산
 - 수동 계산 불필요
@@ -658,6 +682,7 @@ const marker = new mapboxgl.Marker({
 ```
 
 **장점:**
+
 - 재사용 가능한 컴포넌트
 - 타입 안정성
 - Tailwind 클래스 사용 가능
@@ -699,13 +724,13 @@ if (markersRef.current[markerId]) {
 
 #### 성능 특징
 
-| 항목 | Before | After | 개선율 |
-|------|--------|-------|--------|
-| **코드 라인** | 424 lines | 311 lines | 27% 감소 |
-| **클러스터링** | CPU (Haversine) | GPU (Mapbox) | ~10배 빠름 |
-| **마커 1000개** | ~200ms | ~20ms | 90% 빠름 |
-| **메모리 사용** | ~15MB | ~8MB | 47% 감소 |
-| **이벤트 핸들러** | 5개 (styledata, idle 등) | 2개 (moveend, zoomend) | 60% 감소 |
+| 항목              | Before                   | After                  | 개선율     |
+| ----------------- | ------------------------ | ---------------------- | ---------- |
+| **코드 라인**     | 424 lines                | 311 lines              | 27% 감소   |
+| **클러스터링**    | CPU (Haversine)          | GPU (Mapbox)           | ~10배 빠름 |
+| **마커 1000개**   | ~200ms                   | ~20ms                  | 90% 빠름   |
+| **메모리 사용**   | ~15MB                    | ~8MB                   | 47% 감소   |
+| **이벤트 핸들러** | 5개 (styledata, idle 등) | 2개 (moveend, zoomend) | 60% 감소   |
 
 ---
 
@@ -715,20 +740,22 @@ if (markersRef.current[markerId]) {
 **라인 수:** 154 lines
 
 #### 역할
+
 지도 하단에서 올라오는 **인터랙티브 바텀시트 컴포넌트**입니다.
 
 #### Props
+
 ```typescript
 interface CategoryFullScreenProps {
-  isOpen: boolean;                          // 바텀시트 열림/닫힘
-  onClose: () => void;                      // 닫기 콜백
-  courses: CourseWithComments[];            // 전체 코스 데이터
-  categories: CourseCategory[];             // 카테고리 목록
-  initialCategory?: string;                 // 초기 카테고리 키 (기본: "jingwan")
+  isOpen: boolean; // 바텀시트 열림/닫힘
+  onClose: () => void; // 닫기 콜백
+  courses: CourseWithComments[]; // 전체 코스 데이터
+  categories: CourseCategory[]; // 카테고리 목록
+  initialCategory?: string; // 초기 카테고리 키 (기본: "jingwan")
   onCourseClick: (courseId: string) => void; // 코스 클릭 시 상세 페이지 이동
   onCategoryChange?: (categoryKey: string) => void; // 카테고리 변경 콜백
-  selectedCourse?: CourseWithComments | null;       // 선택된 단일 코스 (마커 클릭)
-  selectedCourses?: CourseWithComments[];          // 선택된 복수 코스 (클러스터 클릭)
+  selectedCourse?: CourseWithComments | null; // 선택된 단일 코스 (마커 클릭)
+  selectedCourses?: CourseWithComments[]; // 선택된 복수 코스 (클러스터 클릭)
 }
 ```
 
@@ -736,25 +763,29 @@ interface CategoryFullScreenProps {
 
 **1) Snap Points 시스템**
 
-| Snap Point | 높이 | 용도 |
-|-----------|------|------|
-| **closed** | 0vh | 닫힌 상태 |
-| **medium** | 60vh | 기본 높이 - 코스 카드 미리보기 |
-| **full** | 95vh | 전체 높이 - 모든 코스 스크롤 가능 |
+| Snap Point | 높이 | 용도                              |
+| ---------- | ---- | --------------------------------- |
+| **closed** | 0vh  | 닫힌 상태                         |
+| **medium** | 60vh | 기본 높이 - 코스 카드 미리보기    |
+| **full**   | 95vh | 전체 높이 - 모든 코스 스크롤 가능 |
 
 **위치:** `src/hooks/use-bottom-sheet-snap.ts`
 
 ```typescript
 const getSnapHeight = (point: SnapPoint): string => {
   switch (point) {
-    case "closed": return "0vh";
-    case "medium": return "60vh";
-    case "full": return "95vh";
+    case "closed":
+      return "0vh";
+    case "medium":
+      return "60vh";
+    case "full":
+      return "95vh";
   }
 };
 ```
 
 **동작:**
+
 - 위로 드래그 (100px 이상) → 다음 snap point로 확장
 - 아래로 드래그 (100px 이상) → 이전 snap point로 축소
 - 빠른 드래그 (velocity > 500) → 즉시 snap 변경
@@ -766,28 +797,29 @@ const getSnapHeight = (point: SnapPoint): string => {
 ```typescript
 // 무한 루프 카테고리 변경
 const goToPrevCategory = () => {
-  const newIndex = currentCategoryIndex > 0
-    ? currentCategoryIndex - 1
-    : categories.length - 1;  // 첫 번째 → 마지막
+  const newIndex =
+    currentCategoryIndex > 0 ? currentCategoryIndex - 1 : categories.length - 1; // 첫 번째 → 마지막
   setCurrentCategoryIndex(newIndex);
 };
 
 const goToNextCategory = () => {
-  const newIndex = currentCategoryIndex < categories.length - 1
-    ? currentCategoryIndex + 1
-    : 0;  // 마지막 → 첫 번째
+  const newIndex =
+    currentCategoryIndex < categories.length - 1 ? currentCategoryIndex + 1 : 0; // 마지막 → 첫 번째
   setCurrentCategoryIndex(newIndex);
 };
 ```
 
 **전체 카테고리 특별 로직:**
+
 ```typescript
 if (currentCategoryKey === "all") {
   // 선택된 코스들만 표시 (마커/클러스터 클릭 결과)
   const targetCourses =
     selectedCourses && selectedCourses.length > 0
       ? selectedCourses
-      : selectedCourse ? [selectedCourse] : [];
+      : selectedCourse
+        ? [selectedCourse]
+        : [];
   return targetCourses;
 }
 ```
@@ -801,8 +833,10 @@ const handleHeaderDrag = (info: PanInfo) => {
   const swipeThreshold = 50;
 
   // 좌우 스와이프가 더 강한 경우 카테고리 변경 우선
-  if (Math.abs(info.offset.x) >= swipeThreshold &&
-      Math.abs(info.offset.x) > Math.abs(info.offset.y)) {
+  if (
+    Math.abs(info.offset.x) >= swipeThreshold &&
+    Math.abs(info.offset.x) > Math.abs(info.offset.y)
+  ) {
     onCategoryChange(info.offset.x > 0 ? "prev" : "next");
     return;
   }
@@ -813,6 +847,7 @@ const handleHeaderDrag = (info: PanInfo) => {
 ```
 
 **드래그 우선순위:**
+
 1. 좌우 스와이프 (50px 이상) → 카테고리 변경
 2. 상하 드래그 → Snap points 변경
 
@@ -835,12 +870,12 @@ const handleHeaderDrag = (info: PanInfo) => {
 
 **위치:** `src/config/category-designs.ts`
 
-| 카테고리 | 배경색 | 카드색상 |
-|---------|--------|---------|
-| 진관동 | `#E7F3ED` | `["#DBE6D1", "#B9DAC5", "#9DD6B9"]` |
-| 트랙 | `#FFE8E4` | `["#FED5C8", "#FFC9B6", "#FFAA93"]` |
-| 트레일 | `#E7F3ED` | `["#DBE6D1", "#B9DAC5", "#9DD6B9"]` |
-| 로드 | `#F5F5F5` | `["#E0E0E0", "#D0D0D0", "#C0C0C0"]` |
+| 카테고리 | 배경색    | 카드색상                            |
+| -------- | --------- | ----------------------------------- |
+| 진관동   | `#E7F3ED` | `["#DBE6D1", "#B9DAC5", "#9DD6B9"]` |
+| 트랙     | `#FFE8E4` | `["#FED5C8", "#FFC9B6", "#FFAA93"]` |
+| 트레일   | `#E7F3ED` | `["#DBE6D1", "#B9DAC5", "#9DD6B9"]` |
+| 로드     | `#F5F5F5` | `["#E0E0E0", "#D0D0D0", "#C0C0C0"]` |
 
 #### 컴포넌트 구조
 
@@ -907,6 +942,7 @@ CategoryFullScreen은 로직을 3개의 커스텀 훅으로 분리하여 관심�
 **라인 수:** 57 lines
 
 #### 역할
+
 지도의 전역 상태를 관리하는 훅입니다.
 
 #### 관리하는 상태
@@ -927,7 +963,7 @@ CategoryFullScreen은 로직을 3개의 커스텀 훅으로 분리하여 관심�
 ```typescript
 const [optimisticCourses, addOptimisticCourse] = useOptimistic(
   courses,
-  (state, newCourse) => [...state, newCourse]
+  (state, newCourse) => [...state, newCourse],
 );
 ```
 
@@ -951,13 +987,13 @@ const handleMapLoad = useCallback((mapInstance: mapboxgl.Map) => {
 // 마커 클릭
 const handleCourseClick = useCallback((course: CourseWithComments) => {
   setSelectedCourse(course);
-  setSelectedCourses([]);  // 단일 선택이므로 배열 초기화
+  setSelectedCourses([]); // 단일 선택이므로 배열 초기화
 }, []);
 
 // 클러스터 클릭
 const handleClusterClick = useCallback((courses: CourseWithComments[]) => {
   setSelectedCourses(courses);
-  setSelectedCourse(null);  // 복수 선택이므로 단일 초기화
+  setSelectedCourse(null); // 복수 선택이므로 단일 초기화
 }, []);
 
 // 바텀시트 닫기
@@ -975,6 +1011,7 @@ const handleCloseDrawer = useCallback(() => {
 **라인 수:** 77 lines
 
 #### 역할
+
 코스 데이터에 따라 지도 범위를 자동으로 조정하는 훅입니다.
 
 #### 주요 기능
@@ -998,26 +1035,27 @@ const fitMapToCourses = () => {
 
   const bounds = [
     [minLng - lngPadding, minLat - latPadding],
-    [maxLng + lngPadding, maxLat + latPadding]
+    [maxLng + lngPadding, maxLat + latPadding],
   ];
 
   map.fitBounds(bounds, {
     padding: { top: 80, bottom: 80, left: 80, right: 80 },
     maxZoom: 12.5,
-    duration: 1000
+    duration: 1000,
   });
 };
 ```
 
 **2) 특수 케이스 처리**
 
-| 코스 개수 | 동작 | 줌 레벨 |
-|-----------|------|---------|
-| **0개** | 은평구 중심으로 이동 | 11.5 |
-| **1개** | 해당 좌표로 flyTo | 11.5 |
+| 코스 개수    | 동작                       | 줌 레벨              |
+| ------------ | -------------------------- | -------------------- |
+| **0개**      | 은평구 중심으로 이동       | 11.5                 |
+| **1개**      | 해당 좌표로 flyTo          | 11.5                 |
 | **2개 이상** | fitBounds로 모든 코스 포함 | 자동 (maxZoom: 12.5) |
 
 **3) 자동 패딩**
+
 - 전체 범위의 15% 여백 추가
 - 최소 패딩 0.01° 보장 (매우 가까운 코스들도 줌인되지 않도록)
 
@@ -1039,15 +1077,16 @@ useEffect(() => {
 **라인 수:** 76 lines
 
 #### 역할
+
 사용자의 현재 위치를 가져와 지도를 이동시키는 훅입니다.
 
 #### 반환 값
 
 ```typescript
 return {
-  getCurrentLocation,  // 위치 가져오기 함수
-  isLoading,          // 위치 요청 중
-  error,              // GeolocationPositionError | null
+  getCurrentLocation, // 위치 가져오기 함수
+  isLoading, // 위치 요청 중
+  error, // GeolocationPositionError | null
 };
 ```
 
@@ -1063,8 +1102,8 @@ const getCurrentLocation = () => {
 
       map.flyTo({
         center: [longitude, latitude],
-        zoom: 14,       // 현재 위치는 더 확대
-        duration: 1000
+        zoom: 14, // 현재 위치는 더 확대
+        duration: 1000,
       });
 
       onSuccess?.(position);
@@ -1076,20 +1115,20 @@ const getCurrentLocation = () => {
     {
       enableHighAccuracy: true,
       timeout: 10000,
-      maximumAge: 300000  // 5분간 캐시 사용
-    }
+      maximumAge: 300000, // 5분간 캐시 사용
+    },
   );
 };
 ```
 
 **2) 에러 처리**
 
-| 에러 코드 | 의미 | 해결 방법 |
-|----------|------|----------|
-| **1 (PERMISSION_DENIED)** | 위치 권한 거부 | 브라우저 설정에서 권한 허용 필요 |
-| **2 (POSITION_UNAVAILABLE)** | 위치 정보 사용 불가 | GPS/네트워크 연결 확인 |
-| **3 (TIMEOUT)** | 타임아웃 (10초) | 네트워크 상태 확인 후 재시도 |
-| **0 (NOT_SUPPORTED)** | 브라우저 미지원 | 최신 브라우저 사용 권장 |
+| 에러 코드                    | 의미                | 해결 방법                        |
+| ---------------------------- | ------------------- | -------------------------------- |
+| **1 (PERMISSION_DENIED)**    | 위치 권한 거부      | 브라우저 설정에서 권한 허용 필요 |
+| **2 (POSITION_UNAVAILABLE)** | 위치 정보 사용 불가 | GPS/네트워크 연결 확인           |
+| **3 (TIMEOUT)**              | 타임아웃 (10초)     | 네트워크 상태 확인 후 재시도     |
+| **0 (NOT_SUPPORTED)**        | 브라우저 미지원     | 최신 브라우저 사용 권장          |
 
 ---
 
@@ -1103,25 +1142,27 @@ const getCurrentLocation = () => {
 
 ### 10.2 클라이언트 로컬 상태 (useState)
 
-| 상태 | 위치 | 용도 |
-|------|------|------|
-| `map` | useMapState | 지도 인스턴스 |
-| `selectedCourse` | useMapState | 선택된 단일 코스 |
-| `selectedCourses` | useMapState | 선택된 복수 코스 |
-| `currentCategory` | OptimizedMapClient | 현재 선택 카테고리 |
-| `isFullscreenOpen` | OptimizedMapClient | 바텀시트 열림/닫힘 |
-| `snapPoint` | useBottomSheetSnap | 바텀시트 높이 상태 |
+| 상태                   | 위치                  | 용도                 |
+| ---------------------- | --------------------- | -------------------- |
+| `map`                  | useMapState           | 지도 인스턴스        |
+| `selectedCourse`       | useMapState           | 선택된 단일 코스     |
+| `selectedCourses`      | useMapState           | 선택된 복수 코스     |
+| `currentCategory`      | OptimizedMapClient    | 현재 선택 카테고리   |
+| `isFullscreenOpen`     | OptimizedMapClient    | 바텀시트 열림/닫힘   |
+| `snapPoint`            | useBottomSheetSnap    | 바텀시트 높이 상태   |
 | `currentCategoryIndex` | useCategoryNavigation | 현재 카테고리 인덱스 |
-| `isDragging` | useBottomSheetDrag | 드래그 중 여부 |
+| `isDragging`           | useBottomSheetDrag    | 드래그 중 여부       |
 
 ### 10.3 간소화 히스토리 (2025-11-25)
 
 **Before:**
+
 - ❌ Context API 사용 (MapProvider)
 - ❌ 전역 상태 관리로 인한 불필요한 리렌더링
 - ❌ Props drilling 회피를 위한 과도한 추상화
 
 **After:**
+
 - ✅ useState로 직접 상태 관리
 - ✅ Props를 통한 명확한 데이터 흐름
 - ✅ 불필요한 추상화 레이어 제거
@@ -1139,8 +1180,8 @@ const getCurrentLocation = () => {
 
 ```typescript
 const [categories, courses] = await Promise.all([
-  getCourseCategories(),  // 병렬 실행
-  getCourses(),           // 병렬 실행
+  getCourseCategories(), // 병렬 실행
+  getCourses(), // 병렬 실행
 ]);
 ```
 
@@ -1152,6 +1193,7 @@ const [categories, courses] = await Promise.all([
 ### 11.4 지도 클라이언트 최적화
 
 **마커 풀링:**
+
 ```typescript
 // 이미 존재하는 마커는 재사용
 if (markersRef.current[markerId]) {
@@ -1161,12 +1203,14 @@ if (markersRef.current[markerId]) {
 ```
 
 **React.memo:**
+
 ```typescript
 export const MapboxMap = memo(MapboxMapComponent);
 export const CourseMarker = memo(CourseMarkerComponent);
 ```
 
 **이벤트 최적화:**
+
 - Before: styledata, idle, load, moveend, zoomend (5개)
 - After: moveend, zoomend (2개) - 60% 감소
 
@@ -1197,15 +1241,16 @@ const filteredCourses = useMemo(() => {
 
 ### 11.8 성능 메트릭
 
-| 메트릭 | 목표 | 실제 | 상태 |
-|--------|------|------|------|
-| **FCP (First Contentful Paint)** | < 1.5s | ~1.2s | ✅ 우수 |
-| **LCP (Largest Contentful Paint)** | < 2.5s | ~2.1s | ✅ 양호 |
-| **TTI (Time to Interactive)** | < 3.5s | ~3.2s | ✅ 양호 |
-| **CLS (Cumulative Layout Shift)** | < 0.1 | ~0.05 | ✅ 우수 |
-| **Bundle Size (First Load JS)** | < 600kB | 575kB | ✅ 목표 달성 |
+| 메트릭                             | 목표    | 실제  | 상태         |
+| ---------------------------------- | ------- | ----- | ------------ |
+| **FCP (First Contentful Paint)**   | < 1.5s  | ~1.2s | ✅ 우수      |
+| **LCP (Largest Contentful Paint)** | < 2.5s  | ~2.1s | ✅ 양호      |
+| **TTI (Time to Interactive)**      | < 3.5s  | ~3.2s | ✅ 양호      |
+| **CLS (Cumulative Layout Shift)**  | < 0.1   | ~0.05 | ✅ 우수      |
+| **Bundle Size (First Load JS)**    | < 600kB | 575kB | ✅ 목표 달성 |
 
 **개선 결과:**
+
 - Bundle Size: 613kB → 575kB (38kB 감소, 6.2% 개선)
 - 마커 1000개 렌더링: 200ms → 20ms (90% 개선)
 
@@ -1216,9 +1261,11 @@ const filteredCourses = useMemo(() => {
 ### 12.3 카테고리 스와이프가 작동하지 않아요
 
 **증상:**
+
 - 바텀시트 헤더를 좌우로 스와이프해도 카테고리가 변경되지 않음
 
 **원인:**
+
 1. 스와이프 threshold가 너무 큼
 2. 터치 이벤트와 마우스 이벤트가 충돌
 3. PanInfo 계산이 잘못됨
@@ -1234,7 +1281,8 @@ console.log("Swipe offset:", info.offset.x);
 console.log("Swipe velocity:", info.velocity.x);
 
 // 3. 조건 완화 (임시)
-if (Math.abs(info.offset.x) >= 30) {  // 50 → 30으로 완화
+if (Math.abs(info.offset.x) >= 30) {
+  // 50 → 30으로 완화
   // ...
 }
 ```
@@ -1244,10 +1292,12 @@ if (Math.abs(info.offset.x) >= 30) {  // 50 → 30으로 완화
 ### 12.4 지도가 로딩되지 않아요
 
 **증상:**
+
 - "지도 로딩 중..." 메시지가 계속 표시됨
 - 지도 배경만 보임
 
 **원인:**
+
 1. Mapbox 액세스 토큰이 없거나 만료됨
 2. 네트워크 연결 문제
 3. Mapbox 스타일 URL이 잘못됨
@@ -1265,7 +1315,7 @@ map.current.on("error", (e) => {
 });
 
 // 3. 스타일 URL 확인
-console.log("Map style:", style);  // "mapbox://styles/mapbox/light-v11"
+console.log("Map style:", style); // "mapbox://styles/mapbox/light-v11"
 ```
 
 ---
@@ -1273,9 +1323,11 @@ console.log("Map style:", style);  // "mapbox://styles/mapbox/light-v11"
 ### 12.5 현재 위치 버튼이 작동하지 않아요
 
 **증상:**
+
 - 현재 위치 버튼을 클릭해도 지도가 이동하지 않음
 
 **원인:**
+
 1. Geolocation 권한 거부
 2. HTTPS가 아닌 환경에서 실행 (HTTP는 Geolocation 사용 불가)
 3. 브라우저가 Geolocation 미지원
@@ -1284,13 +1336,13 @@ console.log("Map style:", style);  // "mapbox://styles/mapbox/light-v11"
 
 ```typescript
 // 1. 권한 확인
-navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+navigator.permissions.query({ name: "geolocation" }).then((result) => {
   console.log("Geolocation permission:", result.state);
   // "granted", "denied", "prompt"
 });
 
 // 2. HTTPS 확인
-console.log("Protocol:", window.location.protocol);  // "https:" 여야 함
+console.log("Protocol:", window.location.protocol); // "https:" 여야 함
 
 // 3. 지원 여부 확인
 if (!navigator.geolocation) {
@@ -1303,9 +1355,11 @@ if (!navigator.geolocation) {
 ### 12.6 클러스터 숫자가 실제와 다릅니다
 
 **증상:**
+
 - 클러스터에 "5"라고 표시되는데 클릭하면 3개만 나옴
 
 **원인:**
+
 1. `getClusterLeaves`의 limit 파라미터가 잘못됨
 2. 카테고리 필터링으로 일부 코스가 숨겨짐
 
@@ -1315,9 +1369,11 @@ if (!navigator.geolocation) {
 // 1. limit을 point_count로 설정 (전체 가져오기)
 source.getClusterLeaves(
   clusterId,
-  props.point_count,  // ← 이 값 확인
+  props.point_count, // ← 이 값 확인
   0,
-  (err, features) => { /* ... */ }
+  (err, features) => {
+    /* ... */
+  },
 );
 
 // 2. 카테고리 필터 확인
@@ -1330,10 +1386,12 @@ console.log("Course category:", course.category_key);
 ### 12.7 바텀시트 드래그가 끊겨요
 
 **증상:**
+
 - 바텀시트를 드래그할 때 버벅거림
 - 애니메이션이 부드럽지 않음
 
 **원인:**
+
 1. 드래그 중 카드 애니메이션이 활성화됨
 2. Spring physics 파라미터가 너무 강함
 
@@ -1364,14 +1422,16 @@ transition={{
 
 ```typescript
 const { data, error } = await supabase
-  .from('courses')
-  .select(`
+  .from("courses")
+  .select(
+    `
     *,
     course_categories(name, key),
     course_comments(count)
-  `)
-  .eq('is_active', true)
-  .order('created_at', { ascending: false });
+  `,
+  )
+  .eq("is_active", true)
+  .order("created_at", { ascending: false });
 ```
 
 **테이블:** `courses`
@@ -1385,10 +1445,10 @@ const { data, error } = await supabase
 
 ```typescript
 const { data, error } = await supabase
-  .from('course_categories')
-  .select('*')
-  .eq('is_active', true)
-  .order('sort_order', { ascending: true });
+  .from("course_categories")
+  .select("*")
+  .eq("is_active", true)
+  .order("sort_order", { ascending: true });
 ```
 
 **테이블:** `course_categories`
@@ -1399,11 +1459,11 @@ const { data, error } = await supabase
 
 ## 14. 환경 변수
 
-| 변수명 | 필수 | 용도 |
-|--------|------|------|
-| `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` | ✅ Yes | Mapbox 지도 렌더링 |
-| `NEXT_PUBLIC_SUPABASE_URL` | ✅ Yes | Supabase 데이터베이스 연결 |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ Yes | Supabase 클라이언트 키 |
+| 변수명                            | 필수   | 용도                       |
+| --------------------------------- | ------ | -------------------------- |
+| `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` | ✅ Yes | Mapbox 지도 렌더링         |
+| `NEXT_PUBLIC_SUPABASE_URL`        | ✅ Yes | Supabase 데이터베이스 연결 |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`   | ✅ Yes | Supabase 클라이언트 키     |
 
 **설정 파일:** `.env.local`
 
@@ -1420,6 +1480,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbG...
 ### 15.1 1차 간소화: Wrapper 제거 (2025-11-25)
 
 **Before:**
+
 ```
 MapPage (Server)
 └── MapClientWrapper
@@ -1428,12 +1489,14 @@ MapPage (Server)
 ```
 
 **After:**
+
 ```
 MapPage (Server)
 └── OptimizedMapClient
 ```
 
 **결과:**
+
 - ❌ `MapClientWrapper` 제거 - props만 전달하는 불필요한 래퍼
 - ❌ `MapProvider` 제거 - 사용되지 않는 Context
 - ✅ 서버 컴포넌트에서 직접 `OptimizedMapClient`로 데이터 전달
@@ -1446,6 +1509,7 @@ MapPage (Server)
 **After:** 203 lines (15% 축소)
 
 **개선 사항:**
+
 - ❌ 동적 코스 로딩 로직 제거 (서버에서 이미 전체 데이터 수신)
 - ❌ `allCourses` 중복 상태 제거 (props 직접 사용)
 - ❌ 마커 클릭 시 카테고리 자동 변경 로직 제거
@@ -1453,6 +1517,7 @@ MapPage (Server)
 - ✅ 클러스터 클릭 시 클러스터 내 코스들만 표시
 
 **번들 크기:**
+
 - Before: 613kB
 - After: 575kB (38kB 감소, 6.2% 개선)
 
@@ -1464,17 +1529,20 @@ MapPage (Server)
 **After:** 311 lines (27% 축소)
 
 **제거한 코드:**
+
 - ❌ 수동 Haversine 거리 계산 (45+ lines)
 - ❌ 줌 레벨별 클러스터링 로직 (56+ lines)
 - ❌ HTML 문자열 기반 마커 생성 (인라인 스타일)
 - ❌ 복잡한 styledata/idle 타이밍 처리 (100+ lines)
 
 **추가한 기능:**
+
 - ✅ Mapbox 네이티브 GeoJSON 클러스터링 적용
 - ✅ React 기반 NumberMarker 컴포넌트 사용
 - ✅ 카테고리 색상 유틸리티 함수 분리 (`lib/category-colors.ts`)
 
 **성능 개선:**
+
 - GPU 가속 클러스터링
 - 마커 1000개 렌더링: 200ms → 20ms (90% 개선)
 - 메모리 사용량: 15MB → 8MB (47% 감소)
@@ -1487,6 +1555,7 @@ MapPage (Server)
 **After:** 188 lines (7% 추가 축소)
 
 **개선 사항:**
+
 - ✅ **훅 규칙 준수**: 조건부 return을 모든 훅 호출 이후로 이동
 - ✅ **환경변수 분리**: `MAPBOX_TOKEN`을 모듈 레벨로 이동 (`lib/map-constants.ts`)
 - ✅ **상수 파일 분리**: 지도 설정값을 `lib/map-constants.ts`로 추출
@@ -1501,6 +1570,7 @@ MapPage (Server)
   - 재사용 가능한 인터페이스
 
 **새로운 파일:**
+
 - `lib/map-constants.ts` - 지도 관련 상수
 - `lib/category-utils.ts` - 카테고리 유틸리티
 - `lib/category-colors.ts` - 카테고리 색상 매핑
@@ -1513,10 +1583,12 @@ MapPage (Server)
 ### 15.5 5차 개선: px → rem 변환 (2025-11-25)
 
 **대상:**
+
 - 인라인 style 속성의 px 값
 - Tailwind 임의 값 (예: `rounded-t-[45px]`)
 
 **변환 예시:**
+
 ```typescript
 // Before
 style={{ width: "40px", height: "40px" }}
@@ -1528,6 +1600,7 @@ className="rounded-t-[2.8125rem]"
 ```
 
 **변환하지 않은 것:**
+
 - Tailwind 유틸리티 클래스 (이미 rem 기반)
 - 예: `bottom-2`, `top-16`, `px-4` 등
 
@@ -1538,17 +1611,21 @@ className="rounded-t-[2.8125rem]"
 ### 16.1 HIGH 우선순위
 
 **1. Mapbox 리소스 preconnect**
+
 ```html
 <link rel="preconnect" href="https://api.mapbox.com" />
 <link rel="dns-prefetch" href="https://api.mapbox.com" />
 ```
+
 - 지도 초기 로딩 시간 ~200ms 단축 예상
 
 **2. 리스트 가상 스크롤**
+
 - 바텀시트에 코스가 100개 이상일 때 성능 저하
 - `react-window` 또는 `react-virtualized` 도입 고려
 
 **3. 마커 이미지 WebP 변환**
+
 - 현재: SVG 기반 NumberMarker
 - 개선: 숫자별 WebP 이미지 pre-render
 - 예상 효과: 마커 렌더링 시간 ~30% 단축
@@ -1561,14 +1638,14 @@ className="rounded-t-[2.8125rem]"
 
 ```tsx
 // 현재: 클라이언트 사이드 API 호출
-const response = await fetch('/api/course-comments', {
-  method: 'POST',
-  body: JSON.stringify(data)
+const response = await fetch("/api/course-comments", {
+  method: "POST",
+  body: JSON.stringify(data),
 });
 
 // 개선: Server Actions
 async function createComment(formData: FormData) {
-  'use server'
+  "use server";
   const comment = await db.insert(/* ... */);
   revalidatePath(`/courses/${courseId}`);
   return comment;
@@ -1576,10 +1653,12 @@ async function createComment(formData: FormData) {
 ```
 
 **2. 댓글 옵티미스틱 업데이트**
+
 - `useOptimistic` 활용 (이미 코스 데이터에는 적용됨)
 - 댓글 작성 시 즉시 UI 업데이트
 
 **3. 지도 클라이언트 하위 컴포넌트 분리**
+
 - OptimizedMapClient가 여전히 188 lines
 - 현재 위치 버튼을 별도 컴포넌트로 분리
 - 목표: 150 lines 이하
@@ -1615,6 +1694,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 ```
 
 **3. 추가 PWA 기능**
+
 - 오프라인 지도 캐싱
 - 백그라운드 동기화
 - 푸시 알림
@@ -1626,12 +1706,14 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 `/map` 페이지는 **GSRC81 MAPS의 핵심 서비스 페이지**로, 다음과 같은 특징을 가집니다:
 
 ### 아키텍처
+
 - ✅ Next.js 15 서버 컴포넌트 패턴
 - ✅ 파일 기반 로딩/에러 처리 (`loading.tsx`, `error.tsx`)
 - ✅ ISR을 통한 데이터 캐싱 (1시간 재검증)
 - ✅ 직관적인 데이터 흐름 (Server → Client props)
 
 ### 최적화
+
 - ✅ 불필요한 wrapper 제거 (MapClientWrapper, MapProvider)
 - ✅ Mapbox 네이티브 클러스터링 (수동 계산 → GPU 가속)
 - ✅ React 권장 패턴 적용 (훅 규칙, 관심사 분리, 재사용성)
@@ -1641,6 +1723,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
   - CourseMarker: 424 lines → 311 lines (27% 축소)
 
 ### 기능
+
 - ✅ Mapbox 기반 인터랙티브 지도
 - ✅ 마커 클릭 시 선택된 코스만 표시
 - ✅ 클러스터링 및 카테고리 필터링
@@ -1648,6 +1731,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 - ✅ 현재 위치 이동 (GPS)
 
 ### 성능
+
 - ✅ FCP: ~1.2s (목표: <1.5s)
 - ✅ LCP: ~2.1s (목표: <2.5s)
 - ✅ TTI: ~3.2s (목표: <3.5s)

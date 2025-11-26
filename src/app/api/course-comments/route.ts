@@ -4,20 +4,20 @@ import { supabase } from "@/lib/supabase";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     const {
       course_id,
       message,
       latitude,
       longitude,
-      author_nickname = "익명"
+      author_nickname = "익명",
     } = body;
 
     // 필수 필드 검증
     if (!course_id || !message) {
       return NextResponse.json(
         { error: "course_id와 message는 필수입니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (message.length > 200) {
       return NextResponse.json(
         { error: "메시지는 200자 이하로 작성해주세요." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     if (courseError || !course) {
       return NextResponse.json(
         { error: "존재하지 않는 코스입니다." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -61,24 +61,23 @@ export async function POST(request: NextRequest) {
       console.error("댓글 삽입 오류:", insertError);
       return NextResponse.json(
         { error: "댓글 저장 중 오류가 발생했습니다." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     return NextResponse.json(
-      { 
-        success: true, 
+      {
+        success: true,
         comment,
-        message: "댓글이 성공적으로 추가되었습니다."
+        message: "댓글이 성공적으로 추가되었습니다.",
       },
-      { status: 201 }
+      { status: 201 },
     );
-
   } catch (error) {
     console.error("API 오류:", error);
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -91,7 +90,7 @@ export async function GET(request: NextRequest) {
     if (!courseId) {
       return NextResponse.json(
         { error: "course_id가 필요합니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -106,20 +105,19 @@ export async function GET(request: NextRequest) {
       console.error("댓글 조회 오류:", error);
       return NextResponse.json(
         { error: "댓글 조회 중 오류가 발생했습니다." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     return NextResponse.json({
       success: true,
-      comments: comments || []
+      comments: comments || [],
     });
-
   } catch (error) {
     console.error("API 오류:", error);
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

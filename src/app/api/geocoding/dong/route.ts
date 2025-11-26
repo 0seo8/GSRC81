@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     // 맵박스 결과에서 동 이름 추출 (한국 지역의 경우)
     if (feature.place_name) {
       fullAddress = feature.place_name;
-      
+
       // 한국 주소 패턴에서 동 이름 추출 시도
       const koreanPattern = /([가-힣]+동)/;
       const match = fullAddress.match(koreanPattern);
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
         dong = match[1];
       } else {
         // 동이 없으면 첫 번째 지역명 사용
-        const parts = fullAddress.split(',').map(s => s.trim());
+        const parts = fullAddress.split(",").map((s) => s.trim());
         dong = parts[0];
       }
     }
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 동 이름 정규화
-    const normalizedDong = dong.includes('동') ? dong : dong + '동';
+    const normalizedDong = dong.includes("동") ? dong : dong + "동";
 
     return NextResponse.json({
       dong: normalizedDong,

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 export function useAuthRedirect(
   isAuthenticated: boolean,
   isLoading: boolean,
-  targetPath: string = "/map"
+  targetPath: string = "/map",
 ) {
   const router = useRouter();
 
@@ -19,6 +19,6 @@ export function useAuthRedirect(
       if (isAuthenticated) {
         router.push(targetPath);
       }
-    }
+    },
   };
 }

@@ -24,7 +24,7 @@ interface AppHeaderProps {
 export function AppHeader({
   background = "transparent",
   rightElement,
-  children
+  children,
 }: AppHeaderProps) {
   const bgClass = background === "gray" ? "bg-gray-100" : "bg-transparent";
 
@@ -44,11 +44,7 @@ export function AppHeader({
         <h1 className="text-lg font-semibold tracking-wide text-black font-poppins">
           {LOGIN_CONFIG.TEXT.TITLE}
         </h1>
-        {rightElement && (
-          <div className="absolute right-4">
-            {rightElement}
-          </div>
-        )}
+        {rightElement && <div className="absolute right-4">{rightElement}</div>}
       </div>
     </header>
   );

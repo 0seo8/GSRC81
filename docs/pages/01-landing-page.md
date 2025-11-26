@@ -1,4 +1,3 @@
-
 # Landing Page (`/`) 정리
 
 ## 1. 개요
@@ -10,9 +9,9 @@
 
 ## 2. 위치
 
-* **Path:** `/`
-* **File:** ~~`src/app/page.tsx`~~ → **삭제됨**
-* **처리 위치:** `src/middleware.ts`
+- **Path:** `/`
+- **File:** ~~`src/app/page.tsx`~~ → **삭제됨**
+- **처리 위치:** `src/middleware.ts`
 
 ---
 
@@ -41,10 +40,10 @@ Request → Middleware → /map
 
 ### 주요 이점
 
-* 페이지 렌더링 없이 **즉시 이동**
-* 성능 5~10배 개선 (10~20ms 수준)
-* 번들 크기 감소
-* 모든 라우팅 로직 중앙 집중화
+- 페이지 렌더링 없이 **즉시 이동**
+- 성능 5~10배 개선 (10~20ms 수준)
+- 번들 크기 감소
+- 모든 라우팅 로직 중앙 집중화
 
 ---
 
@@ -91,7 +90,7 @@ export async function middleware(req: NextRequest) {
   // 2. 보호된 경로 인증 검사
   const protectedPaths = ["/map", "/courses"];
   const isProtectedPath = protectedPaths.some((path) =>
-    pathname.startsWith(path)
+    pathname.startsWith(path),
   );
 
   if (isProtectedPath) {
@@ -115,23 +114,23 @@ export async function middleware(req: NextRequest) {
 
 ## 6. 성능 비교
 
-| 항목      | 이전(page.tsx)    | 현재(middleware)        | 개선         |
-| ------- | --------------- | --------------------- | ---------- |
-| 처리 흐름   | Page → Redirect | Middleware → Redirect | 1단계 제거     |
+| 항목          | 이전(page.tsx)  | 현재(middleware)      | 개선          |
+| ------------- | --------------- | --------------------- | ------------- |
+| 처리 흐름     | Page → Redirect | Middleware → Redirect | 1단계 제거    |
 | 리디렉션 속도 | 50–100ms        | 10–20ms               | 5–10배 향상   |
-| 번들 크기   | page.tsx 포함     | page.tsx 제거           | 약 2KB 감소   |
+| 번들 크기     | page.tsx 포함   | page.tsx 제거         | 약 2KB 감소   |
 | 미들웨어 크기 | 60.7kB          | 54.4kB                | 약 6.3kB 감소 |
-| 유지보수성   | 로직 분산           | 미들웨어 집중               | 구조 명확      |
+| 유지보수성    | 로직 분산       | 미들웨어 집중         | 구조 명확     |
 
 ---
 
 ## 7. 변경 사항 요약
 
-* `src/app/page.tsx` 삭제
-* 리디렉션 로직을 **완전히 미들웨어로 이동**
-* `withAuth` HOC 제거 → 명시적 구현
-* `callbackUrl` 파라미터 추가로 로그인 후 UX 개선
-* `next/navigation`의 `redirect()` 의존성 제거
+- `src/app/page.tsx` 삭제
+- 리디렉션 로직을 **완전히 미들웨어로 이동**
+- `withAuth` HOC 제거 → 명시적 구현
+- `callbackUrl` 파라미터 추가로 로그인 후 UX 개선
+- `next/navigation`의 `redirect()` 의존성 제거
 
 ---
 
@@ -149,20 +148,20 @@ User → / → Middleware
 
 ## 9. 테스트 체크리스트
 
-* [x] 빌드 정상 완료
-* [x] 미들웨어 번들 감소 확인
-* [ ] `/` → `/map` 리디렉션 정상 동작
-* [ ] 인증 사용자: `/map` 바로 접근 가능
-* [ ] 비인증 사용자: `/login?callbackUrl=/map`으로 이동
-* [ ] 다른 라우트 성능 문제 없음
+- [x] 빌드 정상 완료
+- [x] 미들웨어 번들 감소 확인
+- [ ] `/` → `/map` 리디렉션 정상 동작
+- [ ] 인증 사용자: `/map` 바로 접근 가능
+- [ ] 비인증 사용자: `/login?callbackUrl=/map`으로 이동
+- [ ] 다른 라우트 성능 문제 없음
 
 ---
 
 ## 10. 관련 문서
 
-* `08-middleware.md`
-* `02-login-page.md`
-* `00-refactoring-summary.md`
+- `08-middleware.md`
+- `02-login-page.md`
+- `00-refactoring-summary.md`
 
 ---
 
@@ -173,6 +172,6 @@ User → / → Middleware
 
 그 결과:
 
-* 더 빠르고(10~20ms),
-* 더 단순하며,
-* 더 유지보수하기 쉬운 구조로 정리되었다.
+- 더 빠르고(10~20ms),
+- 더 단순하며,
+- 더 유지보수하기 쉬운 구조로 정리되었다.
