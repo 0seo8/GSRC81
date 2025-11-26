@@ -35,27 +35,41 @@ export function CategoryFullScreen({
   selectedCourse,
   selectedCourses,
 }: CategoryFullScreenProps) {
-  // 현재 카테고리의 코스들 필터링 (memoized)
-  const filteredCourses = useMemo(() => {
+  const categoryFilteredCourses = useMemo(() => {
     const currentCategoryKey = categories.find(
-      (cat) => cat.key === initialCategory
+      (cat) => cat.key === initialCategory,
     )?.key;
 
     if (currentCategoryKey === "all") {
-      // 전체 카테고리인 경우 선택된 코스들만 표시
-      const targetCourses =
-        selectedCourses && selectedCourses.length > 0
-          ? selectedCourses
-          : selectedCourse
-            ? [selectedCourse]
-            : [];
-      return targetCourses;
+      return courses; // "all"일 때는 모든 코스
     } else {
       return courses.filter(
-        (course) => (course.category_key || "jingwan") === currentCategoryKey
+        (course) => (course.category_key || "jingwan") === currentCategoryKey,
       );
     }
-  }, [initialCategory, selectedCourses, selectedCourse, courses, categories]);
+  }, [initialCategory, courses, categories]);
+
+  const filteredCourses = useMemo(() => {
+    const currentCategoryKey = categories.find(
+      (cat) => cat.key === initialCategory,
+    )?.key;
+
+    if (currentCategoryKey === "all") {
+      // 전체 카테고리인 경우에만 선택된 코스 사용
+      return selectedCourses && selectedCourses.length > 0
+        ? selectedCourses
+        : selectedCourse
+          ? [selectedCourse]
+          : [];
+    }
+    return categoryFilteredCourses;
+  }, [
+    initialCategory,
+    categoryFilteredCourses,
+    selectedCourses,
+    selectedCourse,
+    categories,
+  ]);
 
   // 카테고리 네비게이션 훅
   const {
@@ -112,13 +126,13 @@ export function CategoryFullScreen({
             className="fixed bottom-2 left-2 right-2 z-50 rounded-t-[2.8125rem] flex flex-col"
             initial={{ height: "0vh" }}
             animate={{
-              height: snapManager.getSnapHeight(snapManager.snapPoint)
+              height: snapManager.getSnapHeight(snapManager.snapPoint),
             }}
             exit={{ height: "0vh" }}
             transition={{
               type: "spring",
               damping: 30,
-              stiffness: 300
+              stiffness: 300,
             }}
             style={{
               backgroundColor: currentDesign.backgroundColor,

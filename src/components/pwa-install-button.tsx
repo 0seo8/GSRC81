@@ -78,12 +78,6 @@ export function PWAInstallButton() {
       await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
 
-      if (outcome === "accepted") {
-        console.log("PWA 설치 승인됨");
-      } else {
-        console.log("PWA 설치 거부됨");
-      }
-
       setDeferredPrompt(null);
       setShowInstallPrompt(false);
       localStorage.setItem("pwa-install-prompt-seen", Date.now().toString());

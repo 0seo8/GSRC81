@@ -65,7 +65,8 @@ export function useMapBounds(
     }
   }, [map, courses]);
 
-  // 지도가 로드되면 코스 데이터에 따라 범위 조정 (빈 카테고리 포함)
+  // 지도가 로드되고 코스 데이터가 변경될 때마다 범위 조정
+  // 카테고리 변경 시 해당 카테고리의 코스들을 보여주도록 자동 이동
   useEffect(() => {
     if (map) {
       fitMapToCourses();

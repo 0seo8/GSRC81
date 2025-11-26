@@ -41,8 +41,7 @@ export default function CoursesManagePage() {
   const loadCourses = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Admin: 코스 로딩 시작...');
-      
+
       // V2 API 사용 (비활성 코스도 포함하여 관리자가 모든 코스를 볼 수 있도록)
       const { data, error } = await supabase
         .from("courses")
@@ -50,13 +49,10 @@ export default function CoursesManagePage() {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error('❌ Admin: 코스 로딩 오류:', error);
+        console.error("❌ Admin: 코스 로딩 오류:", error);
         throw error;
       }
-      
-      console.log('✅ Admin: 코스 로딩 성공:', data?.length || 0, '개');
-      console.log('📊 Admin: 코스 데이터:', data);
-      
+
       setCourses(data || []);
     } catch (error) {
       console.error("Failed to load courses:", error);

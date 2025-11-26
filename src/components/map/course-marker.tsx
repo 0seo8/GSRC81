@@ -32,11 +32,33 @@ const CourseMarkerComponent = function CourseMarker({
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const hasInitialized = useRef(false);
   const currentCategoryRef = useRef(currentCategory);
+  const coursesRef = useRef(courses);
+  const onCourseClickRef = useRef(onCourseClick);
+  const onClusterClickRef = useRef(onClusterClick);
+  const geojsonDataRef = useRef<GeoJSON.FeatureCollection>({
+    type: "FeatureCollection",
+    features: [],
+  });
 
-  // currentCategory를 ref로 동기화
+  useEffect(() => {
+    coursesRef.current = courses;
+    onCourseClickRef.current = onCourseClick;
+    onClusterClickRef.current = onClusterClick;
+  }, [courses, onCourseClick, onClusterClick]);
+
   useEffect(() => {
     currentCategoryRef.current = currentCategory;
-  }, [currentCategory]);
+
+    if (map && Object.keys(markersRef.current).length > 0) {
+      Object.values(markersRef.current).forEach((marker) => marker.remove());
+      markersRef.current = {};
+
+      const source = map.getSource("courses") as mapboxgl.GeoJSONSource;
+      if (source && geojsonDataRef.current) {
+        source.setData(geojsonDataRef.current);
+      }
+    }
+  }, [currentCategory, map]);
 
   // courses가 변경될 때만 실행
   useEffect(() => {
@@ -46,7 +68,7 @@ const CourseMarkerComponent = function CourseMarker({
     const clusterId = "clusters";
     const unclusteredId = "unclustered-point";
 
-    // GeoJSON 데이터 생성
+    // GeoJSON 데이터 생성 및 ref에 저장
     const geojsonData: GeoJSON.FeatureCollection = {
       type: "FeatureCollection",
       features: courses.map((course) => ({
@@ -62,6 +84,7 @@ const CourseMarkerComponent = function CourseMarker({
         },
       })),
     };
+    geojsonDataRef.current = geojsonData;
 
     const updateMarkers = () => {
       const features = map.querySourceFeatures(sourceId);
@@ -87,7 +110,7 @@ const CourseMarkerComponent = function CourseMarker({
         }
       });
 
-      // 새 마커 생성
+      // 새 마커 생성 또는 업데이트
       for (const feature of features) {
         const coords = feature.geometry as GeoJSON.Point;
         const props = feature.properties;
@@ -100,7 +123,7 @@ const CourseMarkerComponent = function CourseMarker({
           ? `cluster-${props.cluster_id}`
           : `point-${props.id}`;
 
-        // 이미 존재하면 스킵
+        // 이미 존재하면 스킵 (위치/숫자 변경이 필요한 경우 재생성)
         if (markersRef.current[markerId]) {
           continue;
         }
@@ -141,6 +164,9 @@ const CourseMarkerComponent = function CourseMarker({
             center: [lng, lat],
             duration: 800,
             essential: true,
+            padding: {
+              bottom: window.innerHeight * 0.3,
+            },
           });
 
           if (isCluster) {
@@ -166,20 +192,20 @@ const CourseMarkerComponent = function CourseMarker({
               const clusterCourses = leaves
                 .map((leaf) => {
                   const courseId = leaf.properties?.id;
-                  return courses.find((c) => c.id === courseId);
+                  return coursesRef.current.find((c) => c.id === courseId);
                 })
                 .filter((c): c is Course => c !== undefined);
 
-              if (onClusterClick && clusterCourses.length > 0) {
-                onClusterClick(clusterCourses);
+              if (onClusterClickRef.current && clusterCourses.length > 0) {
+                onClusterClickRef.current(clusterCourses);
               }
             } catch (error) {
               console.error("Error handling cluster click:", error);
             }
           } else {
-            const course = courses.find((c) => c.id === props.id);
-            if (onCourseClick && course) {
-              onCourseClick(course);
+            const course = coursesRef.current.find((c) => c.id === props.id);
+            if (onCourseClickRef.current && course) {
+              onCourseClickRef.current(course);
             }
           }
         });
@@ -264,7 +290,7 @@ const CourseMarkerComponent = function CourseMarker({
       Object.values(markersRef.current).forEach((marker) => marker.remove());
       markersRef.current = {};
     };
-  }, [map, courses, onCourseClick, onClusterClick]);
+  }, [map, courses]);
 
   const skeletonPositions = courses.map((course) => ({
     lat: course.start_latitude,

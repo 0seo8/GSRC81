@@ -130,7 +130,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
 
   // 전체 루트 보기 상태 추적
   const [isFullRouteView, setIsFullRouteView] = useState(false);
-  
+
   // 애니메이션 시작 트리거
   const shouldStartAnimation = useRef(false);
 
@@ -937,9 +937,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
                 ["get", "name_kr"],
                 ["get", "name"],
               ]);
-            } catch {
-              console.log(`Could not set Korean labels for layer: ${layerId}`);
-            }
+            } catch {}
           }
         });
       };

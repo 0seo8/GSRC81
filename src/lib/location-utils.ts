@@ -19,9 +19,12 @@ function getCacheKey(lat: number, lng: number): string {
 }
 
 // 카카오 지오코딩 API를 사용해서 좌표를 동 이름으로 변환 (캐시 적용)
-export async function getLocationFromCoords(lat: number, lng: number): Promise<LocationInfo | null> {
+export async function getLocationFromCoords(
+  lat: number,
+  lng: number,
+): Promise<LocationInfo | null> {
   const cacheKey = getCacheKey(lat, lng);
-  
+
   // 캐시에서 확인
   if (locationCache.has(cacheKey)) {
     return locationCache.get(cacheKey) || null;
@@ -29,18 +32,18 @@ export async function getLocationFromCoords(lat: number, lng: number): Promise<L
 
   try {
     const response = await fetch(`/api/geocoding/dong?lat=${lat}&lng=${lng}`);
-    
+
     if (!response.ok) {
-      console.error('Failed to get location info:', response.status);
+      console.error("Failed to get location info:", response.status);
       locationCache.set(cacheKey, null);
       return null;
     }
-    
+
     const data = await response.json();
     locationCache.set(cacheKey, data);
     return data;
   } catch (error) {
-    console.error('Error fetching location:', error);
+    console.error("Error fetching location:", error);
     locationCache.set(cacheKey, null);
     return null;
   }
@@ -48,7 +51,7 @@ export async function getLocationFromCoords(lat: number, lng: number): Promise<L
 
 // 여러 좌표들에서 동 이름들을 추출하고 유니크한 동들만 반환
 export async function getUniqueDongsFromCoords(
-  coords: Array<{ lat: number; lng: number }>
+  coords: Array<{ lat: number; lng: number }>,
 ): Promise<string[]> {
   if (coords.length === 0) return [];
 
@@ -61,38 +64,35 @@ export async function getUniqueDongsFromCoords(
     return acc;
   }, new Map<string, { lat: number; lng: number }>());
 
-  console.log(`🔍 Total coords: ${coords.length}, Unique coords: ${uniqueCoords.size}`);
-
   // 2. 유니크한 좌표들에 대해서만 API 호출
-  const dongPromises = Array.from(uniqueCoords.values()).map(coord => 
-    getLocationFromCoords(coord.lat, coord.lng)
+  const dongPromises = Array.from(uniqueCoords.values()).map((coord) =>
+    getLocationFromCoords(coord.lat, coord.lng),
   );
-  
+
   try {
     const results = await Promise.all(dongPromises);
     const dongs = results
       .filter((result): result is LocationInfo => result !== null)
-      .map(result => result.dong);
-    
+      .map((result) => result.dong);
+
     // 3. 동 이름 중복 제거
     const uniqueDongs = Array.from(new Set(dongs));
-    console.log(`🏘️ Retrieved dongs: ${uniqueDongs.join(', ')}`);
-    
+
     return uniqueDongs;
   } catch (error) {
-    console.error('Error getting unique dongs:', error);
+    console.error("Error getting unique dongs:", error);
     return [];
   }
 }
 
 // 코스들에서 동 이름들을 추출
 export async function getDongsFromCourses(
-  courses: Array<{ start_latitude: number; start_longitude: number }>
+  courses: Array<{ start_latitude: number; start_longitude: number }>,
 ): Promise<string[]> {
-  const coords = courses.map(course => ({
+  const coords = courses.map((course) => ({
     lat: course.start_latitude,
     lng: course.start_longitude,
   }));
-  
+
   return getUniqueDongsFromCoords(coords);
 }

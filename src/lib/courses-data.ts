@@ -12,12 +12,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase environment variables");
 }
 
-console.log("Supabase config:", {
-  url: supabaseUrl,
-  keyLength: supabaseAnonKey?.length || 0,
-});
-
-// 서버 전용 Supabase 클라이언트 (ANON 키 사용, 타임아웃 추가)
 const supabaseServer = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: false,
@@ -56,12 +50,15 @@ interface SupabaseCourseRow {
   cover_image_url?: string;
   created_at: string;
   is_active: boolean;
-  course_categories?: { key?: string; name?: string } | { key?: string; name?: string }[] | null;
+  course_categories?:
+    | { key?: string; name?: string }
+    | { key?: string; name?: string }[]
+    | null;
   course_comments?: { count: number }[] | null;
 }
 
 export async function getCourses(
-  categoryKey?: string
+  categoryKey?: string,
 ): Promise<CourseWithComments[]> {
   const maxRetries = 3;
   let lastError: Error | null = null;
@@ -84,7 +81,7 @@ export async function getCourses(
           is_active,
           course_categories(key, name),
           course_comments(count)
-        `
+        `,
         )
         .eq("is_active", true)
         .order("created_at", { ascending: false });
@@ -103,7 +100,6 @@ export async function getCourses(
       }
 
       if (!data) {
-        console.log("⚠️ getCourses: 데이터 없음");
         return [];
       }
 
@@ -118,7 +114,7 @@ export async function getCourses(
           category_name: Array.isArray(course.course_categories)
             ? (course.course_categories[0]?.name ?? "진관")
             : (course.course_categories?.name ?? "진관"), // JOIN된 카테고리 이름 사용, 없으면 기본값
-        })
+        }),
       );
 
       // categoryKey가 없으면 모든 코스 반환 (전체 보기)
@@ -128,7 +124,7 @@ export async function getCourses(
 
       // 카테고리 필터링
       const filteredCourses = coursesWithCommentCount.filter(
-        (course) => course.category_key === categoryKey
+        (course) => course.category_key === categoryKey,
       );
 
       return filteredCourses;

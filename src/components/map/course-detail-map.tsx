@@ -78,45 +78,53 @@ export function CourseDetailMap({
 
   // 댓글 추가 관련 상태
   const [showCommentModal, setShowCommentModal] = useState(false);
-  const [commentPosition, setCommentPosition] = useState<{ x: number; y: number } | null>(null);
+  const [commentPosition, setCommentPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [showRipple, setShowRipple] = useState(false);
-  const [ripplePosition, setRipplePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [ripplePosition, setRipplePosition] = useState<{
+    x: number;
+    y: number;
+  }>({ x: 0, y: 0 });
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   // Mapbox 토큰
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
 
   // 길게 누르기 핸들러
-  const handleLongPress = useCallback((x: number, y: number) => {
-    if (!map.current || routeCoordinates.length < 2) {
-      return;
-    }
+  const handleLongPress = useCallback(
+    (x: number, y: number) => {
+      if (!map.current || routeCoordinates.length < 2) {
+        return;
+      }
 
-    // 화면 좌표를 지도 좌표로 변환
-    const point = map.current.unproject([x, y]);
-    const clickCoordinates: [number, number] = [point.lng, point.lat];
+      // 화면 좌표를 지도 좌표로 변환
+      const point = map.current.unproject([x, y]);
+      const clickCoordinates: [number, number] = [point.lng, point.lat];
 
-    // GPX 노선 50m 범위 내 체크
-    const gpxPoints = routeCoordinates.map(coord => ({
-      lat: coord[1],
-      lng: coord[0],
-    }));
+      // GPX 노선 50m 범위 내 체크
+      const gpxPoints = routeCoordinates.map((coord) => ({
+        lat: coord[1],
+        lng: coord[0],
+      }));
 
-    if (isWithinGPXRange(clickCoordinates, gpxPoints, 50)) {
-      // Ripple 효과 표시
-      setRipplePosition({ x, y });
-      setShowRipple(true);
-      
-      // 댓글 모달 표시
-      setTimeout(() => {
-        setCommentPosition({ x, y });
-        setShowCommentModal(true);
-      }, 300);
-    } else {
-      // 노선 범위 외 클릭 시 토스트 메시지 (선택사항)
-      console.log("노선에서 너무 멀리 떨어져 있습니다.");
-    }
-  }, [routeCoordinates]);
+      if (isWithinGPXRange(clickCoordinates, gpxPoints, 50)) {
+        // Ripple 효과 표시
+        setRipplePosition({ x, y });
+        setShowRipple(true);
+
+        // 댓글 모달 표시
+        setTimeout(() => {
+          setCommentPosition({ x, y });
+          setShowCommentModal(true);
+        }, 300);
+      } else {
+        // 노선 범위 외 클릭 시 토스트 메시지 (선택사항)
+      }
+    },
+    [routeCoordinates],
+  );
 
   // 길게 누르기 훅 사용
   const longPressHandlers = useLongPress({
@@ -125,42 +133,47 @@ export function CourseDetailMap({
   });
 
   // 댓글 제출 핸들러
-  const handleCommentSubmit = useCallback(async (comment: string) => {
-    if (!commentPosition || !map.current) return;
+  const handleCommentSubmit = useCallback(
+    async (comment: string) => {
+      if (!commentPosition || !map.current) return;
 
-    setIsSubmittingComment(true);
+      setIsSubmittingComment(true);
 
-    try {
-      // 화면 좌표를 지도 좌표로 변환
-      const point = map.current.unproject([commentPosition.x, commentPosition.y]);
-      
-      // 실제 댓글 저장 API 호출
-      const response = await fetch('/api/course-comments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          course_id: courseId,
-          message: comment,
-          latitude: point.lat,
-          longitude: point.lng,
-          // 추가 필요한 필드들
-        }),
-      });
+      try {
+        // 화면 좌표를 지도 좌표로 변환
+        const point = map.current.unproject([
+          commentPosition.x,
+          commentPosition.y,
+        ]);
 
-      if (response.ok) {
-        console.log('댓글이 성공적으로 추가되었습니다.');
-        // 필요시 댓글 목록 새로고침
-      } else {
-        console.error('댓글 추가 실패:', response.status);
+        // 실제 댓글 저장 API 호출
+        const response = await fetch("/api/course-comments", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            course_id: courseId,
+            message: comment,
+            latitude: point.lat,
+            longitude: point.lng,
+            // 추가 필요한 필드들
+          }),
+        });
+
+        if (response.ok) {
+          // 필요시 댓글 목록 새로고침
+        } else {
+          console.error("댓글 추가 실패:", response.status);
+        }
+      } catch (error) {
+        console.error("댓글 추가 오류:", error);
+      } finally {
+        setIsSubmittingComment(false);
       }
-    } catch (error) {
-      console.error('댓글 추가 오류:', error);
-    } finally {
-      setIsSubmittingComment(false);
-    }
-  }, [commentPosition, courseId]);
+    },
+    [commentPosition, courseId],
+  );
 
   const loadCourseRoute = useCallback(async () => {
     if (!map.current) return;
