@@ -21,11 +21,11 @@ export function splitTitleAtMidpoint(title: string): [string, string] {
 }
 
 /**
- * 난이도 값을 한글 레이블로 변환합니다
- * @param difficulty - 난이도 값 ('easy' | 'medium' | 'hard')
- * @returns 한글 난이도 레이블
+ * @deprecated Use getDifficultyLabel from @/lib/constants/course instead
+ * 난이도 레이블은 @/lib/constants/course에서 가져오세요
  */
 export function getDifficultyLabel(difficulty: string): string {
+  // 하위 호환성을 위해 유지, 곧 제거 예정
   const labels: Record<string, string> = {
     easy: "쉬움",
     medium: "보통",

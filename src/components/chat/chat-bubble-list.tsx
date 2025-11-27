@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/shared/lib/supabase";
 import { Send, MessageSquare, Plus, X } from "lucide-react";
 import Image from "next/image";
 import { format, formatDistanceToNow, differenceInDays } from "date-fns";

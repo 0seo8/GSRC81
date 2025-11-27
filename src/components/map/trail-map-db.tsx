@@ -3,9 +3,9 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import Map, { Source, Layer, Marker, MapRef } from "react-map-gl/mapbox";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { Flag } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/shared/lib/supabase";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import {

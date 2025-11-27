@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { Camera, Download, RotateCcw, X } from "lucide-react";
 
 interface MapCaptureHelperProps {

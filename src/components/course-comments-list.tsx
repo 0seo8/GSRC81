@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import { CourseComment } from "@/lib/comments";
+import { CourseComment } from "@/shared/lib/comments";
 import { MessageCircle } from "lucide-react";
-import { formatRelativeTime } from "@/utils/date-utils";
+import { formatRelativeTime } from "@/shared/lib/utils/date-utils";
 
 interface CourseCommentsListProps {
   comments: CourseComment[];

@@ -1,5 +1,3 @@
-// GSRC81 Maps Type Definitions
-
 export interface Course {
   id: string;
   title: string;

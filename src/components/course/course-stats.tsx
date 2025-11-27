@@ -1,4 +1,4 @@
-import { getDifficultyLabel } from "@/lib/utils/text";
+import { getDifficultyLabel } from "@/shared/lib/constants/course";
 
 interface CourseStatsProps {
   distance: number;

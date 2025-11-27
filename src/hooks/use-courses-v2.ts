@@ -5,7 +5,7 @@ import {
   getActiveCoursesV2,
   getCourseByIdV2,
   subscribeToCourseChanges,
-} from "@/lib/courses-data-v2";
+} from "@/shared/lib/courses-data-v2";
 
 /**
  * 모든 코스 가져오기 훅

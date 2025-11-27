@@ -1,4 +1,4 @@
-import { CourseWithComments } from "@/lib/courses-data";
+import { CourseWithComments } from "@/shared/lib/courses-data";
 import { CourseCard } from "./course-card";
 
 interface CourseCardStackProps {

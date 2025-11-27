@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { CourseCardStack } from "./course-card-stack";
-import { type CourseWithComments } from "@/lib/courses-data";
+import { type CourseWithComments } from "@/shared/lib/courses-data";
 import { useState, useMemo } from "react";
 
 interface CourseDrawerProps {

@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Image as ImageIcon } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
 import Image from "next/image";
 
 interface CoursePhoto {

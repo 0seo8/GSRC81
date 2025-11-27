@@ -5,8 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   type CourseWithComments,
   type CourseCategory,
-} from "@/lib/courses-data";
-import { getCategoryDesign } from "@/config/category-designs";
+} from "@/shared/lib/courses-data";
+import { getCategoryDesign } from "@/shared/lib/config/category-designs";
 import { useBottomSheetDrag } from "@/hooks/use-bottom-sheet-drag";
 import { useCategoryNavigation } from "@/hooks/use-category-navigation";
 import { BottomSheetHeader } from "./bottom-sheet-header";

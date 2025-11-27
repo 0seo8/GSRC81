@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState, memo } from "react";
 import { createRoot } from "react-dom/client";
 import mapboxgl from "mapbox-gl";
-import { type CourseWithComments } from "@/lib/courses-data";
-import { getCategoryColor } from "@/lib/category-colors";
+import { type CourseWithComments } from "@/shared/lib/courses-data";
+import { getCategoryColor } from "@/shared/lib/category-colors";
 import { NumberMarker } from "./number-marker";
 import { MarkerSkeleton } from "./marker-skeleton";
 

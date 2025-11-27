@@ -1,7 +1,7 @@
 import Image from "next/image";
-import { LOGIN_CONFIG } from "@/lib/config/login-constants";
-import { KakaoLoginButton } from "@/components/login/kakao-login-button";
-import { AppHeader } from "@/components/layout/app-header";
+import { LOGIN_CONFIG } from "@/shared/lib/config/login-constants";
+import { KakaoLoginButton } from "@/features/auth/components/kakao-login-button";
+import { AppHeader } from "@/shared/components/layout/app-header";
 
 /**
  * 로그인 페이지 (서버 컴포넌트)

@@ -1,5 +1,5 @@
 import { User } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { TrailData } from "../types";
 import { formatTime } from "../utils";
 import { FLIGHT_CONFIG } from "../constants";

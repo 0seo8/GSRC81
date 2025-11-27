@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useOptimistic } from "react";
-import { type CourseWithComments } from "@/lib/courses-data";
+import { type CourseWithComments } from "@/shared/lib/courses-data";
 
 export function useMapState(courses: CourseWithComments[]) {
   const [map, setMap] = useState<mapboxgl.Map | null>(null);

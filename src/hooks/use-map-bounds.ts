@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { type CourseWithComments } from "@/lib/courses-data";
+import { type CourseWithComments } from "@/shared/lib/courses-data";
 
 export function useMapBounds(
   map: mapboxgl.Map | null,

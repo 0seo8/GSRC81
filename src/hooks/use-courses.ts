@@ -1,5 +1,5 @@
 import { use } from "react";
-import { getCourses, type CourseWithComments } from "@/lib/courses-data";
+import { getCourses, type CourseWithComments } from "@/shared/lib/courses-data";
 
 // React 19의 use hook을 활용한 데이터 fetching
 export function useCoursesData() {

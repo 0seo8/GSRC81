@@ -7,7 +7,7 @@ import {
   ProcessedGPXData,
   GPXPoint,
   extractKmMarkers,
-} from "@/lib/processGpxFile";
+} from "@/shared/lib/processGpxFile";
 
 // ====================================================================
 // 타입 정의
@@ -479,82 +479,3 @@ export function useFlightAnimation(
     },
   };
 }
-
-// ====================================================================
-// 사용 예시
-// ====================================================================
-
-/*
-// 코스 상세 페이지에서의 사용법:
-
-import { useFlightAnimation } from '@/hooks/useFlightAnimation';
-
-const CourseDetailPage = ({ course, notes }) => {
-  const mapRef = useRef<MapRef>(null);
-  
-  const flight = useFlightAnimation(
-    mapRef,
-    course.gpx_data,
-    notes,
-    {
-      speedMultiplier: 1.5, // 1.5배속
-      autoHideMarkers: true,
-      noteShowDistance: 100 // 100m 이내 노트 표시
-    }
-  );
-  
-  return (
-    <div>
-      <Map ref={mapRef}>
-        // 기본 경로 렌더링
-        <Source id="route" type="geojson" data={routeGeoJSON}>
-          <Layer {...routeStyle} />
-        </Source>
-        
-        // 1km 마커들
-        {flight.kmMarkers.map(marker => 
-          marker.isVisible && (
-            <Marker
-              key={marker.km}
-              longitude={marker.position.lng}
-              latitude={marker.position.lat}
-            >
-              <div className="km-marker">{marker.km}km</div>
-            </Marker>
-          )
-        )}
-        
-        // 노트들
-        {flight.visibleNotes.map(note => (
-          <Marker
-            key={note.id}
-            longitude={note.longitude}
-            latitude={note.latitude}
-          >
-            <div className="course-note">{note.title}</div>
-          </Marker>
-        ))}
-      </Map>
-      
-      // 컨트롤 UI
-      <div className="flight-controls">
-        <button onClick={flight.controls.startAnimation}>
-          비행 시작
-        </button>
-        <button onClick={flight.controls.pauseAnimation}>
-          일시정지
-        </button>
-        <button onClick={flight.controls.showFullRoute}>
-          전체 보기
-        </button>
-        
-        // 진행률 표시
-        <div>
-          진행률: {(flight.state.animationProgress * 100).toFixed(1)}%
-          현재: {flight.state.currentKm}km
-        </div>
-      </div>
-    </div>
-  );
-};
-*/

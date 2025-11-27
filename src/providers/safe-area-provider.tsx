@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, ReactNode } from "react";
-import { useDeviceDetection } from "@/hooks/use-device-detection";
+import { useDeviceDetection } from "@/shared/hooks/use-device-detection";
 
 const SafeAreaContext = createContext({
   isIOS: false,

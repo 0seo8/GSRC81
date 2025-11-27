@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
-import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
+import { supabase } from "@/shared/lib/supabase";
+import { Button } from "@/shared/components/ui/button";
 import * as turf from "@turf/turf";
-import { analyzeTerrain, cameraParams, offset } from "@/utils/useDroneCamera";
+import { analyzeTerrain, cameraParams, offset } from "@/hooks/use-drone-camera";
 import {
   Route,
   Mountain,
@@ -25,10 +25,10 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RippleEffect } from "@/components/ui/ripple-effect";
+import { RippleEffect } from "@/shared/components/ui/ripple-effect";
 import { CommentAddModal } from "./comment-add-modal";
-import { useLongPress } from "@/hooks/use-long-press";
-import { isWithinGPXRange } from "@/utils/gpx-distance";
+import { useLongPress } from "@/shared/hooks/use-long-press";
+import { isWithinGPXRange } from "@/shared/lib/utils/gpx-distance";
 
 interface Course {
   id: string;

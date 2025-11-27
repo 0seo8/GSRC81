@@ -10,18 +10,18 @@ import { CategoryFullScreen } from "./category-full-screen";
 import { MapTokenError } from "./map-token-error";
 import { useMapState } from "@/hooks/use-map-state";
 import { useMapBounds } from "@/hooks/use-map-bounds";
-import { useGeolocation } from "@/hooks/use-geolocation";
+import { useGeolocation } from "@/shared/hooks/use-geolocation";
 import {
   type CourseWithComments,
   type CourseCategory,
-} from "@/lib/courses-data";
-import { addAllCategory } from "@/lib/category-utils";
+} from "@/shared/lib/courses-data";
+import { addAllCategory } from "@/shared/lib/category-utils";
 import {
   MAPBOX_TOKEN,
   EUNPYEONG_CENTER,
   DEFAULT_ZOOM,
   MAPBOX_STYLE,
-} from "@/lib/map-constants";
+} from "@/shared/lib/map-constants";
 
 interface OptimizedMapClientProps {
   courses: CourseWithComments[];

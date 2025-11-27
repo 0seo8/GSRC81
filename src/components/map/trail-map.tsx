@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import Map, { Source, Layer, Marker, MapRef } from "react-map-gl/mapbox";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 import {
   Mountain,
   Eye,
@@ -22,7 +22,7 @@ import {
   calculateZoomLevel,
   POIPoint,
   TrailPoint,
-} from "@/lib/gpx-loader";
+} from "@/shared/lib/gpx-loader";
 
 import "mapbox-gl/dist/mapbox-gl.css";
 

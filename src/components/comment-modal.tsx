@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MessageSquare, MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { createComment, CreateCommentData } from "@/lib/comments";
+import { Button } from "@/shared/components/ui/button";
+import { createComment, CreateCommentData } from "@/shared/lib/comments";
 
 interface CommentModalProps {
   isOpen: boolean;

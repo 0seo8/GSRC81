@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Drawer } from "@/components/ui/drawer";
+import { Button } from "@/shared/components/ui/button";
+import { Drawer } from "@/shared/components/ui/drawer";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 

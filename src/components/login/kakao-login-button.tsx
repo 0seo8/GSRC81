@@ -2,8 +2,8 @@
 
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { FigmaButton } from "@/components/ui/figma-button";
-import { LOGIN_CONFIG } from "@/lib/config/login-constants";
+import { FigmaButton } from "@/shared/components/ui/figma-button";
+import { LOGIN_CONFIG } from "@/shared/lib/config/login-constants";
 
 /**
  * 카카오 로그인 버튼 (클라이언트 컴포넌트)

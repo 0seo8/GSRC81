@@ -17,11 +17,15 @@ export const DIFFICULTY_COLORS = {
 export type Difficulty = keyof typeof DIFFICULTY_LABELS;
 
 export function getDifficultyLabel(difficulty: string): string {
-  return DIFFICULTY_LABELS[difficulty as Difficulty] || DIFFICULTY_LABELS.medium;
+  return (
+    DIFFICULTY_LABELS[difficulty as Difficulty] || DIFFICULTY_LABELS.medium
+  );
 }
 
 export function getDifficultyColor(difficulty: string): string {
-  return DIFFICULTY_COLORS[difficulty as Difficulty] || DIFFICULTY_COLORS.medium;
+  return (
+    DIFFICULTY_COLORS[difficulty as Difficulty] || DIFFICULTY_COLORS.medium
+  );
 }
 
 // 기본 fallback 텍스트

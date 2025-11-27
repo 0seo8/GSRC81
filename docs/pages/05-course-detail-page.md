@@ -193,6 +193,7 @@ const [firstLine, secondLine] = splitAtMidpoint(course.title)
    - Should use Tailwind classes
 
 6. **Fixed Heights**
+
    ```typescript
    className = "w-full h-[24.5625rem]";
    ```

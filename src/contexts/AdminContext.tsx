@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/shared/lib/supabase";
 import bcrypt from "bcryptjs";
 
 interface AdminContextType {

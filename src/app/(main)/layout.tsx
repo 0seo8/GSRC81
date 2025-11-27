@@ -1,6 +1,6 @@
-import { PWAInstallButton } from "@/components/pwa-install-button";
-import { AppHeader } from "@/components/layout/app-header";
-import { MenuButton } from "@/components/layout/menu-button";
+import { PWAInstallButton } from "@/shared/components/common/pwa-install-button";
+import { AppHeader } from "@/shared/components/layout/app-header";
+import { MenuButton } from "@/shared/components/layout/menu-button";
 
 interface MainLayoutProps {
   children: React.ReactNode;

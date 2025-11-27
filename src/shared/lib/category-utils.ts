@@ -1,4 +1,4 @@
-import { type CourseCategory } from "@/lib/courses-data";
+import { type CourseCategory } from "@/shared/lib/courses-data";
 
 /**
  * "전체" 카테고리 정의

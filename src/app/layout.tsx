@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Noto_Sans, Poppins } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
-import { Providers } from "@/components/providers";
+import { Toaster } from "@/shared/components/ui/sonner";
+import { Providers } from "@/shared/components/common/providers";
 
 const notoSans = Noto_Sans({
   variable: "--font-noto-sans",

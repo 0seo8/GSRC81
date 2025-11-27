@@ -9,10 +9,10 @@ import Map, {
   MapMouseEvent,
 } from "react-map-gl/mapbox";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { Flag, MessageSquare } from "lucide-react";
 import { convertToLegacyCourse } from "@/types/unified";
-import { getCourseByIdV2 } from "@/lib/courses-data-v2";
+import { getCourseByIdV2 } from "@/shared/lib/courses-data-v2";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import { TrailMapProps, TrailData, TrailGeoJSON } from "./trail-map/types";
@@ -31,8 +31,8 @@ import {
   getCourseComments,
   getFlightModeComments,
   CourseComment,
-} from "@/lib/comments";
-import { getCoursePhotos, CoursePhoto } from "@/lib/course-photos";
+} from "@/shared/lib/comments";
+import { getCoursePhotos, CoursePhoto } from "@/shared/lib/course-photos";
 
 // TrailData를 그대로 사용 (타입 호환성 위해)
 

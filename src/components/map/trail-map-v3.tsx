@@ -15,7 +15,7 @@ import Map, {
   MapMouseEvent,
 } from "react-map-gl/mapbox";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { Flag, MessageSquare } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -32,7 +32,7 @@ import { CommentModal } from "../comment-modal";
 import { CommentList } from "../comment-list";
 import { CourseGallery } from "../course-gallery";
 import { useTrailData } from "@/hooks/use-trail-data";
-import { formatRelativeTime } from "@/utils/date-utils";
+import { formatRelativeTime } from "@/shared/lib/utils/date-utils";
 
 // 좌표 변환을 위한 타입
 interface Coordinate {

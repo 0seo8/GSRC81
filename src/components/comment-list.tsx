@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion";
 import { MessageSquare, MapPin, User } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { CourseComment } from "@/lib/comments";
+import { Card } from "@/shared/components/ui/card";
+import { CourseComment } from "@/shared/lib/comments";
 import Image from "next/image";
 
 interface CommentListProps {

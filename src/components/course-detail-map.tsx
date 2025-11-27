@@ -11,7 +11,7 @@ import Map, {
 import { motion } from "framer-motion";
 import { Flag, MessageSquare } from "lucide-react";
 import { convertToLegacyCourse } from "@/types/unified";
-import { getCourseByIdV2 } from "@/lib/courses-data-v2";
+import { getCourseByIdV2 } from "@/shared/lib/courses-data-v2";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import { TrailData, TrailGeoJSON } from "./map/trail-map/types";
@@ -21,7 +21,7 @@ import { useLocationTracking } from "./map/trail-map/hooks/use-location-tracking
 import { useKmMarkers } from "./map/trail-map/hooks/use-km-markers";
 import { MapControls } from "./map/trail-map/components/map-controls";
 import { CommentModal } from "./comment-modal";
-import { getFlightModeComments, CourseComment } from "@/lib/comments";
+import { getFlightModeComments, CourseComment } from "@/shared/lib/comments";
 
 interface CourseDetailMapProps {
   courseId: string;

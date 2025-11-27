@@ -1,6 +1,3 @@
-// GSRC81 Maps Constants
-
-// Map Configuration
 export const MAP_CONFIG = {
   DEFAULT_CENTER: {
     lng: 126.9227,

@@ -15,7 +15,7 @@ import {
   type CourseWithComments,
   type CourseCategory,
   getCourses,
-} from "@/lib/courses-data";
+} from "@/shared/lib/courses-data";
 
 interface MapClientProps {
   courses: CourseWithComments[];

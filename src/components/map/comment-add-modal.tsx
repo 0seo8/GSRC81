@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { X, MessageSquare } from "lucide-react";
 
 interface CommentAddModalProps {

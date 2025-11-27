@@ -1,5 +1,3 @@
-// 카테고리별 디자인 매핑 설정
-
 export interface CategoryDesign {
   backgroundColor: string;
   cardColors: readonly string[];

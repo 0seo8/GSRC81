@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
-import { CourseCategory, CourseWithComments } from "@/lib/courses-data";
-import { getDongsFromCourses } from "@/lib/location-utils";
+import { CourseCategory, CourseWithComments } from "@/shared/lib/courses-data";
+import { getDongsFromCourses } from "@/shared/lib/location-utils";
 
 interface UseCategoryNavigationProps {
   categories: CourseCategory[];

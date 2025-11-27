@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
-import { CourseWithComments } from "@/lib/courses-data";
+import { CourseWithComments } from "@/shared/lib/courses-data";
 import {
   calculateCardLayout,
   calculateCardShadow,
   getDifficultyText,
-} from "@/utils/card-layout";
+} from "@/shared/lib/utils/card-layout";
 
 interface CourseCardProps {
   course: CourseWithComments;

@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { getCourseByIdV2 } from "@/lib/courses-data-v2";
+import { getCourseByIdV2 } from "@/shared/lib/courses-data-v2";
 import {
   getCourseComments,
   getFlightModeComments,
   CourseComment,
-} from "@/lib/comments";
-import { getCoursePhotos, CoursePhoto } from "@/lib/course-photos";
+} from "@/shared/lib/comments";
+import { getCoursePhotos, CoursePhoto } from "@/shared/lib/course-photos";
 import { convertToLegacyCourse } from "@/types/unified";
 import { TrailData, TrailGeoJSON } from "@/components/map/trail-map/types";
 
