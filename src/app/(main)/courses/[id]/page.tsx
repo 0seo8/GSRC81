@@ -2,13 +2,14 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Noto_Sans } from "next/font/google";
-import { getCourseById } from "@/lib/courses-data";
-import { CourseCommentsList } from "@/components/course-comments-list";
-import { getCourseComments } from "@/lib/comments";
-import { getCoursePhotos } from "@/lib/course-photos";
-import { CourseDetailMapWrapper } from "@/components/map/course-detail-map-wrapper";
-import { CourseStats } from "@/components/course/course-stats";
-import { splitTitleAtMidpoint } from "@/lib/utils/text";
+import { getCourseById } from "@/shared/lib/courses-data";
+import { CourseCommentsList } from "@/features/courses/components/course-comments-list";
+import { getCourseComments } from "@/shared/lib/comments";
+import { getCoursePhotos } from "@/shared/lib/course-photos";
+import { CourseDetailMapWrapper } from "@/features/map/components/course-detail-map-wrapper";
+import { CourseStats } from "@/features/courses/components/course-stats";
+import { splitTitleAtMidpoint } from "@/shared/lib/utils/text";
+import { DEFAULT_COURSE_DESCRIPTION } from "@/core/config/course";
 
 const notoSans = Noto_Sans({
   subsets: ["latin"],
@@ -110,8 +111,7 @@ export default async function CourseDetailPage({
               {/* 코스 설명 */}
               <div className="space-y-2 px-2">
                 <div className="text-course-detail-description text-black pt-5 pb-6">
-                  {course.detail_description ||
-                    "진관천을 한 바퀴 왕복해 도는 코스입니다. 정기런 때 뛰는 코스이기도 해요! 접근하기 좋아 자주 벙이 열리는 장소입니다. 모두 같이 즐겁게 달려봐요!"}
+                  {course.detail_description || DEFAULT_COURSE_DESCRIPTION}
                 </div>
               </div>
             </div>

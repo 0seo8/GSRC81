@@ -3,8 +3,11 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { useSession } from "next-auth/react";
-import { verifyAccessCode, isUserVerified } from "@/lib/auth/verification";
-import { AppHeader } from "@/components/layout/app-header";
+import {
+  verifyAccessCode,
+  isUserVerified,
+} from "@/shared/lib/auth/verification";
+import { AppHeader } from "@/shared/components/layout/app-header";
 
 function VerifyContent() {
   const params = useSearchParams();

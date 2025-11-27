@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SplashScreen } from "@/components/splash-screen";
+import { SplashScreen } from "@/shared/components/common/splash-screen";
 
 const SPLASH_KEY = "gsrc81_splash_shown";
 

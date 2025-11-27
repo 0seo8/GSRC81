@@ -1,4 +1,4 @@
-import { MapSkeleton } from "@/components/map/map-skeleton";
+import { MapSkeleton } from "@/features/map/components/map-skeleton";
 
 /**
  * Map 페이지 로딩 UI

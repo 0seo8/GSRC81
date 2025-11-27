@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { MapError } from "@/components/map/map-error";
+import { MapError } from "@/features/map/components/map-error";
 
 /**
  * Map 페이지 에러 UI

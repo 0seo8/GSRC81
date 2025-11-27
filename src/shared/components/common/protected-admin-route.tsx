@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAdmin } from "@/contexts/AdminContext";
+import { useAdmin } from "@/features/admin/context/AdminContext";
 
 interface ProtectedAdminRouteProps {
   children: React.ReactNode;

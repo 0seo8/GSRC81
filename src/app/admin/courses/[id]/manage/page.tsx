@@ -2,20 +2,30 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ProtectedAdminRoute } from "@/components/protected-admin-route";
-import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { ProtectedAdminRoute } from "@/shared/components/common/protected-admin-route";
+import { supabase } from "@/shared/lib/supabase";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Textarea } from "@/shared/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@/shared/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/shared/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/shared/components/ui/tabs";
 import {
   Save,
   MapPin,
@@ -25,8 +35,16 @@ import {
   Camera,
 } from "lucide-react";
 import Link from "next/link";
-import { type CoursePhoto } from "@/lib/course-photos";
-import ImageUploader from "@/components/common/ImageUploader";
+import { type CoursePhoto } from "@/shared/lib/course-photos";
+import ImageUploader from "@/shared/components/common/ImageUploader";
+import { toast } from "sonner";
+import { DIFFICULTY_LABELS } from "@/core/config/course";
+import {
+  SUCCESS_MESSAGES,
+  ERROR_MESSAGES,
+  CONFIRM_MESSAGES,
+} from "@/core/config/messages";
+import type { CourseCategory } from "@/shared/lib/courses-data";
 
 interface Course {
   id: string;
@@ -43,6 +61,7 @@ interface Course {
   is_active: boolean;
   created_at: string;
   elevation_gain?: number;
+  category_id?: string;
   gpx_data?: {
     version: string;
     points: Array<{ lat: number; lng: number; ele?: number }>;
@@ -78,6 +97,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
   const [course, setCourse] = useState<Course | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [photos, setPhotos] = useState<CoursePhoto[]>([]);
+  const [categories, setCategories] = useState<CourseCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
@@ -97,10 +117,10 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
     end_longitude: "",
     elevation_gain: "",
     is_active: true,
+    category_id: "",
   });
 
   const [hasGpxData, setHasGpxData] = useState(false);
-
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -114,8 +134,25 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
   useEffect(() => {
     if (courseId) {
       loadCourseData();
+      loadCategories();
     }
   }, [courseId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("course_categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error("Failed to load categories:", error);
+      toast.error("카테고리를 불러오는데 실패했습니다");
+    }
+  };
 
   const loadCourseData = async () => {
     try {
@@ -181,10 +218,11 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
         ).toString(),
         elevation_gain: elevation.toString(),
         is_active: courseData.is_active,
+        category_id: courseData.category_id || "",
       });
     } catch (error) {
       console.error("Failed to load course data:", error);
-      alert("코스 정보를 불러오는 중 오류가 발생했습니다.");
+      toast.error(ERROR_MESSAGES.COURSE_LOAD_FAILED);
       router.push("/admin/courses");
     } finally {
       setLoading(false);
@@ -239,6 +277,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
           parseFloat(formData.start_longitude),
         elevation_gain: parseInt(formData.elevation_gain) || 0,
         is_active: formData.is_active,
+        category_id: formData.category_id || null,
       };
 
       const { error } = await supabase
@@ -248,11 +287,11 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
 
       if (error) throw error;
 
-      alert("코스 정보가 성공적으로 저장되었습니다.");
+      toast.success(SUCCESS_MESSAGES.COURSE_UPDATED);
       await loadCourseData(); // 데이터 새로고침
     } catch (error) {
       console.error("Failed to save course:", error);
-      alert("코스 정보 저장 중 오류가 발생했습니다.");
+      toast.error(ERROR_MESSAGES.COURSE_CREATE_FAILED);
     } finally {
       setSaving(false);
     }
@@ -262,7 +301,10 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
     commentId: string,
     authorNickname: string,
   ) => {
-    if (!confirm(`${authorNickname}님의 댓글을 삭제하시겠습니까?`)) return;
+    const confirmed = window.confirm(
+      CONFIRM_MESSAGES.DELETE_COURSE(`${authorNickname}님의 댓글`),
+    );
+    if (!confirmed) return;
 
     try {
       const { error } = await supabase
@@ -272,11 +314,11 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
 
       if (error) throw error;
 
-      alert("댓글이 삭제되었습니다.");
+      toast.success("댓글이 삭제되었습니다");
       await loadCourseData(); // 댓글 목록 새로고침
     } catch (error) {
       console.error("Failed to delete comment:", error);
-      alert("댓글 삭제 중 오류가 발생했습니다.");
+      toast.error("댓글 삭제 중 오류가 발생했습니다");
     }
   };
 
@@ -310,10 +352,10 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
       // 사진 목록에 추가
       setPhotos((prev) => [newPhoto, ...prev]);
 
-      alert("사진이 성공적으로 업로드되었습니다.");
+      toast.success("사진이 성공적으로 업로드되었습니다");
     } catch (error) {
       console.error("사진 업로드 실패:", error);
-      alert(
+      toast.error(
         `사진 업로드 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
       );
     } finally {
@@ -323,7 +365,8 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
 
   // 사진 삭제 핸들러
   const handleDeletePhoto = async (photoId: string) => {
-    if (!confirm("이 사진을 삭제하시겠습니까?")) return;
+    const confirmed = window.confirm("이 사진을 삭제하시겠습니까?");
+    if (!confirmed) return;
 
     try {
       // API를 통해 데이터베이스에서 사진 삭제
@@ -339,20 +382,21 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
       // 사진 목록에서 삭제된 항목 제거
       setPhotos((prev) => prev.filter((photo) => photo.id !== photoId));
 
-      alert("사진이 삭제되었습니다.");
+      toast.success("사진이 삭제되었습니다");
     } catch (error) {
       console.error("사진 삭제 실패:", error);
-      alert(
+      toast.error(
         `사진 삭제 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
       );
     }
   };
 
-  const difficultyOptions = [
-    { value: "easy", label: "쉬움" },
-    { value: "medium", label: "보통" },
-    { value: "hard", label: "어려움" },
-  ];
+  const difficultyOptions = Object.entries(DIFFICULTY_LABELS).map(
+    ([value, label]) => ({
+      value,
+      label,
+    }),
+  );
 
   if (loading) {
     return (
@@ -461,7 +505,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                           className={errors.title ? "border-red-300" : ""}
                         />
                         {errors.title && (
-                          <p className="text-gray-600 text-xs mt-1">
+                          <p className="text-red-600 text-xs mt-1">
                             {errors.title}
                           </p>
                         )}
@@ -499,6 +543,37 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                           placeholder="예: 구파발역"
                         />
                       </div>
+
+                      {/* 카테고리 선택 - 새로 추가된 부분 */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          카테고리
+                        </label>
+                        <Select
+                          value={formData.category_id}
+                          onValueChange={(value) =>
+                            setFormData({
+                              ...formData,
+                              category_id: value,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="w-full md:w-64">
+                            <SelectValue placeholder="카테고리 선택" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">선택 안함</SelectItem>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          코스가 속할 카테고리를 선택하세요 (선택사항)
+                        </p>
+                      </div>
                     </div>
 
                     {/* 코스 정보 */}
@@ -529,7 +604,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                             }
                           />
                           {errors.distance_km && (
-                            <p className="text-gray-600 text-xs mt-1">
+                            <p className="text-red-600 text-xs mt-1">
                               {errors.distance_km}
                             </p>
                           )}
@@ -555,7 +630,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                             }
                           />
                           {errors.avg_time_min && (
-                            <p className="text-gray-600 text-xs mt-1">
+                            <p className="text-red-600 text-xs mt-1">
                               {errors.avg_time_min}
                             </p>
                           )}
@@ -713,7 +788,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                       </div>
 
                       {errors.coordinates && (
-                        <p className="text-gray-600 text-xs">
+                        <p className="text-red-600 text-xs">
                           {errors.coordinates}
                         </p>
                       )}
@@ -886,7 +961,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                                   comment.author_nickname,
                                 )
                               }
-                              className="text-gray-600 hover:text-gray-700 hover:border-gray-300 ml-4"
+                              className="text-red-600 hover:text-red-700 hover:border-red-300 ml-4"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>

@@ -1,11 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ProtectedAdminRoute } from "@/components/protected-admin-route";
-import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProtectedAdminRoute } from "@/shared/components/common/protected-admin-route";
+import { supabase } from "@/shared/lib/supabase";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/shared/components/ui/card";
 import {
   Lock,
   Eye,

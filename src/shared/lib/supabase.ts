@@ -20,7 +20,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Database Tables
 export const TABLES = {
   COURSES: "courses",
   COURSE_CATEGORIES: "course_categories",
@@ -29,11 +28,4 @@ export const TABLES = {
   ADMIN: "admin",
   APP_SETTINGS: "app_settings",
   PROFILES: "profiles",
-} as const;
-
-// Storage Buckets
-export const STORAGE_BUCKETS = {
-  GPX_FILES: "gpx-files",
-  COURSE_IMAGES: "course-images",
-  AVATARS: "avatars",
 } as const;

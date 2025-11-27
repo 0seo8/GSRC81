@@ -1,6 +1,3 @@
-// GSRC81 Maps: 통합된 타입 정의 (v2)
-// GPX 데이터 통합 후 사용할 새로운 타입
-
 export interface UnifiedGPXData {
   version: "1.1";
   points: GPXPoint[];

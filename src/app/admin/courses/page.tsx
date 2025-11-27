@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ProtectedAdminRoute } from "@/components/protected-admin-route";
-import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
+import { ProtectedAdminRoute } from "@/shared/components/common/protected-admin-route";
+import { supabase } from "@/shared/lib/supabase";
+import { Button } from "@/shared/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/shared/components/ui/card";
 import {
   Plus,
   Edit,
@@ -20,13 +20,26 @@ import {
   ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
-import { GPXUploadForm } from "@/components/admin/GPX-upload-form";
+import { GPXUploadForm } from "@/features/admin/components/GPX-upload-form";
 import {
   CourseV2,
   getDistance,
   getDuration,
   UnifiedGPXData,
 } from "@/types/unified";
+import { toast } from "sonner";
+import { GPXDataSchema } from "@/core/validation/gpx";
+import {
+  getDifficultyLabel,
+  getDifficultyColor,
+  EMPTY_COURSE_MESSAGE,
+} from "@/core/config/course";
+import {
+  SUCCESS_MESSAGES,
+  ERROR_MESSAGES,
+  CONFIRM_MESSAGES,
+  LOADING_MESSAGES,
+} from "@/core/config/messages";
 
 export default function CoursesManagePage() {
   const [courses, setCourses] = useState<CourseV2[]>([]);
@@ -42,7 +55,6 @@ export default function CoursesManagePage() {
     try {
       setLoading(true);
 
-      // V2 API 사용 (비활성 코스도 포함하여 관리자가 모든 코스를 볼 수 있도록)
       const { data, error } = await supabase
         .from("courses")
         .select("*")
@@ -56,13 +68,17 @@ export default function CoursesManagePage() {
       setCourses(data || []);
     } catch (error) {
       console.error("Failed to load courses:", error);
+      toast.error(ERROR_MESSAGES.COURSE_LOAD_FAILED);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (course: CourseV2) => {
-    if (!confirm(`"${course.title}" 코스를 삭제하시겠습니까?`)) return;
+    const confirmed = window.confirm(
+      CONFIRM_MESSAGES.DELETE_COURSE(course.title),
+    );
+    if (!confirmed) return;
 
     try {
       const { error } = await supabase
@@ -71,59 +87,24 @@ export default function CoursesManagePage() {
         .eq("id", course.id);
 
       if (error) throw error;
-      alert("코스가 삭제되었습니다.");
+
+      toast.success(SUCCESS_MESSAGES.COURSE_DELETED);
       loadCourses();
     } catch (error) {
       console.error("Failed to delete course:", error);
-      alert("코스 삭제 중 오류가 발생했습니다.");
+      toast.error(ERROR_MESSAGES.COURSE_DELETE_FAILED);
     }
   };
 
   const handleGPXSubmit = async (formData: FormData, gpxData: unknown) => {
-    let courseData = null;
-
     try {
       setSubmitting(true);
 
-      // GPX 데이터에서 코스 정보 추출 (GPXData 타입 구조에 맞게)
-      const gpx = gpxData as {
-        name: string;
-        distance: number;
-        startPoint: { lat: number; lng: number };
-        endPoint: { lat: number; lng: number };
-        duration: number;
-        elevationGain: number;
-        coordinates: Array<{ lat: number; lng: number; ele?: number }>;
-      };
-
-      // 필수 데이터 검증
-      if (!gpx || typeof gpx !== "object") {
-        throw new Error("GPX 데이터가 유효하지 않습니다.");
-      }
+      // Zod로 GPX 데이터 검증
+      const validatedGPX = GPXDataSchema.parse(gpxData);
 
       const { startPoint, coordinates, distance, duration, elevationGain } =
-        gpx;
-
-      // 필수 필드 검증
-      if (
-        !startPoint ||
-        typeof startPoint.lat !== "number" ||
-        typeof startPoint.lng !== "number"
-      ) {
-        throw new Error("시작점 좌표가 유효하지 않습니다.");
-      }
-
-      if (!Array.isArray(coordinates) || coordinates.length === 0) {
-        throw new Error("GPS 좌표 데이터가 없습니다.");
-      }
-
-      if (typeof distance !== "number" || distance <= 0) {
-        throw new Error("거리 정보가 유효하지 않습니다.");
-      }
-
-      if (typeof duration !== "number" || duration <= 0) {
-        throw new Error("소요시간 정보가 유효하지 않습니다.");
-      }
+        validatedGPX;
 
       // 통계 계산
       const bounds = {
@@ -133,7 +114,7 @@ export default function CoursesManagePage() {
         maxLng: Math.max(...coordinates.map((c) => c.lng)),
       };
 
-      // vFinal 표준화된 GPX 데이터 구조 (UnifiedGPXData 타입 호환)
+      // vFinal 표준화된 GPX 데이터 구조
       const normalizedGpxData: UnifiedGPXData = {
         version: "1.1" as const,
         points: coordinates,
@@ -155,7 +136,7 @@ export default function CoursesManagePage() {
         },
       };
 
-      courseData = {
+      const courseData = {
         title: formData.get("title") as string,
         description: formData.get("description") as string,
         detail_description:
@@ -170,7 +151,7 @@ export default function CoursesManagePage() {
         cover_image_url: (formData.get("cover_image_url") as string) || null,
         elevation_gain: elevationGain || 0,
         sort_order: 0,
-        gpx_data: normalizedGpxData, // 기존 구조와 호환되는 데이터
+        gpx_data: normalizedGpxData,
         is_active: true,
       };
 
@@ -183,28 +164,17 @@ export default function CoursesManagePage() {
         throw courseError;
       }
 
-      alert("코스가 성공적으로 등록되었습니다.");
+      toast.success(SUCCESS_MESSAGES.COURSE_CREATED);
       setIsGPXFormExpanded(false);
-      loadCourses(); // 새로운 코스를 반영하기 위해 리로드
+      loadCourses();
     } catch (error) {
       console.error("Failed to save course from GPX:", error);
-      console.error("Error details:", {
-        error,
-        gpxData,
-        courseData,
-        formDataValues: {
-          title: formData.get("title"),
-          description: formData.get("description"),
-          difficulty: formData.get("difficulty"),
-        },
-      });
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : typeof error === "object"
-            ? JSON.stringify(error, null, 2)
-            : String(error);
-      alert(`코스 등록 중 오류가 발생했습니다: ${errorMessage}`);
+
+      if (error instanceof Error) {
+        toast.error(`${ERROR_MESSAGES.COURSE_CREATE_FAILED}: ${error.message}`);
+      } else {
+        toast.error(ERROR_MESSAGES.COURSE_CREATE_FAILED);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -214,157 +184,164 @@ export default function CoursesManagePage() {
     setIsGPXFormExpanded(!isGPXFormExpanded);
   };
 
-  const difficultyLabels = {
-    easy: "쉬움",
-    medium: "보통",
-    hard: "어려움",
-  };
-
-  const difficultyColors = {
-    easy: "bg-gray-100 text-gray-800",
-    medium: "bg-gray-200 text-gray-800",
-    hard: "bg-gray-300 text-gray-800",
-  };
-
   return (
     <ProtectedAdminRoute>
       <div className="min-h-screen bg-gray-50">
         {/* 메인 콘텐츠 */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* 모바일용 GPX 코스 등록 섹션 (아코디언) */}
-          <div className="mb-6 block md:hidden">
+          {/* GPX 코스 등록 섹션 - Responsive */}
+          <div className="mb-8">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              {/* 모바일: 접기/펼치기 버튼 */}
               <button
                 onClick={toggleGPXForm}
-                className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50 rounded-lg transition-colors"
+                className="w-full p-4 md:p-6 flex items-center justify-between text-left hover:bg-gray-50 md:hover:bg-white rounded-lg transition-colors"
               >
                 <div className="flex items-center">
-                  <Plus className="w-4 h-4 mr-2 text-gray-600" />
-                  <span className="text-base font-semibold text-gray-900">
+                  <Plus className="w-4 h-4 md:w-5 md:h-5 mr-2 text-gray-600" />
+                  <span className="text-base md:text-lg font-semibold text-gray-900">
                     새 코스 등록
                   </span>
                 </div>
-                {isGPXFormExpanded ? (
-                  <ChevronUp className="w-5 h-5 text-gray-400" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-400" />
-                )}
+                {/* 모바일에서만 아이콘 표시 */}
+                <div className="md:hidden">
+                  {isGPXFormExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </div>
               </button>
 
-              {isGPXFormExpanded && (
-                <div className="px-4 pb-4 border-t border-gray-100">
-                  <div className="pt-4">
-                    <GPXUploadForm
-                      onSubmit={handleGPXSubmit}
-                      loading={submitting}
-                    />
-                  </div>
+              {/* 폼 영역 - 데스크톱에서는 항상 표시, 모바일에서는 토글 */}
+              <div
+                className={`
+                  px-4 pb-4 md:px-6 md:pb-6 border-t border-gray-100
+                  ${isGPXFormExpanded ? "block" : "hidden md:block"}
+                `}
+              >
+                <div className="pt-4">
+                  <GPXUploadForm
+                    onSubmit={handleGPXSubmit}
+                    loading={submitting}
+                  />
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
-          {/* 데스크톱용 GPX 코스 등록 섹션 */}
-          <div className="mb-8 hidden md:block">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Plus className="w-5 h-5 mr-2 text-gray-600" />새 코스 등록
-              </h2>
-              <GPXUploadForm onSubmit={handleGPXSubmit} loading={submitting} />
-            </div>
-          </div>
-
+          {/* 코스 목록 */}
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">코스를 불러오는 중...</p>
+              <p className="text-gray-600">
+                {LOADING_MESSAGES.LOADING_COURSES}
+              </p>
             </div>
           ) : courses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course) => (
-                <Card key={course.id} className="shadow-xl border-0 py-6 gap-2">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">
-                          {course.title}
-                        </CardTitle>
-                        <CardDescription className="">
-                          {course.gpx_data.metadata?.nearestStation &&
-                            `${course.gpx_data.metadata.nearestStation} 인근`}
-                        </CardDescription>
-                      </div>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          difficultyColors[course.difficulty]
-                        }`}
-                      >
-                        {difficultyLabels[course.difficulty]}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                      {course.description || "설명이 없습니다."}
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                      <div>
-                        <span className="text-gray-500">거리</span>
-                        <p className="font-medium">
-                          {getDistance(course).toFixed(2)}km
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">소요시간</span>
-                        <p className="font-medium">{getDuration(course)}</p>
-                      </div>
-                    </div>
-
-                    <div className="text-xs text-gray-400 mb-4">
-                      등록일: {new Date(course.created_at).toLocaleDateString()}
-                    </div>
-
-                    <div className="flex space-x-2">
-                      <Link
-                        href={`/admin/courses/${course.id}/manage`}
-                        className="flex-1"
-                      >
-                        <Button size="sm" variant="outline" className="w-full">
-                          <Edit className="w-4 h-4 mr-1" />
-                          관리
-                        </Button>
-                      </Link>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(course)}
-                        className="text-gray-600 hover:text-gray-700 hover:border-gray-300"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  onDelete={handleDelete}
+                />
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                등록된 코스가 없습니다
-              </h3>
-              <p className="text-gray-600 mb-6">
-                GPX 파일을 업로드하여 첫 번째 러닝 코스를 등록해보세요
-              </p>
-              <Button onClick={() => setIsGPXFormExpanded(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                GPX로 첫 코스 등록하기
-              </Button>
-            </div>
+            <EmptyState onAddCourse={() => setIsGPXFormExpanded(true)} />
           )}
         </main>
       </div>
     </ProtectedAdminRoute>
+  );
+}
+
+// 코스 카드 컴포넌트
+interface CourseCardProps {
+  course: CourseV2;
+  onDelete: (course: CourseV2) => Promise<void>;
+}
+
+function CourseCard({ course, onDelete }: CourseCardProps) {
+  return (
+    <Card className="shadow-xl border-0 py-6 gap-2">
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-lg">{course.title}</CardTitle>
+            <CardDescription>
+              {course.gpx_data.metadata?.nearestStation &&
+                `${course.gpx_data.metadata.nearestStation} 인근`}
+            </CardDescription>
+          </div>
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(course.difficulty)}`}
+          >
+            {getDifficultyLabel(course.difficulty)}
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+          {course.description || "설명이 없습니다."}
+        </p>
+
+        <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+          <div>
+            <span className="text-gray-500">거리</span>
+            <p className="font-medium">{getDistance(course).toFixed(2)}km</p>
+          </div>
+          <div>
+            <span className="text-gray-500">소요시간</span>
+            <p className="font-medium">{getDuration(course)}</p>
+          </div>
+        </div>
+
+        <div className="text-xs text-gray-400 mb-4">
+          등록일: {new Date(course.created_at).toLocaleDateString()}
+        </div>
+
+        <div className="flex space-x-2">
+          <Link href={`/admin/courses/${course.id}/manage`} className="flex-1">
+            <Button size="sm" variant="outline" className="w-full">
+              <Edit className="w-4 h-4 mr-1" />
+              관리
+            </Button>
+          </Link>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onDelete(course)}
+            className="text-red-600 hover:text-red-700 hover:border-red-300"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// 빈 상태 컴포넌트
+interface EmptyStateProps {
+  onAddCourse: () => void;
+}
+
+function EmptyState({ onAddCourse }: EmptyStateProps) {
+  return (
+    <div className="text-center py-12">
+      <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+      <h3 className="text-lg font-medium text-gray-900 mb-2">
+        {EMPTY_COURSE_MESSAGE.title}
+      </h3>
+      <p className="text-gray-600 mb-6">
+        GPX 파일을 업로드하여 첫 번째 러닝 코스를 등록해보세요
+      </p>
+      <Button onClick={onAddCourse}>
+        <Plus className="w-4 h-4 mr-2" />
+        GPX로 첫 코스 등록하기
+      </Button>
+    </div>
   );
 }

@@ -3,7 +3,7 @@
  * 사용자 인증 코드 검증 관련 유틸리티 함수
  */
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/shared/lib/supabase";
 
 export interface VerificationResult {
   success: boolean;
@@ -96,22 +96,4 @@ export async function verifyAccessCode(
     success: true,
     data: updatedLink,
   };
-}
-
-/**
- * 사용자의 검증 정보 가져오기
- * @param kakaoUserId - 카카오 사용자 ID
- * @returns 검증 정보
- */
-export async function getUserVerificationData(kakaoUserId: string) {
-  if (!kakaoUserId) return null;
-
-  const { data, error } = await supabase
-    .from("access_links")
-    .select("*")
-    .eq("kakao_user_id", kakaoUserId)
-    .single();
-
-  if (error) return null;
-  return data;
 }

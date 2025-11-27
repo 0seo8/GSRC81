@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AdminLoginForm } from "@/components/admin/admin-login-form";
-import { useAdmin } from "@/contexts/AdminContext";
+import { AdminLoginForm } from "@/features/admin/components/admin-login-form";
+import { useAdmin } from "@/features/admin/context/AdminContext";
 
 export default function AdminLoginPage() {
   const { isAdminAuthenticated } = useAdmin();

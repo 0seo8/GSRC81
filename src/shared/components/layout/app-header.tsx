@@ -1,4 +1,4 @@
-import { LOGIN_CONFIG } from "@/lib/config/login-constants";
+import { LOGIN_CONFIG } from "@/core/config/login";
 
 interface AppHeaderProps {
   /**

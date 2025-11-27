@@ -1,5 +1,5 @@
-import { getCourses, getCourseCategories } from "@/lib/courses-data";
-import { OptimizedMapClient } from "@/components/map/optimized-map-client";
+import { getCourses, getCourseCategories } from "@/shared/lib/courses-data";
+import { OptimizedMapClient } from "@/features/map/components/optimized-map-client";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 
 const courseCardVariants = cva(
   "course-card flex flex-col justify-between p-6 transition-all duration-200 hover:transform hover:-translate-y-1 hover:shadow-lg",

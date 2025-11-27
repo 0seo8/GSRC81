@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ProtectedAdminRoute } from "@/components/protected-admin-route";
-import { Button } from "@/components/ui/button";
+import { ProtectedAdminRoute } from "@/shared/components/common/protected-admin-route";
+import { Button } from "@/shared/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/shared/components/ui/card";
 import {
   AlertTriangle,
   CheckCircle,
@@ -17,7 +17,10 @@ import {
   Database,
   ArrowRight,
 } from "lucide-react";
-import { checkMigrationStatus, migrateAllCourses } from "@/lib/gpx-migration";
+import {
+  checkMigrationStatus,
+  migrateAllCourses,
+} from "@/shared/lib/gpx-migration";
 
 export default function MigrationPage() {
   const [status, setStatus] = useState({
