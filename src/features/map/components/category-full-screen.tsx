@@ -35,41 +35,17 @@ export function CategoryFullScreen({
   selectedCourse,
   selectedCourses,
 }: CategoryFullScreenProps) {
-  const categoryFilteredCourses = useMemo(() => {
-    const currentCategoryKey = categories.find(
-      (cat) => cat.key === initialCategory,
-    )?.key;
-
-    if (currentCategoryKey === "all") {
-      return courses; // "all"일 때는 모든 코스
-    } else {
-      return courses.filter(
-        (course) => (course.category_key || "jingwan") === currentCategoryKey,
-      );
-    }
-  }, [initialCategory, courses, categories]);
-
   const filteredCourses = useMemo(() => {
-    const currentCategoryKey = categories.find(
-      (cat) => cat.key === initialCategory,
-    )?.key;
-
-    if (currentCategoryKey === "all") {
-      // 전체 카테고리인 경우에만 선택된 코스 사용
-      return selectedCourses && selectedCourses.length > 0
-        ? selectedCourses
-        : selectedCourse
-          ? [selectedCourse]
-          : [];
+    // 마커 또는 클러스터를 클릭했을 때는 항상 선택된 코스만 표시
+    if (selectedCourses && selectedCourses.length > 0) {
+      return selectedCourses;
     }
-    return categoryFilteredCourses;
-  }, [
-    initialCategory,
-    categoryFilteredCourses,
-    selectedCourses,
-    selectedCourse,
-    categories,
-  ]);
+    if (selectedCourse) {
+      return [selectedCourse];
+    }
+    // 선택된 코스가 없는 경우 (일반적으로 발생하지 않아야 함)
+    return [];
+  }, [selectedCourses, selectedCourse]);
 
   // 카테고리 네비게이션 훅
   const {
@@ -118,7 +94,13 @@ export function CategoryFullScreen({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={(e) => {
+              // 마커를 클릭한 경우가 아니면 닫기
+              const target = e.target as HTMLElement;
+              if (!target.closest('.mapboxgl-marker')) {
+                onClose();
+              }
+            }}
           />
 
           {/* 바텀시트 메인 컨테이너 */}

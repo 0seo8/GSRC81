@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 
 // 클라이언트 컴포넌트에서만 dynamic import with ssr: false 사용 가능
 const CourseDetailMap = dynamic(
-  () => import("@/features/map/components/course-detail-map").then(mod => ({ default: mod.CourseDetailMap })),
+  () => import("@/features/map/components/course-detail-map"),
   {
     ssr: false,
     loading: () => (
