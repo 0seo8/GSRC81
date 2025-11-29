@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Card,
@@ -61,11 +61,7 @@ export default function AdminUsersPage() {
     action: null,
   });
 
-  useEffect(() => {
-    loadUsers();
-  }, [pagination.page, filter, search]);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -97,7 +93,11 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.pageSize, filter, search]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const handleSearch = () => {
     setSearch(searchInput);
@@ -123,9 +123,10 @@ export default function AdminUsersPage() {
       toast.success(result.message);
       loadUsers();
       setConfirmDialog({ isOpen: false, user: null, action: null });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to toggle admin:", error);
-      toast.error(error.message || "관리자 권한 변경에 실패했습니다");
+      const message = error instanceof Error ? error.message : "관리자 권한 변경에 실패했습니다";
+      toast.error(message);
     }
   };
 

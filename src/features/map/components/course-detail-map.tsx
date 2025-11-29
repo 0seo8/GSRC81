@@ -391,6 +391,14 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
       handleTrailLayerClick(lng, lat);
     };
 
+    const handleMouseEnter = () => {
+      map.getCanvas().style.cursor = "pointer";
+    };
+
+    const handleMouseLeave = () => {
+      map.getCanvas().style.cursor = "";
+    };
+
     // 레이어가 로드될 때까지 대기
     const setupLayerEvents = () => {
       if (map.getLayer("trail-clickable")) {
@@ -398,13 +406,8 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
         map.on("click", "trail-clickable", handleLayerClick);
 
         // 마우스 커서 변경 (경로 위에서만 포인터)
-        map.on("mouseenter", "trail-clickable", () => {
-          map.getCanvas().style.cursor = "pointer";
-        });
-
-        map.on("mouseleave", "trail-clickable", () => {
-          map.getCanvas().style.cursor = "";
-        });
+        map.on("mouseenter", "trail-clickable", handleMouseEnter);
+        map.on("mouseleave", "trail-clickable", handleMouseLeave);
       }
     };
 
@@ -418,8 +421,8 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     return () => {
       if (map.getLayer("trail-clickable")) {
         map.off("click", "trail-clickable", handleLayerClick);
-        map.off("mouseenter", "trail-clickable");
-        map.off("mouseleave", "trail-clickable");
+        map.off("mouseenter", "trail-clickable", handleMouseEnter);
+        map.off("mouseleave", "trail-clickable", handleMouseLeave);
       }
     };
   }, [handleTrailLayerClick]);
