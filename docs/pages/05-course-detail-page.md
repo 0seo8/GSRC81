@@ -23,9 +23,16 @@ Displays comprehensive information about a specific running course including map
    - Course route visualization
    - GPX path rendering
    - Flight mode animation support
+   - Interactive route with clickable comment placement
+   - Smart cursor feedback (pointer on route, default elsewhere)
 
 3. **Comments System**
    - Map-based comments with geolocation
+   - **Route-only comment placement** (improved in 2025-01-29)
+     - Comments can only be placed on the actual route path
+     - Uses Mapbox layer click events for precise placement
+     - Cursor changes to pointer when hovering over route
+     - Map pan/zoom/scroll works normally when clicking outside route
    - Comment list with photos
    - Distance markers along route
 
@@ -404,6 +411,119 @@ app/(main)/courses/[id]/
 - **Server Actions** for comment submission
 - **Partial Prerendering** (experimental)
 
+## Comment Placement System (2025-01-29 Update)
+
+### Problem Statement
+
+**Before**: Users could click anywhere on the map to place comments, which resulted in:
+- ❌ Comments being placed far from the actual route
+- ❌ Unintentional comment placement when trying to pan/zoom the map
+- ❌ Poor user experience with unclear interaction boundaries
+
+### Solution: Mapbox Layer Click Events
+
+**After**: Implemented route-specific click detection using Mapbox layer events
+
+### Implementation Details
+
+#### 1. Clickable Transparent Layer
+
+```typescript
+// src/features/map/components/course-detail-map.tsx
+const trailClickableLayer = {
+  id: "trail-clickable",
+  type: "line" as const,
+  paint: {
+    "line-color": "transparent",
+    "line-width": 20, // Wide enough for easy clicking/tapping
+    "line-opacity": 0,
+  },
+  layout: {
+    "line-join": "round" as const,
+    "line-cap": "round" as const,
+  },
+};
+```
+
+**Key Points**:
+- 20px width provides comfortable click/tap target for mobile
+- Transparent layer sits above visible route line
+- Follows exact route geometry
+
+#### 2. Layer-Specific Click Handler
+
+```typescript
+useEffect(() => {
+  if (!mapRef.current) return;
+  const map = mapRef.current.getMap();
+
+  const handleLayerClick = (e: mapboxgl.MapLayerMouseEvent) => {
+    const { lng, lat } = e.lngLat;
+    handleTrailLayerClick(lng, lat);
+  };
+
+  // Register click event only for the clickable layer
+  map.on("click", "trail-clickable", handleLayerClick);
+
+  // Cursor feedback
+  map.on("mouseenter", "trail-clickable", () => {
+    map.getCanvas().style.cursor = "pointer";
+  });
+
+  map.on("mouseleave", "trail-clickable", () => {
+    map.getCanvas().style.cursor = "";
+  });
+
+  return () => {
+    map.off("click", "trail-clickable", handleLayerClick);
+    map.off("mouseenter", "trail-clickable");
+    map.off("mouseleave", "trail-clickable");
+  };
+}, [handleTrailLayerClick]);
+```
+
+#### 3. Removed General Map Click Handler
+
+**Before**:
+```typescript
+<Map onClick={handleMapClick} ... />
+```
+
+**After**:
+```typescript
+<Map ... /> // No onClick - only layer clicks work
+```
+
+### User Experience Improvements
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| Comment Placement | Anywhere on map | Only on route ✅ |
+| Visual Feedback | None | Cursor changes to pointer ✅ |
+| Map Navigation | Competed with comment clicks | Works normally ✅ |
+| Mobile Usability | Hard to hit route precisely | 20px tap target ✅ |
+| Accidental Clicks | Common | Prevented ✅ |
+
+### Technical Benefits
+
+1. **Precision**: Comments always placed exactly on route path
+2. **Intuitive**: Cursor feedback makes interaction clear
+3. **Standard Pattern**: Uses Mapbox recommended approach
+4. **Performance**: No distance calculations on every map click
+5. **Mobile-Friendly**: Generous tap target (20px width)
+
+### Files Modified
+
+- `src/features/map/components/course-detail-map.tsx`
+  - Added `trailClickableLayer` definition
+  - Modified click handler to be layer-specific
+  - Added cursor hover effects
+  - Removed general map onClick handler
+
+### Related Documentation
+
+See `.claude/comment-registration-improvement.md` for full analysis of solution alternatives.
+
 ## Testing Recommendations
 
 ### Unit Tests
@@ -417,9 +537,15 @@ app/(main)/courses/[id]/
 - Course data fetching
 - 404 handling
 - Comment rendering
+- **Route-only comment placement** (new)
+- **Cursor feedback on route hover** (new)
 
 ### E2E Tests
 
 - Full page load
 - Map interaction
 - Photo gallery navigation
+- **Comment placement workflow** (updated)
+  - Hover over route → cursor changes to pointer
+  - Click route → comment modal opens
+  - Click outside route → map pans/zooms normally

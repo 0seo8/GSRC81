@@ -146,12 +146,11 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     [trailData],
   );
 
-  // 지도 클릭 핸들러
-  const handleMapClick = useCallback(
-    (event: MapMouseEvent) => {
+  // 경로 레이어 클릭 핸들러 (레이어 위에서만 동작)
+  const handleTrailLayerClick = useCallback(
+    (lng: number, lat: number) => {
       if (isAnimating) return; // 애니메이션 중에는 클릭 비활성화
 
-      const { lng, lat } = event.lngLat;
       const nearestPoint = findNearestRoutePoint(lng, lat);
 
       if (nearestPoint) {
@@ -381,6 +380,50 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     }
   }, [courseId, loadFlightComments]);
 
+  // 경로 레이어 클릭 이벤트 등록
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const map = mapRef.current.getMap();
+
+    const handleLayerClick = (e: mapboxgl.MapLayerMouseEvent) => {
+      const { lng, lat } = e.lngLat;
+      handleTrailLayerClick(lng, lat);
+    };
+
+    // 레이어가 로드될 때까지 대기
+    const setupLayerEvents = () => {
+      if (map.getLayer("trail-clickable")) {
+        // 레이어 클릭 이벤트 등록
+        map.on("click", "trail-clickable", handleLayerClick);
+
+        // 마우스 커서 변경 (경로 위에서만 포인터)
+        map.on("mouseenter", "trail-clickable", () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+
+        map.on("mouseleave", "trail-clickable", () => {
+          map.getCanvas().style.cursor = "";
+        });
+      }
+    };
+
+    // 스타일이 로드된 후 이벤트 등록
+    if (map.isStyleLoaded()) {
+      setupLayerEvents();
+    } else {
+      map.once("styledata", setupLayerEvents);
+    }
+
+    return () => {
+      if (map.getLayer("trail-clickable")) {
+        map.off("click", "trail-clickable", handleLayerClick);
+        map.off("mouseenter", "trail-clickable");
+        map.off("mouseleave", "trail-clickable");
+      }
+    };
+  }, [handleTrailLayerClick]);
+
   // 트레일 라인 스타일
   const trailLineLayer = {
     id: "trail-line",
@@ -399,6 +442,21 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     id: "trail-outline",
     type: "line" as const,
     paint: {},
+    layout: {
+      "line-join": "round" as const,
+      "line-cap": "round" as const,
+    },
+  };
+
+  // 클릭 가능한 투명 레이어 (넓은 클릭 영역)
+  const trailClickableLayer = {
+    id: "trail-clickable",
+    type: "line" as const,
+    paint: {
+      "line-color": "transparent",
+      "line-width": 20, // 클릭하기 쉬운 넓은 영역
+      "line-opacity": 0,
+    },
     layout: {
       "line-join": "round" as const,
       "line-cap": "round" as const,
@@ -443,7 +501,6 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
         ref={mapRef}
         {...viewState}
         onMove={(evt) => setViewState(evt.viewState)}
-        onClick={handleMapClick}
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         style={{ width: "100%", height: "100%" }}
         mapStyle="mapbox://styles/mapbox/streets-v12"
@@ -476,6 +533,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
               <Source id="trail" type="geojson" data={geoJSONData}>
                 <Layer {...trailOutlineLayer} />
                 <Layer {...trailLineLayer} />
+                <Layer {...trailClickableLayer} />
               </Source>
             )
           );
