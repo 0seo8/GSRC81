@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Navigation } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Navigation, Shield } from "lucide-react";
 
 /**
  * 메뉴 버튼 및 드롭다운 (클라이언트 컴포넌트)
@@ -10,6 +11,7 @@ import { Navigation } from "lucide-react";
  */
 export function MenuButton() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { data: session } = useSession();
 
   return (
     <>
@@ -33,13 +35,18 @@ export function MenuButton() {
               <Navigation className="w-4 h-4 inline mr-2" />
               지도
             </a>
-            <a
-              href="/admin"
-              className="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              관리자
-            </a>
+
+            {/* 관리자 권한이 있는 사용자에게만 표시 */}
+            {session?.user?.isAdmin && (
+              <a
+                href="/admin"
+                className="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Shield className="w-4 h-4 inline mr-2" />
+                관리자
+              </a>
+            )}
           </nav>
         </div>
       )}
