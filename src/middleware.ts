@@ -64,7 +64,11 @@ export async function middleware(req: NextRequest) {
   // ✅ 4. Admin routes handled by AdminContext
   // No need to check here, AdminContext + admin middleware handles it
 
-  return NextResponse.next();
+  // Add pathname to headers for admin layout
+  const response = NextResponse.next();
+  response.headers.set("x-pathname", pathname);
+
+  return response;
 }
 
 export const config = {

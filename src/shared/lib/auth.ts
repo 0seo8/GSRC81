@@ -62,6 +62,7 @@ export const authOptions: NextAuthOptions = {
 
         if (userInfo) {
           session.user.isVerified = userInfo.is_active;
+          session.user.isAdmin = userInfo.is_admin || false;
         }
       }
       return session;

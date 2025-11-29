@@ -130,6 +130,7 @@ export default function AdminDashboard() {
         {/* 모바일 메뉴 리스트 */}
         <div className="block md:hidden space-y-4 mb-8">
           <MenuCard href="/admin/courses" label="코스 관리" />
+          <MenuCard href="/admin/users" label="사용자 관리" />
           <MenuCard href="/admin/password" label="비밀번호 관리" />
           <MenuCard label="시스템 설정" />
           <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between">
@@ -165,6 +166,11 @@ export default function AdminDashboard() {
                 href="/admin/courses"
                 icon={<Edit className="w-4 h-4 mr-2" />}
                 label="코스 관리"
+              />
+              <ActionButton
+                href="/admin/users"
+                icon={<Users className="w-4 h-4 mr-2" />}
+                label="사용자 관리"
               />
               <ActionButton
                 href="/admin/password"
