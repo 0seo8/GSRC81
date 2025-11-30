@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/shared/lib/supabase";
+import { supabase, supabaseAdmin } from "@/shared/lib/supabase";
 import { getCurrentUser, checkAdminPermission } from "@/features/admin/lib/auth-helpers";
 
 interface RouteParams {
@@ -71,28 +71,45 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // 관리자 권한 업데이트
-    const { error: updateError } = await supabase
+    // 관리자 권한 업데이트 (supabaseAdmin 사용 - RLS 우회)
+    console.log("Updating admin status:", {
+      userId,
+      newAdminStatus,
+      action,
+    });
+
+    const { data: updateData, error: updateError } = await supabaseAdmin
       .from("access_links")
       .update({ is_admin: newAdminStatus })
-      .eq("id", userId);
+      .eq("id", userId)
+      .select();
+
+    console.log("Update result:", { updateData, updateError });
 
     if (updateError) {
       console.error("Failed to update admin status:", updateError);
       return NextResponse.json(
-        { error: "Failed to update admin status" },
+        { error: `Failed to update admin status: ${updateError.message}` },
         { status: 500 },
       );
     }
 
-    // 감사 로그 기록
+    if (!updateData || updateData.length === 0) {
+      console.error("No rows updated");
+      return NextResponse.json(
+        { error: "No rows were updated. User may not exist." },
+        { status: 404 },
+      );
+    }
+
+    // 감사 로그 기록 (supabaseAdmin 사용)
     const ipAddress =
       request.headers.get("x-forwarded-for") ||
       request.headers.get("x-real-ip") ||
       "unknown";
     const userAgent = request.headers.get("user-agent") || "unknown";
 
-    await supabase.from("admin_action_logs").insert({
+    await supabaseAdmin.from("admin_action_logs").insert({
       admin_id: currentAdmin.id,
       action_type: action === "grant" ? "grant_admin" : "revoke_admin",
       target_user_id: userId,

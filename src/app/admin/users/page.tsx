@@ -123,7 +123,16 @@ export default function AdminUsersPage() {
       }
 
       toast.success(result.message);
-      loadUsers();
+
+      // 사용자 목록에서 해당 사용자의 is_admin 상태를 즉시 업데이트
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.id === user.id
+            ? { ...u, is_admin: action === "grant" }
+            : u
+        )
+      );
+
       setConfirmDialog({ isOpen: false, user: null, action: null });
 
       // 변경된 사용자가 현재 로그인한 사용자인 경우 세션 갱신

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/shared/lib/supabase";
+import { supabaseAdmin } from "@/shared/lib/supabase";
 import { checkAdminPermission } from "@/features/admin/lib/auth-helpers";
 
 /**
@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
     const filter = searchParams.get("filter"); // 'admin' | 'user' | 'all'
     const search = searchParams.get("search"); // 닉네임 검색
 
-    // 쿼리 빌드
-    let query = supabase
+    // 쿼리 빌드 (supabaseAdmin 사용 - RLS 우회)
+    let query = supabaseAdmin
       .from("access_links")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false });
