@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   type CourseWithComments,
@@ -71,6 +71,9 @@ export function CategoryFullScreen({
   // 디자인 설정
   const currentDesign = getCategoryDesign(currentCategory?.key);
 
+  // 스크롤 컨테이너 ref
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   // 바텀시트가 열릴 때 snapPoint를 medium으로 초기화
   useEffect(() => {
     if (isOpen) {
@@ -78,6 +81,65 @@ export function CategoryFullScreen({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]); // isOpen이 변경될 때만 실행
+
+  // 스크롤로 전체화면 전환 기능 (마우스 휠)
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleScroll = (e: WheelEvent) => {
+      const isAtTop = scrollContainer.scrollTop === 0;
+      const isScrollingUp = e.deltaY < 0;
+      const isMediumSize = snapManager.snapPoint === "medium";
+
+      // 맨 위에서 위로 스크롤하면 전체화면으로 확장
+      if (isAtTop && isScrollingUp && isMediumSize) {
+        e.preventDefault();
+        snapManager.snapToNext();
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleScroll, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleScroll);
+    };
+  }, [snapManager]);
+
+  // 터치 스크롤로 전체화면 전환 기능 (모바일)
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    let touchStartY = 0;
+    let scrollTopAtTouchStart = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+      scrollTopAtTouchStart = scrollContainer.scrollTop;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const touchCurrentY = e.touches[0].clientY;
+      const touchDeltaY = touchCurrentY - touchStartY;
+      const isAtTop = scrollTopAtTouchStart === 0;
+      const isScrollingUp = touchDeltaY > 30; // 30px 이상 아래로 드래그 (위로 스크롤)
+      const isMediumSize = snapManager.snapPoint === "medium";
+
+      // 맨 위에서 위로 스크롤하면 전체화면으로 확장
+      if (isAtTop && isScrollingUp && isMediumSize) {
+        snapManager.snapToNext();
+      }
+    };
+
+    scrollContainer.addEventListener("touchstart", handleTouchStart, { passive: true });
+    scrollContainer.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+    return () => {
+      scrollContainer.removeEventListener("touchstart", handleTouchStart);
+      scrollContainer.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [snapManager]);
 
   // 카테고리가 없을 때 안전 장치
   if (!categories || categories.length === 0) {
@@ -132,7 +194,7 @@ export function CategoryFullScreen({
             </div>
 
             {/* 카드 스크롤 영역 */}
-            <div className="flex-1 overflow-y-auto px-0 pb-0">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-0 pb-0 flex flex-col justify-end">
               <RefactoredCourseCardStack
                 courses={filteredCourses}
                 cardColors={currentDesign.cardColors}
