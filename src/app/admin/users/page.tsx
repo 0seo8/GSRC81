@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Card,
@@ -40,6 +41,7 @@ interface PaginationInfo {
 }
 
 export default function AdminUsersPage() {
+  const { data: session, update: updateSession } = useSession();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -123,6 +125,12 @@ export default function AdminUsersPage() {
       toast.success(result.message);
       loadUsers();
       setConfirmDialog({ isOpen: false, user: null, action: null });
+
+      // 변경된 사용자가 현재 로그인한 사용자인 경우 세션 갱신
+      if (session?.user?.id === user.kakao_user_id) {
+        await updateSession();
+        toast.info("세션이 업데이트되었습니다. 페이지를 새로고침해주세요.");
+      }
     } catch (error: unknown) {
       console.error("Failed to toggle admin:", error);
       const message = error instanceof Error ? error.message : "관리자 권한 변경에 실패했습니다";

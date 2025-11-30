@@ -41,11 +41,26 @@ export const authOptions: NextAuthOptions = {
       if (url.startsWith(baseUrl)) return url;
       return baseUrl;
     },
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile, trigger }) {
       // 카카오 로그인시 프로필 정보를 토큰에 저장
       if (account?.provider === "kakao" && profile) {
         token.kakaoId = profile.id;
       }
+
+      // update trigger가 호출되거나 처음 로그인할 때 최신 정보를 가져옴
+      if (token.kakaoId && (trigger === "update" || account?.provider === "kakao")) {
+        const { data: userInfo } = await supabase
+          .from("access_links")
+          .select("is_admin, is_active")
+          .eq("kakao_user_id", token.kakaoId)
+          .single();
+
+        if (userInfo) {
+          token.isAdmin = userInfo.is_admin || false;
+          token.isVerified = userInfo.is_active;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -53,17 +68,9 @@ export const authOptions: NextAuthOptions = {
         // 카카오 사용자 ID를 세션에 추가
         session.user.id = token.kakaoId as string;
 
-        // 추가 사용자 정보가 필요하면 여기서 설정
-        const { data: userInfo } = await supabase
-          .from("access_links")
-          .select("*")
-          .eq("kakao_user_id", token.kakaoId)
-          .single();
-
-        if (userInfo) {
-          session.user.isVerified = userInfo.is_active;
-          session.user.isAdmin = userInfo.is_admin || false;
-        }
+        // JWT 토큰에서 최신 정보를 가져옴
+        session.user.isVerified = token.isVerified as boolean;
+        session.user.isAdmin = token.isAdmin as boolean;
       }
       return session;
     },
