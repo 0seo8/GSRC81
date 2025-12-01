@@ -1,5 +1,6 @@
 import { CourseWithComments } from "@/shared/lib/courses-data";
 import { CourseCard } from "./course-card";
+import { getStackHeight } from "@/shared/lib/utils/card-layout";
 
 interface RefactoredCourseCardStackProps {
   courses: CourseWithComments[];
@@ -20,25 +21,8 @@ export function RefactoredCourseCardStack({
     return null;
   }
 
-  // 카드 수에 따른 동적 높이 계산 (rem 단위) - 실제 카드 배치 기준
-  const calculateStackHeight = () => {
-    if (courses.length === 1) {
-      return "100%"; // 1개일때는 스크롤 영역에 꽉 차도록
-    } else if (courses.length === 2) {
-      // 2개: 2번째 카드의 bottom + height
-      return "16.6875rem"; // 5.4375rem + 11.25rem
-    } else {
-      // 3개 이상: 38px씩 겹침, 카드 높이 150px
-      const lastCardIndex = courses.length - 1;
-      const overlap = 2.375; // 38px
-      const lastCardBottom = (lastCardIndex - 1) * (9.375 - overlap); // (150 - 38) * (index - 1)
-      const lastCardHeight = 9.375; // 150px
-      const totalHeight = lastCardBottom + lastCardHeight;
-      return `${totalHeight}rem`;
-    }
-  };
-
-  const stackHeight = calculateStackHeight();
+  // 🎨 Figma 스펙대로 카드 스택 높이 계산 (rem 단위)
+  const stackHeight = getStackHeight(courses.length);
 
   return (
     <div

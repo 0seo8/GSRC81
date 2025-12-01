@@ -1,5 +1,5 @@
 /**
- * 🎨 Figma 디자인 정확한 스펙 구현 (100% rem 단위)
+ * 🎨 Figma 디자인 정확한 스펙 구현
  *
  * 디바이스: 390×844 (iPhone 12 Pro)
  * 바텀시트: 376×414
@@ -16,7 +16,7 @@ export interface CardLayout {
 }
 
 // ========================================
-// 🎯 Figma 정확한 스펙 상수 (rem 단위)
+// 🎯 Figma 정확한 스펙 상수
 // ========================================
 
 const FIGMA_CARD_SPECS = {
@@ -42,7 +42,7 @@ const FIGMA_CARD_SPECS = {
 /**
  * Figma 스펙대로 카드 레이아웃 계산
  */
-export function calculateCardLayout(
+export function calculateCardLayoutFigmaExact(
   courseIndex: number,
   totalCourses: number,
 ): CardLayout {
@@ -123,7 +123,7 @@ export function calculateCardLayout(
 /**
  * 전체 스택 높이 계산 (Figma 스펙)
  */
-export function getStackHeight(total: number): string {
+export function getStackHeightFigmaExact(total: number): string {
   if (total === 0) return "0rem";
 
   // 1개: 130px + 9px 여백 = 139px
@@ -180,27 +180,97 @@ export function getDifficultyText(difficulty: string): string {
 }
 
 // ========================================
-// 📊 예상 결과 검증 (개발 모드에서만)
+// 📊 예상 결과 검증
 // ========================================
 
 if (process.env.NODE_ENV === "development") {
-  console.group("🎨 Figma 스펙 검증 (100% rem 단위)");
+  console.group("🎨 Figma 스펙 검증");
 
   // 1개 카드
-  console.log("1개 카드:", getStackHeight(1));
+  console.log("1개 카드:", getStackHeightFigmaExact(1));
   // 예상: 8.6875rem (139px = 130 + 9)
 
   // 2개 카드
-  console.log("2개 카드:", getStackHeight(2));
+  console.log("2개 카드:", getStackHeightFigmaExact(2));
   // 예상: 14.3125rem (229px = 130 + 180 - 87 + 6)
 
   // 3개 카드
-  console.log("3개 카드:", getStackHeight(3));
+  console.log("3개 카드:", getStackHeightFigmaExact(3));
   // 예상: 14.3125rem (229px = 136 + 180 - 87)
 
   // 5개 카드
-  console.log("5개 카드:", getStackHeight(5));
+  console.log("5개 카드:", getStackHeightFigmaExact(5));
   // 예상: 25.1875rem (403px = 136 + 180 - 87 + 87 * 2)
 
   console.groupEnd();
 }
+
+// ========================================
+// ⚠️ 주의사항
+// ========================================
+
+/**
+ * 1. 2번 카드 높이가 케이스별로 다름!
+ * - 2개일 때: 180px
+ * - 3개 이상일 때: 136px ⭐
+ *
+ * 2. 1번 카드 숨김 오프셋
+ * - -112px (-7rem) ⭐
+ * - 이전 추측(-80px)보다 더 많이 숨김
+ *
+ * 3. 바닥 여백
+ * - 1개: 9px
+ * - 2개: 6px (레이아웃 여백)
+ * - 3개 이상: 0px
+ *
+ * 4. 좌우 여백 (7px)
+ * - 바텀시트 외부 여백
+ * - 카드 내부 padding과는 별개
+ * - CSS에서 별도 처리 필요
+ */
+
+// ========================================
+// 🔄 마이그레이션 가이드
+// ========================================
+
+/**
+ * Step 1: 기존 card-layout.ts 백업
+ * ```bash
+ * cp src/shared/lib/utils/card-layout.ts \
+ *    src/shared/lib/utils/card-layout.backup.ts
+ * ```
+ *
+ * Step 2: Import 경로 변경
+ * ```typescript
+ * // Before
+ * import { calculateCardLayout } from "@/shared/lib/utils/card-layout";
+ *
+ * // After
+ * import { calculateCardLayoutFigmaExact as calculateCardLayout }
+ *   from "@/shared/lib/utils/card-layout-figma-spec";
+ * ```
+ *
+ * Step 3: refactored-course-card-stack.tsx 업데이트
+ * ```typescript
+ * import { getStackHeightFigmaExact } from "@/shared/lib/utils/card-layout-figma-spec";
+ *
+ * const stackHeight = getStackHeightFigmaExact(courses.length);
+ * ```
+ *
+ * Step 4: 좌우 여백 추가 (CategoryFullScreen.tsx)
+ * ```typescript
+ * <div className="px-[7px]">  // 7px 외부 여백
+ *   <RefactoredCourseCardStack ... />
+ * </div>
+ * ```
+ *
+ * Step 5: 테스트
+ * - [ ] 1개 카드: 130px + 9px 여백
+ * - [ ] 2개 카드: 87px 겹침, 6px 여백
+ * - [ ] 3개 카드: 2번 136px, 3번 180px
+ * - [ ] 5개 카드: 스크롤 확인
+ *
+ * Step 6: Figma와 픽셀 단위 비교
+ * - [ ] 디자이너와 함께 확인
+ * - [ ] 실제 디바이스에서 테스트
+ */

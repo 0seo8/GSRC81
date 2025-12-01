@@ -194,7 +194,7 @@ export function CategoryFullScreen({
             </div>
 
             {/* 카드 스크롤 영역 */}
-            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-0 pb-0 flex flex-col justify-end">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-[0.4375rem] pb-0 flex flex-col justify-end">
               <RefactoredCourseCardStack
                 courses={filteredCourses}
                 cardColors={currentDesign.cardColors}
