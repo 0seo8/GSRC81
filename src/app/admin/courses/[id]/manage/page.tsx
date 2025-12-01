@@ -550,11 +550,11 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                           카테고리
                         </label>
                         <Select
-                          value={formData.category_id}
+                          value={formData.category_id || "none"}
                           onValueChange={(value) =>
                             setFormData({
                               ...formData,
-                              category_id: value,
+                              category_id: value === "none" ? "" : value,
                             })
                           }
                         >
@@ -562,7 +562,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                             <SelectValue placeholder="카테고리 선택" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">선택 안함</SelectItem>
+                            <SelectItem value="none">선택 안함</SelectItem>
                             {categories.map((category) => (
                               <SelectItem key={category.id} value={category.id}>
                                 {category.name}
