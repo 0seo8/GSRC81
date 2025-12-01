@@ -45,6 +45,11 @@ export const authOptions: NextAuthOptions = {
       // 카카오 로그인시 프로필 정보를 토큰에 저장
       if (account?.provider === "kakao" && profile) {
         token.kakaoId = profile.id;
+
+        // 카카오 프로필 정보 추가
+        token.name = profile.kakao_account?.profile?.nickname || profile.properties?.nickname || null;
+        token.email = profile.kakao_account?.email || null;
+        token.picture = profile.kakao_account?.profile?.profile_image_url || profile.properties?.profile_image || null;
       }
 
       // update trigger가 호출되거나 처음 로그인할 때 최신 정보를 가져옴
@@ -67,6 +72,11 @@ export const authOptions: NextAuthOptions = {
       if (session.user && token.kakaoId) {
         // 카카오 사용자 ID를 세션에 추가
         session.user.id = token.kakaoId as string;
+
+        // 카카오 프로필 정보를 세션에 추가
+        session.user.name = token.name as string | null;
+        session.user.email = token.email as string | null;
+        session.user.image = token.picture as string | null;
 
         // JWT 토큰에서 최신 정보를 가져옴
         session.user.isVerified = token.isVerified as boolean;

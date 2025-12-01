@@ -16,7 +16,23 @@ const nextConfig: NextConfig = {
   },
   // Configure allowed image domains
   images: {
-    domains: ["iogbdjpvcxtdchmpicma.supabase.co"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "iogbdjpvcxtdchmpicma.supabase.co",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "k.kakaocdn.net",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "mud-kage.kakao.com",
+        pathname: "/**",
+      },
+    ],
   },
 };
 

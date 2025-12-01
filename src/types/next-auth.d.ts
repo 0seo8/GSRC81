@@ -39,5 +39,10 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     kakaoId?: string | number;
+    isAdmin?: boolean;
+    isVerified?: boolean;
+    name?: string | null;
+    email?: string | null;
+    picture?: string | null;
   }
 }
