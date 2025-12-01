@@ -1,6 +1,10 @@
 /**
  * User Verification Utilities
- * 사용자 인증 코드 검증 관련 유틸리티 함수
+ *
+ * 간단한 아키텍처:
+ * - access_codes 테이블에 코드 정보 저장
+ * - access_links.access_code_id FK로 연결
+ * - 사용자는 최초 1회만 인증
  */
 
 import { supabase } from "@/shared/lib/supabase";
@@ -11,8 +15,8 @@ export interface VerificationResult {
   data?: {
     id: string;
     kakao_user_id: string;
-    access_code: string;
     is_active: boolean;
+    is_admin: boolean;
   };
 }
 
@@ -26,22 +30,32 @@ export async function isUserVerified(kakaoUserId: string): Promise<boolean> {
 
   const { data, error } = await supabase
     .from("access_links")
-    .select("*")
+    .select("id, is_active")
     .eq("kakao_user_id", kakaoUserId)
-    .single();
+    .maybeSingle();
 
-  return !error && !!data;
+  return !error && !!data && data.is_active;
 }
 
 /**
- * 접근 코드 검증 및 사용자 연결
- * @param code - 접근 코드
+ * 접근 코드 검증 및 사용자 등록
+ *
+ * 플로우:
+ * 1. 이미 인증된 사용자인지 확인 (kakao_user_id로 조회)
+ * 2. 신규 사용자면 access_codes 테이블에서 코드 유효성 확인
+ * 3. access_links 레코드 생성 (access_code_id FK 저장)
+ *
+ * @param code - 사용자가 입력한 접근 코드
  * @param kakaoUserId - 카카오 사용자 ID
+ * @param kakaoNickname - 카카오 닉네임 (선택)
+ * @param kakaoProfileUrl - 카카오 프로필 URL (선택)
  * @returns 검증 결과
  */
 export async function verifyAccessCode(
   code: string,
   kakaoUserId: string,
+  kakaoNickname?: string,
+  kakaoProfileUrl?: string,
 ): Promise<VerificationResult> {
   if (!code || !kakaoUserId) {
     return {
@@ -50,50 +64,94 @@ export async function verifyAccessCode(
     };
   }
 
-  // 1. 접근 코드 유효성 확인
-  const { data: accessLink, error: fetchError } = await supabase
+  // 1. 이미 인증된 사용자인지 확인
+  const { data: existingUser } = await supabase
     .from("access_links")
     .select("*")
-    .eq("access_code", code)
-    .single();
+    .eq("kakao_user_id", kakaoUserId)
+    .maybeSingle();
 
-  if (fetchError || !accessLink) {
+  if (existingUser) {
+    if (!existingUser.is_active) {
+      return {
+        success: false,
+        error: "비활성화된 계정입니다. 관리자에게 문의하세요.",
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        id: existingUser.id,
+        kakao_user_id: existingUser.kakao_user_id,
+        is_active: existingUser.is_active,
+        is_admin: existingUser.is_admin || false,
+      },
+    };
+  }
+
+  // 2. 신규 사용자 - access_codes 테이블에서 코드 조회
+  const { data: accessCode, error: codeError } = await supabase
+    .from("access_codes")
+    .select("*")
+    .eq("code", code)
+    .maybeSingle();
+
+  if (codeError || !accessCode) {
     return {
       success: false,
       error: "유효하지 않은 접근 코드입니다.",
     };
   }
 
-  // 2. 이미 사용된 코드인지 확인
-  if (accessLink.kakao_user_id && accessLink.kakao_user_id !== kakaoUserId) {
+  // 활성화 상태 확인
+  if (!accessCode.is_active) {
     return {
       success: false,
-      error: "이미 사용된 접근 코드입니다.",
+      error: "비활성화된 접근 코드입니다.",
     };
   }
 
-  // 3. 사용자 ID 연결 및 활성화
-  const { data: updatedLink, error: updateError } = await supabase
+  // 만료일 확인
+  if (accessCode.expires_at) {
+    const expiryDate = new Date(accessCode.expires_at);
+    if (expiryDate < new Date()) {
+      return {
+        success: false,
+        error: "만료된 접근 코드입니다.",
+      };
+    }
+  }
+
+  // 3. access_links 레코드 생성
+  const { data: newUser, error: insertError } = await supabase
     .from("access_links")
-    .update({
+    .insert({
+      access_code_id: accessCode.id,
       kakao_user_id: kakaoUserId,
-      kakao_nickname: null,
+      kakao_nickname: kakaoNickname || null,
+      kakao_profile_url: kakaoProfileUrl || null,
+      is_admin: false,
       is_active: true,
-      updated_at: new Date().toISOString(),
     })
-    .eq("id", accessLink.id)
     .select()
     .single();
 
-  if (updateError || !updatedLink) {
+  if (insertError || !newUser) {
+    console.error("User creation error:", insertError);
     return {
       success: false,
-      error: "인증 처리 중 오류가 발생했습니다.",
+      error: "사용자 등록 중 오류가 발생했습니다.",
     };
   }
 
   return {
     success: true,
-    data: updatedLink,
+    data: {
+      id: newUser.id,
+      kakao_user_id: newUser.kakao_user_id,
+      is_active: newUser.is_active,
+      is_admin: newUser.is_admin || false,
+    },
   };
 }

@@ -54,8 +54,13 @@ function VerifyContent() {
     setLoading(true);
     setError("");
 
-    // 접근 코드 검증 및 사용자 연결
-    const result = await verifyAccessCode(code, kakaoUserId);
+    // 접근 코드 검증 및 사용자 연결 (Kakao 프로필 정보 포함)
+    const result = await verifyAccessCode(
+      code,
+      kakaoUserId,
+      session?.user?.name || undefined,
+      session?.user?.image || undefined,
+    );
 
     if (!result.success) {
       setError(`❌ ${result.error}`);
