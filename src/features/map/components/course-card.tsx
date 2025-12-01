@@ -46,16 +46,21 @@ export function CourseCard({
   return (
     <motion.div
       key={course.id}
+      layoutId={`course-card-${course.id}`}
+      layout
       initial={{ opacity: 0, y: 20 }}
       animate={{
         opacity: 1,
         y: 0,
         scale: 1,
-        bottom: getBottomPosition(),
       }}
       transition={{
+        layout: {
+          duration: 0.4,
+          ease: [0.25, 0.1, 0.25, 1],
+        },
         duration: 0.3,
-        ease: "easeOut",
+        ease: [0.4, 0, 0.2, 1],
       }}
       className="absolute left-0 right-0 px-[41px] py-[20px] cursor-pointer"
       style={{
@@ -64,6 +69,7 @@ export function CourseCard({
         borderRadius: layout.borderRadius,
         zIndex: layout.zIndex,
         boxShadow: shadow,
+        bottom: getBottomPosition(),
       }}
       onClick={(e) => {
         // 스크롤 중이 아닐 때만 클릭 이벤트 처리
