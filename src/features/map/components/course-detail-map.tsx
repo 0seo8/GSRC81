@@ -6,7 +6,6 @@ import Map, {
   Layer,
   Marker,
   MapRef,
-  MapMouseEvent,
 } from "react-map-gl/mapbox";
 import { motion } from "framer-motion";
 import { Flag, MessageSquare } from "lucide-react";
@@ -45,6 +44,9 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
   } | null>(null);
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [flightComments, setFlightComments] = useState<CourseComment[]>([]);
+  const [visibleComments, setVisibleComments] = useState<Set<string>>(
+    new Set(),
+  );
 
   const mapRef = useRef<MapRef>(null);
 
@@ -380,6 +382,32 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     }
   }, [courseId, loadFlightComments]);
 
+  // 애니메이션 진행에 따라 댓글 표시 관리
+  useEffect(() => {
+    if (!isAnimating || !trailData) {
+      // 애니메이션이 아닐 때는 모든 댓글 숨김
+      setVisibleComments(new Set());
+      return;
+    }
+
+    // 현재 진행 거리 계산 (km 단위)
+    const totalDistanceKm = trailData.stats.totalDistance;
+    const currentDistanceKm = animationProgress * totalDistanceKm;
+
+    // 현재 거리를 지난 댓글들 표시
+    const newVisibleComments = new Set<string>();
+    flightComments.forEach((comment) => {
+      if (
+        comment.distance_marker !== undefined &&
+        comment.distance_marker <= currentDistanceKm
+      ) {
+        newVisibleComments.add(comment.id);
+      }
+    });
+
+    setVisibleComments(newVisibleComments);
+  }, [isAnimating, animationProgress, trailData, flightComments]);
+
   // 경로 레이어 클릭 이벤트 등록
   useEffect(() => {
     if (!mapRef.current) return;
@@ -627,7 +655,12 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
         {/* 댓글 말풍선 마커들 - 비행모드일 때만 표시 */}
         {isAnimating &&
           flightComments
-            .filter((comment) => comment.latitude && comment.longitude)
+            .filter(
+              (comment) =>
+                comment.latitude &&
+                comment.longitude &&
+                visibleComments.has(comment.id),
+            )
             .map((comment) => (
               <Marker
                 key={comment.id}
