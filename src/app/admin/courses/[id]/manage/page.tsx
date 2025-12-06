@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { Noto_Sans } from "next/font/google";
 import { ProtectedAdminRoute } from "@/shared/components/common/protected-admin-route";
 import { supabase } from "@/shared/lib/supabase";
@@ -29,6 +28,7 @@ import { toast } from "sonner";
 import { CourseDetailMapWrapper } from "@/features/map/components/course-detail-map-wrapper";
 import { CourseCommentsList } from "@/features/courses/components/course-comments-list";
 import { CourseStats } from "@/features/courses/components/course-stats";
+import { PhotoGallery } from "@/features/courses/components/photo-gallery";
 import { splitTitleAtMidpoint } from "@/shared/lib/utils/text";
 import { DEFAULT_COURSE_DESCRIPTION, DIFFICULTY_LABELS } from "@/core/config/course";
 import ImageUploader from "@/shared/components/common/ImageUploader";
@@ -588,36 +588,11 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                 </div>
 
                 {photos.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                    {photos.map((photo, index) => (
-                      <div key={photo.id} className="bg-white overflow-hidden relative group">
-                        <Image
-                          src={photo.file_url}
-                          alt={photo.caption || "코스 사진"}
-                          width={400}
-                          height={400}
-                          className="w-full aspect-square object-cover"
-                          loading={index < 3 ? "eager" : "lazy"}
-                          priority={index < 3}
-                        />
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDeletePhoto(photo.id)}
-                            className="bg-white hover:bg-red-50 text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        {photo.caption && (
-                          <div className="p-3">
-                            <p className="text-sm text-gray-600">{photo.caption}</p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <PhotoGallery
+                    photos={photos}
+                    isAdmin={true}
+                    onDeletePhoto={handleDeletePhoto}
+                  />
                 )}
               </div>
             </div>

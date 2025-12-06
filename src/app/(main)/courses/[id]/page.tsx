@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import Image from "next/image";
 import { Noto_Sans } from "next/font/google";
 import { getCourseById } from "@/shared/lib/courses-data";
 import { CourseCommentsList } from "@/features/courses/components/course-comments-list";
@@ -8,6 +7,7 @@ import { getCourseComments } from "@/shared/lib/comments";
 import { getCoursePhotos } from "@/shared/lib/course-photos";
 import { CourseDetailMapWrapper } from "@/features/map/components/course-detail-map-wrapper";
 import { CourseStats } from "@/features/courses/components/course-stats";
+import { PhotoGallery } from "@/features/courses/components/photo-gallery";
 import { splitTitleAtMidpoint } from "@/shared/lib/utils/text";
 import { DEFAULT_COURSE_DESCRIPTION } from "@/core/config/course";
 
@@ -124,28 +124,7 @@ export default async function CourseDetailPage({
             {/* 코스 사진 갤러리 */}
             {photos.length > 0 && (
               <div className="border-t border-b border-black py-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {photos.map((photo, index) => (
-                    <div key={photo.id} className="bg-white overflow-hidden">
-                      <Image
-                        src={photo.file_url}
-                        alt={photo.caption || "코스 사진"}
-                        width={400}
-                        height={400}
-                        className="w-full aspect-square object-cover"
-                        loading={index < 3 ? "eager" : "lazy"}
-                        priority={index < 3}
-                      />
-                      {photo.caption && (
-                        <div className="p-3">
-                          <p className="text-sm text-gray-600">
-                            {photo.caption}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <PhotoGallery photos={photos} />
               </div>
             )}
           </div>
