@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Noto_Sans } from "next/font/google";
 import { ProtectedAdminRoute } from "@/shared/components/common/protected-admin-route";
 import { supabase } from "@/shared/lib/supabase";
 import { Button } from "@/shared/components/ui/button";
@@ -15,75 +17,43 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/shared/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/shared/components/ui/tabs";
-import {
+  Edit,
   Save,
-  MapPin,
-  MessageSquare,
+  X,
   Trash2,
-  AlertCircle,
-  Camera,
+  Loader2,
+  ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
-import { type CoursePhoto } from "@/shared/lib/course-photos";
-import ImageUploader from "@/shared/components/common/ImageUploader";
 import { toast } from "sonner";
-import { DIFFICULTY_LABELS } from "@/core/config/course";
-import {
-  SUCCESS_MESSAGES,
-  ERROR_MESSAGES,
-  CONFIRM_MESSAGES,
-} from "@/core/config/messages";
-import type { CourseCategory } from "@/shared/lib/courses-data";
+import { CourseDetailMapWrapper } from "@/features/map/components/course-detail-map-wrapper";
+import { CourseCommentsList } from "@/features/courses/components/course-comments-list";
+import { splitTitleAtMidpoint } from "@/shared/lib/utils/text";
+import { DEFAULT_COURSE_DESCRIPTION, DIFFICULTY_LABELS } from "@/core/config/course";
+import ImageUploader from "@/shared/components/common/ImageUploader";
+import type { CoursePhoto } from "@/shared/lib/course-photos";
+import type { CourseComment } from "@/shared/lib/comments";
+
+const notoSans = Noto_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
 
 interface Course {
   id: string;
   title: string;
   description: string;
+  detail_description?: string;
   start_latitude: number;
   start_longitude: number;
-  end_latitude: number;
-  end_longitude: number;
   distance_km: number;
   avg_time_min: number;
   difficulty: "easy" | "medium" | "hard";
-  nearest_station: string;
+  elevation_gain?: number;
   is_active: boolean;
   created_at: string;
-  elevation_gain?: number;
   category_id?: string;
-  gpx_data?: {
-    version: string;
-    points: Array<{ lat: number; lng: number; ele?: number }>;
-    bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number };
-    stats: {
-      totalDistance: number;
-      elevationGain: number;
-      estimatedDuration: number;
-    };
-    metadata?: {
-      importedAt: string;
-      source: string;
-    };
-  };
-}
-
-interface Comment {
-  id: string;
-  course_id: string;
-  author_nickname: string;
-  message: string;
-  created_at: string;
 }
 
 interface CourseManagePageProps {
@@ -93,35 +63,25 @@ interface CourseManagePageProps {
 export default function CourseManagePage({ params }: CourseManagePageProps) {
   const router = useRouter();
   const [courseId, setCourseId] = useState<string | null>(null);
-
   const [course, setCourse] = useState<Course | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<CourseComment[]>([]);
   const [photos, setPhotos] = useState<CoursePhoto[]>([]);
-  const [categories, setCategories] = useState<CourseCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("info");
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // 편집 모드 상태
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [editingStats, setEditingStats] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
 
   // 폼 데이터
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
+  const [titleForm, setTitleForm] = useState("");
+  const [statsForm, setStatsForm] = useState({
     distance_km: "",
     avg_time_min: "",
-    difficulty: "medium" as "easy" | "medium" | "hard",
-    nearest_station: "",
-    start_latitude: "",
-    start_longitude: "",
-    end_latitude: "",
-    end_longitude: "",
     elevation_gain: "",
-    is_active: true,
-    category_id: "",
+    difficulty: "medium" as "easy" | "medium" | "hard",
   });
-
-  const [hasGpxData, setHasGpxData] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [descriptionForm, setDescriptionForm] = useState("");
 
   useEffect(() => {
     async function getParams() {
@@ -134,31 +94,13 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
   useEffect(() => {
     if (courseId) {
       loadCourseData();
-      loadCategories();
     }
   }, [courseId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const loadCategories = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("course_categories")
-        .select("*")
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true });
-
-      if (error) throw error;
-      setCategories(data || []);
-    } catch (error) {
-      console.error("Failed to load categories:", error);
-      toast.error("카테고리를 불러오는데 실패했습니다");
-    }
-  };
 
   const loadCourseData = async () => {
     try {
       setLoading(true);
 
-      // 코스 정보, 댓글, 사진을 병렬로 로드
       const [courseResult, commentsResult, photosResult] = await Promise.all([
         supabase.from("courses").select("*").eq("id", courseId).single(),
         supabase
@@ -167,142 +109,116 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
           .eq("course_id", courseId)
           .order("created_at", { ascending: false }),
         fetch(`/api/course-photos?course_id=${courseId}`).then((res) =>
-          res.json(),
+          res.json()
         ),
       ]);
 
       if (courseResult.error) throw courseResult.error;
-      if (commentsResult.error) throw commentsResult.error;
 
       const courseData = courseResult.data;
       setCourse(courseData);
       setComments(commentsResult.data || []);
-
-      // 사진 데이터 처리 (API 오류 시 빈 배열)
-      if (Array.isArray(photosResult)) {
-        setPhotos(photosResult);
-      } else {
-        console.warn("Photo loading failed:", photosResult);
-        setPhotos([]);
-      }
-
-      // GPX 데이터 존재 여부 확인
-      setHasGpxData(!!courseData.gpx_data);
-
-      // gpx_data가 있으면 그 데이터를 우선 사용
-      const distance =
-        courseData.gpx_data?.stats?.totalDistance || courseData.distance_km;
-      const duration =
-        courseData.gpx_data?.stats?.estimatedDuration ||
-        courseData.avg_time_min;
-      const elevation =
-        courseData.gpx_data?.stats?.elevationGain ||
-        courseData.elevation_gain ||
-        0;
+      setPhotos(Array.isArray(photosResult) ? photosResult : []);
 
       // 폼 데이터 초기화
-      setFormData({
-        title: courseData.title,
-        description: courseData.description || "",
-        distance_km: distance.toString(),
-        avg_time_min: duration.toString(),
+      setTitleForm(courseData.title);
+      setStatsForm({
+        distance_km: courseData.distance_km.toString(),
+        avg_time_min: courseData.avg_time_min.toString(),
+        elevation_gain: (courseData.elevation_gain || 0).toString(),
         difficulty: courseData.difficulty,
-        nearest_station: courseData.nearest_station || "",
-        start_latitude: courseData.start_latitude.toString(),
-        start_longitude: courseData.start_longitude.toString(),
-        end_latitude: (
-          courseData.end_latitude || courseData.start_latitude
-        ).toString(),
-        end_longitude: (
-          courseData.end_longitude || courseData.start_longitude
-        ).toString(),
-        elevation_gain: elevation.toString(),
-        is_active: courseData.is_active,
-        category_id: courseData.category_id || "",
       });
+      setDescriptionForm(courseData.detail_description || courseData.description || "");
     } catch (error) {
       console.error("Failed to load course data:", error);
-      toast.error(ERROR_MESSAGES.COURSE_LOAD_FAILED);
+      toast.error("코스 정보를 불러오는데 실패했습니다");
       router.push("/admin/courses");
     } finally {
       setLoading(false);
     }
   };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = "코스명을 입력해주세요.";
+  // 제목 저장
+  const handleSaveTitle = async () => {
+    if (!titleForm.trim()) {
+      toast.error("코스 이름을 입력해주세요");
+      return;
     }
-
-    if (!formData.distance_km || parseFloat(formData.distance_km) <= 0) {
-      newErrors.distance_km = "올바른 거리를 입력해주세요.";
-    }
-
-    if (!formData.avg_time_min || parseInt(formData.avg_time_min) <= 0) {
-      newErrors.avg_time_min = "올바른 소요시간을 입력해주세요.";
-    }
-
-    if (!formData.start_latitude || !formData.start_longitude) {
-      newErrors.coordinates = "시작점 좌표를 입력해주세요.";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSaveCourse = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
 
     try {
-      setSaving(true);
-
-      const updateData = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        distance_km: parseFloat(formData.distance_km),
-        avg_time_min: parseInt(formData.avg_time_min),
-        difficulty: formData.difficulty,
-        nearest_station: formData.nearest_station.trim(),
-        start_latitude: parseFloat(formData.start_latitude),
-        start_longitude: parseFloat(formData.start_longitude),
-        end_latitude:
-          parseFloat(formData.end_latitude) ||
-          parseFloat(formData.start_latitude),
-        end_longitude:
-          parseFloat(formData.end_longitude) ||
-          parseFloat(formData.start_longitude),
-        elevation_gain: parseInt(formData.elevation_gain) || 0,
-        is_active: formData.is_active,
-        category_id: formData.category_id || null,
-      };
-
       const { error } = await supabase
         .from("courses")
-        .update(updateData)
+        .update({ title: titleForm.trim() })
         .eq("id", courseId);
 
       if (error) throw error;
 
-      toast.success(SUCCESS_MESSAGES.COURSE_UPDATED);
-      await loadCourseData(); // 데이터 새로고침
+      toast.success("코스 이름이 업데이트되었습니다");
+      setEditingTitle(false);
+      await loadCourseData();
     } catch (error) {
-      console.error("Failed to save course:", error);
-      toast.error(ERROR_MESSAGES.COURSE_CREATE_FAILED);
-    } finally {
-      setSaving(false);
+      console.error("Failed to save title:", error);
+      toast.error("저장에 실패했습니다");
     }
   };
 
-  const handleDeleteComment = async (
-    commentId: string,
-    authorNickname: string,
-  ) => {
+  // 통계 저장
+  const handleSaveStats = async () => {
+    if (
+      !statsForm.distance_km ||
+      !statsForm.avg_time_min ||
+      parseFloat(statsForm.distance_km) <= 0 ||
+      parseInt(statsForm.avg_time_min) <= 0
+    ) {
+      toast.error("올바른 값을 입력해주세요");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("courses")
+        .update({
+          distance_km: parseFloat(statsForm.distance_km),
+          avg_time_min: parseInt(statsForm.avg_time_min),
+          elevation_gain: parseInt(statsForm.elevation_gain) || 0,
+          difficulty: statsForm.difficulty,
+        })
+        .eq("id", courseId);
+
+      if (error) throw error;
+
+      toast.success("코스 통계가 업데이트되었습니다");
+      setEditingStats(false);
+      await loadCourseData();
+    } catch (error) {
+      console.error("Failed to save stats:", error);
+      toast.error("저장에 실패했습니다");
+    }
+  };
+
+  // 설명 저장
+  const handleSaveDescription = async () => {
+    try {
+      const { error } = await supabase
+        .from("courses")
+        .update({ detail_description: descriptionForm.trim() })
+        .eq("id", courseId);
+
+      if (error) throw error;
+
+      toast.success("코스 설명이 업데이트되었습니다");
+      setEditingDescription(false);
+      await loadCourseData();
+    } catch (error) {
+      console.error("Failed to save description:", error);
+      toast.error("저장에 실패했습니다");
+    }
+  };
+
+  // 댓글 삭제
+  const handleDeleteComment = async (commentId: string, authorNickname: string) => {
     const confirmed = window.confirm(
-      CONFIRM_MESSAGES.DELETE_COURSE(`${authorNickname}님의 댓글`),
+      `${authorNickname}님의 댓글을 삭제하시겠습니까?`
     );
     if (!confirmed) return;
 
@@ -315,26 +231,21 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
       if (error) throw error;
 
       toast.success("댓글이 삭제되었습니다");
-      await loadCourseData(); // 댓글 목록 새로고침
+      await loadCourseData();
     } catch (error) {
       console.error("Failed to delete comment:", error);
-      toast.error("댓글 삭제 중 오류가 발생했습니다");
+      toast.error("댓글 삭제에 실패했습니다");
     }
   };
 
-  // 사진 업로드 핸들러
+  // 사진 업로드
   const handlePhotoUpload = async (url: string) => {
     if (!courseId) return;
 
     try {
-      setUploadingPhoto(true);
-
-      // API를 통해 데이터베이스에 사진 레코드 생성
       const response = await fetch("/api/course-photos", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           course_id: courseId,
           file_url: url,
@@ -347,29 +258,20 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
         throw new Error(errorData.error || "사진 저장에 실패했습니다.");
       }
 
-      const newPhoto = await response.json();
-
-      // 사진 목록에 추가
-      setPhotos((prev) => [newPhoto, ...prev]);
-
-      toast.success("사진이 성공적으로 업로드되었습니다");
+      toast.success("사진이 업로드되었습니다");
+      await loadCourseData();
     } catch (error) {
       console.error("사진 업로드 실패:", error);
-      toast.error(
-        `사진 업로드 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
-      );
-    } finally {
-      setUploadingPhoto(false);
+      toast.error("사진 업로드에 실패했습니다");
     }
   };
 
-  // 사진 삭제 핸들러
+  // 사진 삭제
   const handleDeletePhoto = async (photoId: string) => {
     const confirmed = window.confirm("이 사진을 삭제하시겠습니까?");
     if (!confirmed) return;
 
     try {
-      // API를 통해 데이터베이스에서 사진 삭제
       const response = await fetch(`/api/course-photos?photo_id=${photoId}`, {
         method: "DELETE",
       });
@@ -379,31 +281,20 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
         throw new Error(errorData.error || "사진 삭제에 실패했습니다.");
       }
 
-      // 사진 목록에서 삭제된 항목 제거
-      setPhotos((prev) => prev.filter((photo) => photo.id !== photoId));
-
       toast.success("사진이 삭제되었습니다");
+      await loadCourseData();
     } catch (error) {
       console.error("사진 삭제 실패:", error);
-      toast.error(
-        `사진 삭제 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
-      );
+      toast.error("사진 삭제에 실패했습니다");
     }
   };
-
-  const difficultyOptions = Object.entries(DIFFICULTY_LABELS).map(
-    ([value, label]) => ({
-      value,
-      label,
-    }),
-  );
 
   if (loading) {
     return (
       <ProtectedAdminRoute>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
             <p className="text-gray-600">코스 정보를 불러오는 중...</p>
           </div>
         </div>
@@ -416,13 +307,9 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
       <ProtectedAdminRoute>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
               코스를 찾을 수 없습니다
             </h2>
-            <p className="text-gray-600 mb-6">
-              요청하신 코스가 존재하지 않거나 삭제되었습니다.
-            </p>
             <Link href="/admin/courses">
               <Button>코스 목록으로 돌아가기</Button>
             </Link>
@@ -432,559 +319,329 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
     );
   }
 
+  const [firstLine, secondLine] = splitTitleAtMidpoint(course.title);
+
   return (
     <ProtectedAdminRoute>
-      <div className="min-h-screen bg-gray-50">
-        {/* 메인 콘텐츠 */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="space-y-6"
-          >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="info" className="flex items-center">
-                <MapPin className="w-4 h-4 mr-2" />
-                코스 정보
-              </TabsTrigger>
-              <TabsTrigger value="photos" className="flex items-center">
-                <Camera className="w-4 h-4 mr-2" />
-                사진 관리 ({photos.length})
-              </TabsTrigger>
-              <TabsTrigger value="comments" className="flex items-center">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                댓글 관리 ({comments.length})
-              </TabsTrigger>
-            </TabsList>
+      <div className={`min-h-screen bg-page-bg ${notoSans.className}`}>
+        {/* 상단 네비게이션 */}
+        <div className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-10 px-4 py-3">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <Link href="/admin/courses" className="flex items-center text-gray-600 hover:text-gray-900">
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              코스 목록으로
+            </Link>
+            <h1 className="text-lg font-semibold text-gray-900">코스 관리</h1>
+          </div>
+        </div>
 
-            {/* 코스 정보 탭 */}
-            <TabsContent value="info">
-              <Card className="shadow-xl border-0 py-6">
-                <CardHeader>
-                  <CardTitle>코스 기본 정보</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSaveCourse} className="space-y-6">
-                    {/* GPX 데이터 상태 */}
-                    {hasGpxData && course?.gpx_data && (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                        <h3 className="font-medium text-green-900 mb-2">
-                          ✅ GPX 데이터 (v{course.gpx_data.version})
-                        </h3>
-                        <div className="text-sm text-green-700 space-y-1">
-                          <p>
-                            • 총 {course.gpx_data.points.length}개의 GPS 포인트
-                          </p>
-                          <p>
-                            • 거리:{" "}
-                            {course.gpx_data.stats.totalDistance.toFixed(3)}km
-                          </p>
-                          <p>
-                            • 고도상승: {course.gpx_data.stats.elevationGain}m
-                          </p>
-                          <p>
-                            • 예상시간:{" "}
-                            {course.gpx_data.stats.estimatedDuration}분
-                          </p>
+        {/* 지도 영역 */}
+        <div className="w-full h-map-height pt-14 p-2.5">
+          <CourseDetailMapWrapper courseId={courseId!} />
+        </div>
+
+        {/* 하단 컨텐츠 */}
+        <div
+          className="flex-1 bg-page-bg"
+          style={{ minHeight: "calc(100vh - 393px)" }}
+        >
+          <div className="overflow-y-auto h-full">
+            <div className="max-w-2xl mx-auto px-[0.625rem] py-5">
+              {/* 코스 이름 + 작성자 섹션 */}
+              <div className="mb-6">
+                <div className="flex justify-between items-start mb-2">
+                  {!editingTitle ? (
+                    <>
+                      <h1 className="text-course-detail-title text-black flex-1">
+                        <div>{firstLine}</div>
+                        {secondLine && <div>{secondLine}</div>}
+                      </h1>
+                      <div className="flex items-start gap-2">
+                        <div className="text-right">
+                          <div className="text-xs font-medium text-black">BY</div>
+                          <div className="text-xs font-medium text-black">GSRC81</div>
                         </div>
-                      </div>
-                    )}
-
-                    {/* 기본 정보 */}
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          코스명 *
-                        </label>
-                        <Input
-                          value={formData.title}
-                          onChange={(e) =>
-                            setFormData({ ...formData, title: e.target.value })
-                          }
-                          placeholder="예: 은평구 한바퀴 코스"
-                          className={errors.title ? "border-red-300" : ""}
-                        />
-                        {errors.title && (
-                          <p className="text-red-600 text-xs mt-1">
-                            {errors.title}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          코스 설명
-                        </label>
-                        <Textarea
-                          value={formData.description}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              description: e.target.value,
-                            })
-                          }
-                          placeholder="코스에 대한 간단한 설명을 입력해주세요"
-                          rows={3}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          가까운 지하철역
-                        </label>
-                        <Input
-                          value={formData.nearest_station}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              nearest_station: e.target.value,
-                            })
-                          }
-                          placeholder="예: 구파발역"
-                        />
-                      </div>
-
-                      {/* 카테고리 선택 - 새로 추가된 부분 */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          카테고리
-                        </label>
-                        <Select
-                          value={formData.category_id || "none"}
-                          onValueChange={(value) =>
-                            setFormData({
-                              ...formData,
-                              category_id: value === "none" ? "" : value,
-                            })
-                          }
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingTitle(true)}
+                          className="ml-2"
                         >
-                          <SelectTrigger className="w-full md:w-64">
-                            <SelectValue placeholder="카테고리 선택" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">선택 안함</SelectItem>
-                            {categories.map((category) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-gray-500 mt-1">
-                          코스가 속할 카테고리를 선택하세요 (선택사항)
-                        </p>
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex-1">
+                      <Input
+                        value={titleForm}
+                        onChange={(e) => setTitleForm(e.target.value)}
+                        className="text-lg font-bold mb-2"
+                        placeholder="코스 이름"
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={handleSaveTitle}>
+                          <Save className="w-3 h-3 mr-1" />
+                          저장
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setTitleForm(course.title);
+                            setEditingTitle(false);
+                          }}
+                        >
+                          <X className="w-3 h-3 mr-1" />
+                          취소
+                        </Button>
                       </div>
                     </div>
+                  )}
+                </div>
+              </div>
 
-                    {/* 코스 정보 */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-gray-900">
-                        코스 세부 정보
-                      </h3>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            거리 (km) *
-                          </label>
-                          <Input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={formData.distance_km}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                distance_km: e.target.value,
-                              })
-                            }
-                            placeholder="5.2"
-                            className={
-                              errors.distance_km ? "border-red-300" : ""
-                            }
-                          />
-                          {errors.distance_km && (
-                            <p className="text-red-600 text-xs mt-1">
-                              {errors.distance_km}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            소요시간 (분) *
-                          </label>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={formData.avg_time_min}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                avg_time_min: e.target.value,
-                              })
-                            }
-                            placeholder="30"
-                            className={
-                              errors.avg_time_min ? "border-red-300" : ""
-                            }
-                          />
-                          {errors.avg_time_min && (
-                            <p className="text-red-600 text-xs mt-1">
-                              {errors.avg_time_min}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            고도 상승 (m)
-                          </label>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={formData.elevation_gain}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                elevation_gain: e.target.value,
-                              })
-                            }
-                            placeholder="100"
-                          />
+              {/* 통계 섹션 */}
+              <div className="border-t border-black">
+                {!editingStats ? (
+                  <div className="relative">
+                    <div className="grid grid-cols-4 gap-4 px-2 pt-4 pb-5 border-b border-black">
+                      <div className="text-center">
+                        <div className="text-xs text-gray-600 mb-1">거리</div>
+                        <div className="text-sm font-semibold text-black">
+                          {course.distance_km}km
                         </div>
                       </div>
-
+                      <div className="text-center">
+                        <div className="text-xs text-gray-600 mb-1">시간</div>
+                        <div className="text-sm font-semibold text-black">
+                          약 {course.avg_time_min}분
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-600 mb-1">고도</div>
+                        <div className="text-sm font-semibold text-black">
+                          {course.elevation_gain || 0}m
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-600 mb-1">난이도</div>
+                        <div className="text-sm font-semibold text-black">
+                          {DIFFICULTY_LABELS[course.difficulty]}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditingStats(true)}
+                      className="absolute top-2 right-2"
+                    >
+                      <Edit className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="px-2 pt-4 pb-5 border-b border-black space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          난이도 *
+                        <label className="block text-xs text-gray-600 mb-1">
+                          거리 (km)
+                        </label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          value={statsForm.distance_km}
+                          onChange={(e) =>
+                            setStatsForm({ ...statsForm, distance_km: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          시간 (분)
+                        </label>
+                        <Input
+                          type="number"
+                          value={statsForm.avg_time_min}
+                          onChange={(e) =>
+                            setStatsForm({ ...statsForm, avg_time_min: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          고도 (m)
+                        </label>
+                        <Input
+                          type="number"
+                          value={statsForm.elevation_gain}
+                          onChange={(e) =>
+                            setStatsForm({ ...statsForm, elevation_gain: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          난이도
                         </label>
                         <Select
-                          value={formData.difficulty}
+                          value={statsForm.difficulty}
                           onValueChange={(value) =>
-                            setFormData({
-                              ...formData,
+                            setStatsForm({
+                              ...statsForm,
                               difficulty: value as "easy" | "medium" | "hard",
                             })
                           }
                         >
-                          <SelectTrigger className="w-full md:w-48">
-                            <SelectValue placeholder="난이도 선택" />
+                          <SelectTrigger>
+                            <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {difficultyOptions.map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
+                            {Object.entries(DIFFICULTY_LABELS).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
-
-                    {/* 시작점/종료점 좌표 */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-gray-900">
-                        경로 좌표
-                      </h3>
-
-                      <div className="space-y-4">
-                        {/* 시작점 */}
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">
-                            시작점
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-600 mb-1">
-                                위도 (Latitude) *
-                              </label>
-                              <Input
-                                type="number"
-                                step="any"
-                                value={formData.start_latitude}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    start_latitude: e.target.value,
-                                  })
-                                }
-                                placeholder="37.6361"
-                                className={
-                                  errors.coordinates ? "border-red-300" : ""
-                                }
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-medium text-gray-600 mb-1">
-                                경도 (Longitude) *
-                              </label>
-                              <Input
-                                type="number"
-                                step="any"
-                                value={formData.start_longitude}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    start_longitude: e.target.value,
-                                  })
-                                }
-                                placeholder="126.9185"
-                                className={
-                                  errors.coordinates ? "border-red-300" : ""
-                                }
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 종료점 */}
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">
-                            종료점
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-600 mb-1">
-                                위도 (Latitude)
-                              </label>
-                              <Input
-                                type="number"
-                                step="any"
-                                value={formData.end_latitude}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    end_latitude: e.target.value,
-                                  })
-                                }
-                                placeholder="37.6361"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-medium text-gray-600 mb-1">
-                                경도 (Longitude)
-                              </label>
-                              <Input
-                                type="number"
-                                step="any"
-                                value={formData.end_longitude}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    end_longitude: e.target.value,
-                                  })
-                                }
-                                placeholder="126.9185"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {errors.coordinates && (
-                        <p className="text-red-600 text-xs">
-                          {errors.coordinates}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* 활성화 상태 */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-gray-900">
-                        활성화 상태
-                      </h3>
-
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id="is_active"
-                          checked={formData.is_active}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              is_active: e.target.checked,
-                            })
-                          }
-                          className="rounded border-gray-300"
-                        />
-                        <label
-                          htmlFor="is_active"
-                          className="text-sm text-gray-700"
-                        >
-                          코스 활성화 (체크 해제 시 지도에서 숨김)
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* 저장 버튼 */}
-                    <div className="flex justify-end pt-6">
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleSaveStats}>
+                        <Save className="w-3 h-3 mr-1" />
+                        저장
+                      </Button>
                       <Button
-                        type="submit"
-                        disabled={saving}
-                        className="bg-gray-700 hover:bg-gray-800"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setStatsForm({
+                            distance_km: course.distance_km.toString(),
+                            avg_time_min: course.avg_time_min.toString(),
+                            elevation_gain: (course.elevation_gain || 0).toString(),
+                            difficulty: course.difficulty,
+                          });
+                          setEditingStats(false);
+                        }}
                       >
-                        {saving ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            저장 중...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="w-4 h-4 mr-2" />
-                            저장하기
-                          </>
-                        )}
+                        <X className="w-3 h-3 mr-1" />
+                        취소
                       </Button>
                     </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                  </div>
+                )}
+              </div>
 
-            {/* 사진 관리 탭 */}
-            <TabsContent value="photos">
-              <Card>
-                <CardHeader>
-                  <CardTitle>사진 관리</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* 사진 업로드 */}
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
-                      새 사진 업로드
-                    </h3>
-                    <ImageUploader
-                      onUpload={handlePhotoUpload}
-                      bucket="course-photos"
-                      currentUrl=""
-                    />
-                    {uploadingPhoto && (
-                      <p className="text-sm text-gray-500 mt-2">
-                        사진을 업로드하는 중...
+              {/* 코스 설명 섹션 */}
+              <div className="border-b border-black py-5">
+                <div className="relative px-2">
+                  {!editingDescription ? (
+                    <>
+                      <p className="text-course-detail-description text-black">
+                        {course.detail_description || DEFAULT_COURSE_DESCRIPTION}
                       </p>
-                    )}
-                  </div>
-
-                  {/* 사진 목록 */}
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
-                      등록된 사진
-                    </h3>
-                    {photos.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {photos.map((photo) => (
-                          <div key={photo.id} className="relative group">
-                            <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                              <img
-                                src={photo.file_url}
-                                alt={photo.caption || "코스 사진"}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDeletePhoto(photo.id)}
-                                className="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                            {photo.caption && (
-                              <p className="text-sm text-gray-600 mt-2">
-                                {photo.caption}
-                              </p>
-                            )}
-                            <p className="text-xs text-gray-400">
-                              {new Date(photo.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-12">
-                        <Camera className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                          등록된 사진이 없습니다
-                        </h3>
-                        <p className="text-gray-600">
-                          위에서 사진을 업로드하여 코스 갤러리를 만들어보세요.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* 댓글 관리 탭 */}
-            <TabsContent value="comments">
-              <Card>
-                <CardHeader>
-                  <CardTitle>댓글 관리</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {comments.length > 0 ? (
-                    <div className="space-y-4">
-                      {comments.map((comment) => (
-                        <div
-                          key={comment.id}
-                          className="border border-gray-200 rounded-lg p-4"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <span className="font-medium text-gray-900">
-                                  {comment.author_nickname}
-                                </span>
-                                <span className="text-xs text-gray-500">
-                                  {new Date(
-                                    comment.created_at,
-                                  ).toLocaleString()}
-                                </span>
-                              </div>
-                              <p className="text-gray-700">{comment.message}</p>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                handleDeleteComment(
-                                  comment.id,
-                                  comment.author_nickname,
-                                )
-                              }
-                              className="text-red-600 hover:text-red-700 hover:border-red-300 ml-4"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditingDescription(true)}
+                        className="absolute top-0 right-0"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                    </>
                   ) : (
-                    <div className="text-center py-12">
-                      <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        댓글이 없습니다
-                      </h3>
-                      <p className="text-gray-600">
-                        아직 이 코스에 작성된 댓글이 없습니다.
-                      </p>
+                    <div className="space-y-2">
+                      <Textarea
+                        value={descriptionForm}
+                        onChange={(e) => setDescriptionForm(e.target.value)}
+                        rows={6}
+                        placeholder="코스 설명을 입력하세요"
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={handleSaveDescription}>
+                          <Save className="w-3 h-3 mr-1" />
+                          저장
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setDescriptionForm(
+                              course.detail_description || course.description || ""
+                            );
+                            setEditingDescription(false);
+                          }}
+                        >
+                          <X className="w-3 h-3 mr-1" />
+                          취소
+                        </Button>
+                      </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </main>
+                </div>
+              </div>
+
+              {/* 댓글 섹션 */}
+              <div className="border-b border-black py-6">
+                <div className="relative">
+                  <CourseCommentsList
+                    comments={comments}
+                    loading={false}
+                    onDeleteComment={handleDeleteComment}
+                    isAdmin={true}
+                  />
+                </div>
+              </div>
+
+              {/* 사진 갤러리 섹션 */}
+              <div className="py-6">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-black mb-2">
+                    코스 사진 ({photos.length})
+                  </h3>
+                  <ImageUploader
+                    onUpload={handlePhotoUpload}
+                    bucket="course-photos"
+                    currentUrl=""
+                  />
+                </div>
+
+                {photos.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                    {photos.map((photo, index) => (
+                      <div key={photo.id} className="bg-white overflow-hidden relative group">
+                        <Image
+                          src={photo.file_url}
+                          alt={photo.caption || "코스 사진"}
+                          width={400}
+                          height={400}
+                          className="w-full aspect-square object-cover"
+                          loading={index < 3 ? "eager" : "lazy"}
+                          priority={index < 3}
+                        />
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeletePhoto(photo.id)}
+                            className="bg-white hover:bg-red-50 text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        {photo.caption && (
+                          <div className="p-3">
+                            <p className="text-sm text-gray-600">{photo.caption}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </ProtectedAdminRoute>
   );

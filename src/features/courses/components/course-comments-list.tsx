@@ -2,17 +2,21 @@
 
 import React from "react";
 import { CourseComment } from "@/shared/lib/comments";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Trash2 } from "lucide-react";
 import { formatRelativeTime } from "@/shared/lib/utils/date-utils";
 
 interface CourseCommentsListProps {
   comments: CourseComment[];
   loading: boolean;
+  isAdmin?: boolean;
+  onDeleteComment?: (commentId: string, authorNickname: string) => void;
 }
 
 export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
   comments,
   loading,
+  isAdmin = false,
+  onDeleteComment,
 }) => {
   if (loading) {
     return (
@@ -84,7 +88,7 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
 
                   {/* 말풍선 댓글 내용 */}
                   <div
-                    className={`flex ${isEven ? "justify-start" : "justify-end"}`}
+                    className={`flex items-start gap-2 ${isEven ? "justify-start" : "justify-end"}`}
                     style={{
                       marginRight: isEven
                         ? "3rem"
@@ -95,7 +99,7 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                     }}
                   >
                     <div
-                      className="relative bg-black text-white px-3 py-3 inline-block"
+                      className="relative bg-black text-white px-3 py-3 inline-block group"
                       style={{
                         borderRadius: isEven
                           ? "0 18px 18px 18px"
@@ -108,6 +112,17 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                       >
                         {comment.message}
                       </p>
+                      {isAdmin && onDeleteComment && (
+                        <button
+                          onClick={() =>
+                            onDeleteComment(comment.id, comment.author_nickname)
+                          }
+                          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
+                          title="댓글 삭제"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
