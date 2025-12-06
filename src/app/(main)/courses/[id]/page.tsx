@@ -86,7 +86,7 @@ export default async function CourseDetailPage({
         style={{ minHeight: "calc(100vh - 393px)" }}
       >
         <div className="overflow-y-auto h-full">
-          <div className="max-w-2xl mx-auto px-[0.625rem] py-5">
+          <div className="max-w-2xl mx-auto px-5 py-5">
             {/* 코스 정보 섹션 */}
             <div>
               <div className="mb-6 flex justify-between items-end">
@@ -109,7 +109,7 @@ export default async function CourseDetailPage({
               />
 
               {/* 코스 설명 */}
-              <div className="space-y-2 px-2">
+              <div className="space-y-2">
                 <div className="text-course-detail-description text-black pt-5 pb-6">
                   {course.detail_description || DEFAULT_COURSE_DESCRIPTION}
                 </div>

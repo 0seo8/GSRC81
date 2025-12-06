@@ -59,20 +59,27 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
             return (
               <div
                 key={comment.id}
-                className={`flex items-start space-x-3 ${isEven ? "flex-row" : "flex-row-reverse space-x-reverse"}`}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "48px 1fr 48px",
+                  gap: "0.75rem"
+                }}
               >
-                {/* 프로필 이미지 */}
-                <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-sm font-medium">
-                    {comment.author_nickname.charAt(0)}
-                  </span>
+                {/* 왼쪽 프로필 영역 */}
+                <div className="flex justify-center">
+                  {isEven && (
+                    <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-sm font-medium">
+                        {comment.author_nickname.charAt(0)}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  {/* 작성자 정보 (이름, 거리, 시간) */}
-                  <div
-                    className={`flex items-center space-x-2 mb-2 ${isEven ? "justify-start" : "justify-end"}`}
-                  >
+                {/* 가운데 댓글 영역 (항상 같은 위치) */}
+                <div>
+                  {/* 작성자 정보 */}
+                  <div className={`flex items-center space-x-2 mb-2 ${isEven ? "justify-start" : "justify-end"}`}>
                     <span className="font-medium text-black text-sm">
                       {comment.author_nickname}
                     </span>
@@ -86,18 +93,8 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                     </span>
                   </div>
 
-                  {/* 말풍선 댓글 내용 */}
-                  <div
-                    className={`flex items-start gap-2 ${isEven ? "justify-start" : "justify-end"}`}
-                    style={{
-                      marginRight: isEven
-                        ? "3rem"
-                        : "0" /* 48px margin from right for left-aligned */,
-                      marginLeft: isEven
-                        ? "0"
-                        : "3rem" /* 48px margin from left for right-aligned */,
-                    }}
-                  >
+                  {/* 말풍선 */}
+                  <div className={`flex ${isEven ? "justify-start" : "justify-end"}`}>
                     <div
                       className="relative bg-black text-white px-3 py-3 inline-block group"
                       style={{
@@ -106,8 +103,7 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                           : "18px 0px 18px 18px",
                       }}
                     >
-                      <p
-                        className="leading-relaxed whitespace-pre-wrap"
+                      <p className="leading-relaxed whitespace-pre-wrap"
                         style={{ fontSize: "0.875rem" }}
                       >
                         {comment.message}
@@ -125,6 +121,17 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                       )}
                     </div>
                   </div>
+                </div>
+
+                {/* 오른쪽 프로필 영역 */}
+                <div className="flex justify-center">
+                  {!isEven && (
+                    <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-sm font-medium">
+                        {comment.author_nickname.charAt(0)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             );

@@ -28,6 +28,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { CourseDetailMapWrapper } from "@/features/map/components/course-detail-map-wrapper";
 import { CourseCommentsList } from "@/features/courses/components/course-comments-list";
+import { CourseStats } from "@/features/courses/components/course-stats";
 import { splitTitleAtMidpoint } from "@/shared/lib/utils/text";
 import { DEFAULT_COURSE_DESCRIPTION, DIFFICULTY_LABELS } from "@/core/config/course";
 import ImageUploader from "@/shared/components/common/ImageUploader";
@@ -402,35 +403,15 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
               </div>
 
               {/* 통계 섹션 */}
-              <div className="border-t border-black">
+              <div>
                 {!editingStats ? (
                   <div className="relative">
-                    <div className="grid grid-cols-4 gap-4 px-2 pt-4 pb-5 border-b border-black">
-                      <div className="text-center">
-                        <div className="text-xs text-gray-600 mb-1">거리</div>
-                        <div className="text-sm font-semibold text-black">
-                          {course.distance_km}km
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-600 mb-1">시간</div>
-                        <div className="text-sm font-semibold text-black">
-                          약 {course.avg_time_min}분
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-600 mb-1">고도</div>
-                        <div className="text-sm font-semibold text-black">
-                          {course.elevation_gain || 0}m
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-600 mb-1">난이도</div>
-                        <div className="text-sm font-semibold text-black">
-                          {DIFFICULTY_LABELS[course.difficulty]}
-                        </div>
-                      </div>
-                    </div>
+                    <CourseStats
+                      distance={course.distance_km}
+                      time={course.avg_time_min}
+                      elevation={course.elevation_gain || 0}
+                      difficulty={course.difficulty}
+                    />
                     <Button
                       size="sm"
                       variant="outline"
