@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -86,6 +86,13 @@ export default function AdminUsersPage() {
       if (!response.ok) {
         throw new Error(result.error || "Failed to load users");
       }
+
+      // 디버깅: API 응답 확인
+      console.log("👥 [Admin Users] API 응답:", result.data);
+      console.log("🖼️ [Admin Users] 첫 번째 사용자 프로필:", {
+        nickname: result.data[0]?.kakao_nickname,
+        profileUrl: result.data[0]?.kakao_profile_url,
+      });
 
       setUsers(result.data);
       setPagination(result.pagination);
@@ -353,18 +360,25 @@ interface UserRowProps {
 }
 
 function UserRow({ user, onToggleAdmin }: UserRowProps) {
+  const [imageError, setImageError] = React.useState(false);
+
   return (
     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
       <div className="flex items-center gap-4 flex-1">
         {/* Profile Image */}
         <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-          {user.kakao_profile_url ? (
+          {user.kakao_profile_url && !imageError ? (
             <Image
               src={user.kakao_profile_url}
               alt={user.kakao_nickname}
               width={48}
               height={48}
               className="w-full h-full object-cover"
+              unoptimized
+              onError={() => {
+                console.error("이미지 로드 실패:", user.kakao_profile_url);
+                setImageError(true);
+              }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">

@@ -28,6 +28,11 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
       {
+        protocol: "http", // 카카오가 http URL을 제공하는 경우 대비
+        hostname: "k.kakaocdn.net",
+        pathname: "/**",
+      },
+      {
         protocol: "https",
         hostname: "mud-kage.kakao.com",
         pathname: "/**",
