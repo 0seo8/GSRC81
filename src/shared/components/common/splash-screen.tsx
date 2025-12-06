@@ -34,8 +34,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Main Content - 로그인 페이지와 동일한 레이아웃 */}
-      <div className="flex-1 flex flex-col justify-center items-center px-6 pt-16">
+      {/* Main Content - Figma 시안 기준 정확한 레이아웃 (380px × 800px) */}
+      <div className="flex-1 flex flex-col justify-start items-center px-6 pt-[12rem]">
         {/* Progressive Text Animation */}
         <AnimatePresence>
           {!showLogo && (
@@ -47,7 +47,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
                 transition: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] },
               }}
             >
-              <div className="text-landing-slogan text-black leading-tight space-y-2">
+              <div className="text-landing-slogan text-black leading-tight flex flex-col gap-[0.6875rem]">
                 {textLines.map((line, index) => (
                   <motion.div
                     key={index}
