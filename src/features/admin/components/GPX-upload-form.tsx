@@ -48,12 +48,12 @@ export function GPXUploadForm({
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    detail_description: "",
+    distance_km: "",
+    avg_time_min: "",
     difficulty: "medium" as "easy" | "medium" | "hard",
     category_id: "",
-    tags: [] as string[],
-    cover_image_url: "",
   });
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const [parsing, setParsing] = useState(false);
 
   // 카테고리 목록 로드
@@ -157,9 +157,20 @@ export function GPXUploadForm({
             coordinates,
           };
 
-          // 자동으로 제목 설정
+          // 자동으로 제목, 거리, 시간 설정
           if (!formData.title) {
-            setFormData((prev) => ({ ...prev, title: gpxData.name }));
+            setFormData((prev) => ({
+              ...prev,
+              title: gpxData.name,
+              distance_km: gpxData.distance.toString(),
+              avg_time_min: gpxData.duration.toString(),
+            }));
+          } else {
+            setFormData((prev) => ({
+              ...prev,
+              distance_km: gpxData.distance.toString(),
+              avg_time_min: gpxData.duration.toString(),
+            }));
           }
 
           resolve(gpxData);
@@ -207,13 +218,21 @@ export function GPXUploadForm({
     submitData.append("gpx_file", file);
     submitData.append("title", formData.title);
     submitData.append("description", formData.description);
-    submitData.append("detail_description", formData.detail_description);
+    submitData.append("distance_km", formData.distance_km.toString());
+    submitData.append("avg_time_min", formData.avg_time_min.toString());
     submitData.append("difficulty", formData.difficulty);
     submitData.append("category_id", formData.category_id);
-    submitData.append("cover_image_url", formData.cover_image_url);
-    submitData.append("tags", JSON.stringify(formData.tags));
+    submitData.append("photos", JSON.stringify(uploadedPhotos));
 
     await onSubmit(submitData, gpxData);
+  };
+
+  const handlePhotoUpload = (url: string) => {
+    setUploadedPhotos((prev) => [...prev, url]);
+  };
+
+  const handlePhotoRemove = (url: string) => {
+    setUploadedPhotos((prev) => prev.filter((photo) => photo !== url));
   };
 
   return (
@@ -346,24 +365,51 @@ export function GPXUploadForm({
             onChange={(e) =>
               setFormData({ ...formData, description: e.target.value })
             }
-            placeholder="코스에 대한 간단한 설명을 입력하세요 (카드용)"
+            placeholder="코스에 대한 간단한 설명을 입력하세요"
             rows={2}
             required
           />
         </div>
 
-        <div>
-          <Label htmlFor="detail_description">코스 상세 설명</Label>
-          <Textarea
-            id="detail_description"
-            value={formData.detail_description}
-            onChange={(e) =>
-              setFormData({ ...formData, detail_description: e.target.value })
-            }
-            placeholder="상세 페이지 본문 내용을 입력하세요"
-            rows={4}
-          />
-        </div>
+        {/* GPX 파싱 후 거리/시간 수정 가능 */}
+        {gpxData && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="distance">거리 (km) *</Label>
+              <Input
+                id="distance"
+                type="number"
+                step="0.01"
+                value={formData.distance_km}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    distance_km: e.target.value,
+                  })
+                }
+                placeholder="0.00"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="time">소요시간 (분) *</Label>
+              <Input
+                id="time"
+                type="number"
+                value={formData.avg_time_min}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    avg_time_min: e.target.value,
+                  })
+                }
+                placeholder="0"
+                required
+              />
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -408,37 +454,37 @@ export function GPXUploadForm({
         </div>
 
         <div>
-          <Label htmlFor="tags">태그</Label>
-          <div className="flex items-center space-x-2">
-            <Tag className="w-4 h-4 text-gray-500" />
-            <Input
-              id="tags"
-              value={formData.tags.join(" ")}
-              onChange={(e) => {
-                const tagString = e.target.value;
-                const tags = tagString
-                  .split(" ")
-                  .map((tag) => tag.trim())
-                  .filter((tag) => tag.length > 0);
-                setFormData({ ...formData, tags });
-              }}
-              placeholder="태그1 태그2 태그3 (스페이스로 구분)"
+          <Label>코스 사진 (선택)</Label>
+          <div className="space-y-3">
+            <ImageUploader
+              onUpload={handlePhotoUpload}
+              currentUrl=""
+              bucket="course-photos"
             />
+            {uploadedPhotos.length > 0 && (
+              <div className="grid grid-cols-2 gap-2">
+                {uploadedPhotos.map((url, index) => (
+                  <div key={url} className="relative group">
+                    <img
+                      src={url}
+                      alt={`업로드된 사진 ${index + 1}`}
+                      className="w-full aspect-square object-cover rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handlePhotoRemove(url)}
+                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Upload className="w-3 h-3 rotate-180" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-gray-500">
+              여러 장의 사진을 업로드할 수 있습니다
+            </p>
           </div>
-          <p className="text-xs text-gray-500 mt-1">
-            예: 벚꽃 강변 야경 (스페이스로 구분)
-          </p>
-        </div>
-
-        <div>
-          <Label>대표 이미지</Label>
-          <ImageUploader
-            onUpload={(url) =>
-              setFormData({ ...formData, cover_image_url: url })
-            }
-            currentUrl={formData.cover_image_url}
-            bucket="course-photos"
-          />
         </div>
       </div>
 

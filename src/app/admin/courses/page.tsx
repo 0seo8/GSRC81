@@ -16,26 +16,20 @@ import {
   Edit,
   Trash2,
   MapPin,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
-import { GPXUploadForm } from "@/features/admin/components/GPX-upload-form";
 import {
   CourseV2,
   getDistance,
   getDuration,
-  UnifiedGPXData,
 } from "@/types/unified";
 import { toast } from "sonner";
-import { GPXDataSchema } from "@/core/validation/gpx";
 import {
   getDifficultyLabel,
   getDifficultyColor,
   EMPTY_COURSE_MESSAGE,
 } from "@/core/config/course";
 import {
-  SUCCESS_MESSAGES,
   ERROR_MESSAGES,
   CONFIRM_MESSAGES,
   LOADING_MESSAGES,
@@ -44,8 +38,6 @@ import {
 export default function CoursesManagePage() {
   const [courses, setCourses] = useState<CourseV2[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [isGPXFormExpanded, setIsGPXFormExpanded] = useState(false);
 
   useEffect(() => {
     loadCourses();
@@ -88,7 +80,7 @@ export default function CoursesManagePage() {
 
       if (error) throw error;
 
-      toast.success(SUCCESS_MESSAGES.COURSE_DELETED);
+      toast.success("코스가 삭제되었습니다");
       loadCourses();
     } catch (error) {
       console.error("Failed to delete course:", error);
@@ -96,138 +88,20 @@ export default function CoursesManagePage() {
     }
   };
 
-  const handleGPXSubmit = async (formData: FormData, gpxData: unknown) => {
-    try {
-      setSubmitting(true);
-
-      // Zod로 GPX 데이터 검증
-      const validatedGPX = GPXDataSchema.parse(gpxData);
-
-      const { startPoint, coordinates, distance, duration, elevationGain } =
-        validatedGPX;
-
-      // 통계 계산
-      const bounds = {
-        minLat: Math.min(...coordinates.map((c) => c.lat)),
-        maxLat: Math.max(...coordinates.map((c) => c.lat)),
-        minLng: Math.min(...coordinates.map((c) => c.lng)),
-        maxLng: Math.max(...coordinates.map((c) => c.lng)),
-      };
-
-      // vFinal 표준화된 GPX 데이터 구조
-      const normalizedGpxData: UnifiedGPXData = {
-        version: "1.1" as const,
-        points: coordinates,
-        bounds,
-        stats: {
-          totalDistance: distance,
-          elevationGain: elevationGain || 0,
-          estimatedDuration: duration,
-        },
-        metadata: {
-          startPoint: {
-            lat: startPoint.lat,
-            lng: startPoint.lng,
-          },
-          endPoint: {
-            lat: coordinates[coordinates.length - 1].lat,
-            lng: coordinates[coordinates.length - 1].lng,
-          },
-        },
-      };
-
-      const courseData = {
-        title: formData.get("title") as string,
-        description: formData.get("description") as string,
-        detail_description:
-          (formData.get("detail_description") as string) || null,
-        start_latitude: startPoint.lat,
-        start_longitude: startPoint.lng,
-        distance_km: distance,
-        avg_time_min: duration,
-        difficulty: formData.get("difficulty") as string,
-        category_id: (formData.get("category_id") as string) || null,
-        tags: JSON.parse((formData.get("tags") as string) || "[]"),
-        cover_image_url: (formData.get("cover_image_url") as string) || null,
-        elevation_gain: elevationGain || 0,
-        sort_order: 0,
-        gpx_data: normalizedGpxData,
-        is_active: true,
-      };
-
-      const { error: courseError } = await supabase
-        .from("courses")
-        .insert([courseData]);
-
-      if (courseError) {
-        console.error("❌ Supabase insert error:", courseError);
-        throw courseError;
-      }
-
-      toast.success(SUCCESS_MESSAGES.COURSE_CREATED);
-      setIsGPXFormExpanded(false);
-      loadCourses();
-    } catch (error) {
-      console.error("Failed to save course from GPX:", error);
-
-      if (error instanceof Error) {
-        toast.error(`${ERROR_MESSAGES.COURSE_CREATE_FAILED}: ${error.message}`);
-      } else {
-        toast.error(ERROR_MESSAGES.COURSE_CREATE_FAILED);
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const toggleGPXForm = () => {
-    setIsGPXFormExpanded(!isGPXFormExpanded);
-  };
-
   return (
     <ProtectedAdminRoute>
       <div className="min-h-screen bg-gray-50">
         {/* 메인 콘텐츠 */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* GPX 코스 등록 섹션 - Responsive */}
-          <div className="mb-8">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              {/* 모바일: 접기/펼치기 버튼 */}
-              <button
-                onClick={toggleGPXForm}
-                className="w-full p-4 md:p-6 flex items-center justify-between text-left hover:bg-gray-50 md:hover:bg-white rounded-lg transition-colors"
-              >
-                <div className="flex items-center">
-                  <Plus className="w-4 h-4 md:w-5 md:h-5 mr-2 text-gray-600" />
-                  <span className="text-base md:text-lg font-semibold text-gray-900">
-                    새 코스 등록
-                  </span>
-                </div>
-                {/* 모바일에서만 아이콘 표시 */}
-                <div className="md:hidden">
-                  {isGPXFormExpanded ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
-                  )}
-                </div>
-              </button>
-
-              {/* 폼 영역 - 데스크톱에서는 항상 표시, 모바일에서는 토글 */}
-              <div
-                className={`
-                  px-4 pb-4 md:px-6 md:pb-6 border-t border-gray-100
-                  ${isGPXFormExpanded ? "block" : "hidden md:block"}
-                `}
-              >
-                <div className="pt-4">
-                  <GPXUploadForm
-                    onSubmit={handleGPXSubmit}
-                    loading={submitting}
-                  />
-                </div>
-              </div>
-            </div>
+          {/* 새 코스 등록 버튼 */}
+          <div className="mb-8 flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900">코스 관리</h1>
+            <Link href="/admin/courses/new">
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                새 코스 등록
+              </Button>
+            </Link>
           </div>
 
           {/* 코스 목록 */}
@@ -249,7 +123,7 @@ export default function CoursesManagePage() {
               ))}
             </div>
           ) : (
-            <EmptyState onAddCourse={() => setIsGPXFormExpanded(true)} />
+            <EmptyState />
           )}
         </main>
       </div>
@@ -324,11 +198,7 @@ function CourseCard({ course, onDelete }: CourseCardProps) {
 }
 
 // 빈 상태 컴포넌트
-interface EmptyStateProps {
-  onAddCourse: () => void;
-}
-
-function EmptyState({ onAddCourse }: EmptyStateProps) {
+function EmptyState() {
   return (
     <div className="text-center py-12">
       <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -338,10 +208,12 @@ function EmptyState({ onAddCourse }: EmptyStateProps) {
       <p className="text-gray-600 mb-6">
         GPX 파일을 업로드하여 첫 번째 러닝 코스를 등록해보세요
       </p>
-      <Button onClick={onAddCourse}>
-        <Plus className="w-4 h-4 mr-2" />
-        GPX로 첫 코스 등록하기
-      </Button>
+      <Link href="/admin/courses/new">
+        <Button>
+          <Plus className="w-4 h-4 mr-2" />
+          GPX로 첫 코스 등록하기
+        </Button>
+      </Link>
     </div>
   );
 }
