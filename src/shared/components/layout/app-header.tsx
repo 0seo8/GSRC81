@@ -26,7 +26,7 @@ export function AppHeader({
   rightElement,
   children,
 }: AppHeaderProps) {
-  const bgClass = background === "gray" ? "bg-gray-100" : "bg-transparent";
+  const bgClass = background === "gray" ? "bg-base" : "bg-transparent";
 
   // children이 제공된 경우 커스텀 레이아웃 사용
   if (children) {
@@ -41,7 +41,7 @@ export function AppHeader({
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 ${bgClass}`}>
       <div className="relative flex items-center justify-center px-4 py-4">
-        <h1 className="text-lg font-semibold tracking-wide text-black font-poppins">
+        <h1 className="text-[1.0625rem] font-bold tracking-wide text-black font-poppins">
           {LOGIN_CONFIG.TEXT.TITLE}
         </h1>
         {rightElement && <div className="absolute right-4">{rightElement}</div>}

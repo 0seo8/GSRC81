@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans, Poppins } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/shared/components/ui/sonner";
@@ -35,8 +35,6 @@ export const metadata: Metadata = {
     "GPS",
   ],
   authors: [{ name: "GSRC81" }],
-  viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
-  themeColor: "#000000",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -56,6 +54,13 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#000000",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -64,7 +69,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body
-        className={`${notoSans.variable} ${inter.variable} ${poppins.variable} antialiased`}
+        className={`${notoSans.variable} ${inter.variable} ${poppins.variable} antialiased safe-area-bottom`}
       >
         <Providers>
           {children}

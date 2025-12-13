@@ -77,7 +77,7 @@ function VerifyContent() {
   // 검증 상태 확인 중
   if (checking) {
     return (
-      <div className="min-h-screen bg-[#F5F5F5] flex flex-col">
+      <div className="min-h-screen bg-base flex flex-col">
         <AppHeader background="gray" />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -90,7 +90,7 @@ function VerifyContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex flex-col">
+    <div className="min-h-screen bg-base flex flex-col">
       {/* 공통 헤더 */}
       <AppHeader background="gray" />
 
@@ -164,7 +164,7 @@ export default function VerifyPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#F5F5F5] flex flex-col">
+        <div className="min-h-screen bg-base flex flex-col">
           <AppHeader background="gray" />
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">

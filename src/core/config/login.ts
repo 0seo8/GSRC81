@@ -12,12 +12,12 @@ export const LOGIN_CONFIG = {
   },
   SPACING: {
     LOGO_BOTTOM: "mb-12",
-    BRAND_BOTTOM: "mb-16",
-    TERMS_TOP: "mt-6",
+    BRAND_BOTTOM: "mb-24", // 로고와 버튼 사이 간격 증가 (64px → 96px) - 시각적 분리 강화
+    TERMS_TOP: "mt-8", // 버튼과 약관 사이 간격 (24px → 32px) - 8pt grid 준수
     SAFE_AREA: "h-8",
   },
   COLORS: {
-    BACKGROUND: "bg-gray-100",
+    BACKGROUND: "bg-base", // #EBE7E4 - 따뜻한 베이지 톤
     TEXT_SECONDARY: "text-gray-500",
     TEXT_PRIMARY: "text-black",
   },

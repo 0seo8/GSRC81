@@ -29,18 +29,18 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] bg-[#F5F5F5] flex flex-col"
+      className="fixed inset-0 z-[100] bg-base flex flex-col"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Main Content - Figma 시안 기준 정확한 레이아웃 (380px × 800px) */}
-      <div className="flex-1 flex flex-col justify-start items-center px-6 pt-[12rem]">
-        {/* Progressive Text Animation */}
+      {/* Main Content - 로그인 페이지와 동일한 레이아웃 */}
+      <div className="flex-1 flex flex-col justify-center items-center px-6 pt-16">
+        {/* Progressive Text Animation - 좌측 정렬, 한 줄씩 누적되며 나타남 */}
         <AnimatePresence>
           {!showLogo && (
             <motion.div
-              className="text-center"
+              className="w-full mb-16"
               exit={{
                 opacity: 0,
                 y: -100,
@@ -97,9 +97,6 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           )}
         </AnimatePresence>
       </div>
-
-      {/* Bottom Safe Area - 로그인 페이지와 동일 */}
-      <div className="h-8"></div>
     </motion.div>
   );
 }

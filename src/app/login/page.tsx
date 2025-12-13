@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { LOGIN_CONFIG } from "@/core/config/login";
 import { KakaoLoginButton } from "@/features/auth/components/kakao-login-button";
 import { AppHeader } from "@/shared/components/layout/app-header";
@@ -17,9 +18,10 @@ export default function LoginPage() {
       {/* 공통 헤더 */}
       <AppHeader background="gray" />
 
-      <div className="flex-1 flex flex-col justify-center items-center px-6 pt-16">
-        {/* Brand Image */}
-        <div className={LOGIN_CONFIG.SPACING.BRAND_BOTTOM}>
+      {/* Main Content - 로고 상단 1/3, 버튼 하단 고정 레이아웃 */}
+      <div className="flex-1 flex flex-col items-center px-6">
+        {/* Logo Section - 상단 영역, flex-1로 남은 공간 차지 */}
+        <div className="flex-1 flex items-center justify-center min-h-0 pt-8">
           <div className="text-center">
             <Image
               src={LOGIN_CONFIG.LOGO.SRC}
@@ -32,41 +34,40 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Login Form */}
-        <div className="w-full max-w-sm">
+        {/* Login Form - 하단 고정 (thumb zone 최적화) */}
+        <div className="w-full max-w-sm pb-12">
           {/* 클라이언트 컴포넌트: 로그인 버튼만 */}
           <KakaoLoginButton />
 
-          {/* Terms */}
+          {/* Terms - 좌측 정렬로 가독성 향상 */}
           <div className={`px-2 ${LOGIN_CONFIG.SPACING.TERMS_TOP}`}>
             <p
-              className={`${LOGIN_CONFIG.COLORS.TEXT_SECONDARY} text-xs text-center leading-relaxed mb-2`}
+              className={`${LOGIN_CONFIG.COLORS.TEXT_SECONDARY} text-xs text-left leading-relaxed mb-2`}
             >
               카카오톡으로 로그인하면{" "}
-              <span
-                className={`font-medium ${LOGIN_CONFIG.COLORS.TEXT_PRIMARY}`}
+              <Link
+                href="/terms"
+                className={`font-medium ${LOGIN_CONFIG.COLORS.TEXT_PRIMARY} underline hover:text-gray-700 transition-colors`}
               >
                 GSRC81의 회칙
-              </span>{" "}
+              </Link>{" "}
               및{" "}
-              <span
-                className={`font-medium ${LOGIN_CONFIG.COLORS.TEXT_PRIMARY}`}
+              <Link
+                href="/privacy"
+                className={`font-medium ${LOGIN_CONFIG.COLORS.TEXT_PRIMARY} underline hover:text-gray-700 transition-colors`}
               >
                 개인정보 처리방침
-              </span>
+              </Link>
               에 동의하게 됩니다.
             </p>
             <p
-              className={`${LOGIN_CONFIG.COLORS.TEXT_SECONDARY} text-xs text-center leading-relaxed`}
+              className={`${LOGIN_CONFIG.COLORS.TEXT_SECONDARY} text-xs text-left leading-relaxed`}
             >
               {LOGIN_CONFIG.TEXT.TERMS_EN}
             </p>
           </div>
         </div>
       </div>
-
-      {/* Bottom Safe Area */}
-      <div className={LOGIN_CONFIG.SPACING.SAFE_AREA}></div>
     </div>
   );
 }
