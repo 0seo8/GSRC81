@@ -21,22 +21,22 @@ export interface CardLayout {
 
 const FIGMA_CARD_SPECS = {
   // 카드 높이
-  firstCard: 8.125,       // 130px - 1번 카드 (모든 케이스 동일)
-  secondCard_2: 11.25,    // 180px - 2개일 때 2번 카드
-  secondCard_3plus: 8.5,  // 136px - 3개 이상일 때 2번 카드 ⭐
-  thirdCard_3plus: 11.25, // 180px - 3개 이상일 때 3번+ 카드
+  firstCard: 8.125, // 130px - 1번 카드 (모든 케이스 동일)
+  secondCard_2: 11.25, // 180px - 2개일 때 2번 카드
+  secondCard_3plus: 8.5, // 136px - 3개 이상일 때 2번 카드 ⭐
+  thirdCard_3plus: 10.25, // 180px - 3개 이상일 때 3번+ 카드
 
   // 간격
-  overlap: 5.4375,        // 87px - 카드 겹침 간격 (일관됨)
+  overlap: 4.4375, // 87px - 카드 겹침 간격 (일관됨)
   bottomMargin_1: 0.5625, // 9px - 1개일 때 바닥 여백
-  bottomMargin_2: 0.375,  // 6px - 2개일 때 레이아웃 바닥 여백
+  bottomMargin_2: 0.375, // 6px - 2개일 때 레이아웃 바닥 여백
 
   // 숨김
-  hiddenOffset: -7,       // -112px - 3개 이상일 때 1번 카드 숨김 ⭐
+  hiddenOffset: -7, // -112px - 3개 이상일 때 1번 카드 숨김 ⭐
 
   // 모서리
-  fullRadius: "2.8125rem",      // 45px - 전체 모서리
-  topRadius: "2.8125rem 2.8125rem 0 0",  // 45px - 상단만
+  fullRadius: "2.8125rem", // 45px - 전체 모서리
+  topRadius: "2.8125rem 2.8125rem 0 0", // 45px - 상단만
 } as const;
 
 /**
@@ -46,15 +46,14 @@ export function calculateCardLayout(
   courseIndex: number,
   totalCourses: number,
 ): CardLayout {
-
   // ========================================
   // 1개 카드
   // ========================================
   if (totalCourses === 1) {
     return {
-      height: `${FIGMA_CARD_SPECS.firstCard}rem`,  // 130px
-      bottom: `${FIGMA_CARD_SPECS.bottomMargin_1}rem`,  // 9px 여백
-      borderRadius: FIGMA_CARD_SPECS.fullRadius,  // 전체 둥근
+      height: `${FIGMA_CARD_SPECS.firstCard}rem`, // 130px
+      bottom: `${FIGMA_CARD_SPECS.bottomMargin_1}rem`, // 9px 여백
+      borderRadius: FIGMA_CARD_SPECS.fullRadius, // 전체 둥근
       zIndex: 1,
     };
   }
@@ -66,18 +65,18 @@ export function calculateCardLayout(
     if (courseIndex === 0) {
       // 카드 1: 앞에 표시, 전체 둥근
       return {
-        height: `${FIGMA_CARD_SPECS.firstCard}rem`,  // 130px
-        bottom: "0rem",  // 바닥에 딱 붙음
+        height: `${FIGMA_CARD_SPECS.firstCard}rem`, // 130px
+        bottom: "0rem", // 바닥에 딱 붙음
         borderRadius: FIGMA_CARD_SPECS.fullRadius,
-        zIndex: 2,  // 위에 표시
+        zIndex: 2, // 위에 표시
       };
     } else {
       // 카드 2: 뒤에 표시, 위쪽만 둥근
       return {
-        height: `${FIGMA_CARD_SPECS.secondCard_2}rem`,  // 180px
-        bottom: `${FIGMA_CARD_SPECS.overlap}rem`,  // 87px 위에
+        height: `${FIGMA_CARD_SPECS.secondCard_2}rem`, // 180px
+        bottom: `${FIGMA_CARD_SPECS.overlap}rem`, // 87px 위에
         borderRadius: FIGMA_CARD_SPECS.topRadius,
-        zIndex: 1,  // 아래 표시
+        zIndex: 1, // 아래 표시
       };
     }
   }
@@ -88,10 +87,10 @@ export function calculateCardLayout(
   if (courseIndex === 0) {
     // 카드 1: 완전 숨김, 전체 둥근, z-index 최고
     return {
-      height: `${FIGMA_CARD_SPECS.firstCard}rem`,  // 130px
-      bottom: `${FIGMA_CARD_SPECS.hiddenOffset}rem`,  // -112px
+      height: `${FIGMA_CARD_SPECS.firstCard}rem`, // 130px
+      bottom: `${FIGMA_CARD_SPECS.hiddenOffset}rem`, // -112px
       borderRadius: FIGMA_CARD_SPECS.fullRadius,
-      zIndex: totalCourses,  // 가장 높은 z-index
+      zIndex: totalCourses, // 가장 높은 z-index
     };
   }
 
@@ -99,8 +98,8 @@ export function calculateCardLayout(
     // 카드 2: 기준점(bottom: 0), 위쪽만 둥근
     // ⭐ 중요: 3개 이상일 때는 136px!
     return {
-      height: `${FIGMA_CARD_SPECS.secondCard_3plus}rem`,  // 136px
-      bottom: "0rem",  // 기준점
+      height: `${FIGMA_CARD_SPECS.secondCard_3plus}rem`, // 136px
+      bottom: "-1rem", // 기준점
       borderRadius: FIGMA_CARD_SPECS.topRadius,
       zIndex: totalCourses - courseIndex,
     };
@@ -113,7 +112,7 @@ export function calculateCardLayout(
   const cardBottom = FIGMA_CARD_SPECS.overlap * (courseIndex - 1);
 
   return {
-    height: `${FIGMA_CARD_SPECS.thirdCard_3plus}rem`,  // 180px
+    height: `${FIGMA_CARD_SPECS.thirdCard_3plus}rem`, // 180px
     bottom: `${cardBottom}rem`,
     borderRadius: FIGMA_CARD_SPECS.topRadius,
     zIndex: totalCourses - courseIndex,
@@ -138,7 +137,7 @@ export function getStackHeight(total: number): string {
       FIGMA_CARD_SPECS.secondCard_2 -
       FIGMA_CARD_SPECS.overlap +
       FIGMA_CARD_SPECS.bottomMargin_2;
-    return `${totalHeight}rem`;  // 14.3125rem (229px)
+    return `${totalHeight}rem`; // 14.3125rem (229px)
   }
 
   // 3개 이상: 136(카드2) + 180(카드3) - 87(겹침) + (N-3) × 87
@@ -146,11 +145,11 @@ export function getStackHeight(total: number): string {
   // N=4: 229 + 87 = 316px
   // N=5: 316 + 87 = 403px
   const baseHeight =
-    FIGMA_CARD_SPECS.secondCard_3plus +  // 136px (카드2 기준)
-    FIGMA_CARD_SPECS.thirdCard_3plus -   // 180px (카드3)
-    FIGMA_CARD_SPECS.overlap;            // -87px (겹침)
+    FIGMA_CARD_SPECS.secondCard_3plus + // 136px (카드2 기준)
+    FIGMA_CARD_SPECS.thirdCard_3plus - // 180px (카드3)
+    FIGMA_CARD_SPECS.overlap; // -87px (겹침)
 
-  const additionalCards = total - 3;  // 4번 카드부터
+  const additionalCards = total - 3; // 4번 카드부터
   const additionalHeight = additionalCards * FIGMA_CARD_SPECS.overlap;
 
   return `${baseHeight + additionalHeight}rem`;
