@@ -8,6 +8,8 @@ import { MapboxMap } from "./mapbox-map";
 import { CourseMarker } from "./course-marker";
 import { CategoryFullScreen } from "./category-full-screen";
 import { MapTokenError } from "./map-token-error";
+import { AppHeader } from "@/shared/components/layout/app-header";
+import { MenuButton } from "@/shared/components/layout/menu-button";
 import { useMapState } from "@/features/map/hooks/use-map-state";
 import { useMapBounds } from "@/features/map/hooks/use-map-bounds";
 import { useGeolocation } from "@/shared/hooks/use-geolocation";
@@ -136,10 +138,22 @@ export function OptimizedMapClient({
     [router, handleCloseDrawer],
   );
 
-  // 카테고리 변경 (바텀시트에서 호출)
-  const handleCategoryChange = useCallback((categoryKey: string) => {
-    setCurrentCategory(categoryKey);
-  }, []);
+  // 카테고리 변경 (드롭다운에서 호출)
+  const handleCategoryChange = useCallback(
+    (categoryKey: string) => {
+      setCurrentCategory(categoryKey);
+      // 카테고리 변경 시 바텀시트 닫기
+      setIsFullscreenOpen(false);
+      handleCloseDrawer();
+    },
+    [handleCloseDrawer],
+  );
+
+  // 메뉴 열림 시 바텀시트 닫기
+  const handleMenuOpen = useCallback(() => {
+    setIsFullscreenOpen(false);
+    handleCloseDrawer();
+  }, [handleCloseDrawer]);
 
   // 바텀시트 닫기
   const handleCloseFullscreen = useCallback(() => {
@@ -154,6 +168,19 @@ export function OptimizedMapClient({
 
   return (
     <div className="h-screen bg-transparent flex flex-col overflow-hidden">
+      {/* AppHeader with MenuButton (map page only) */}
+      <AppHeader
+        background="transparent"
+        rightElement={
+          <MenuButton
+            categories={allCategories}
+            selectedCategory={currentCategory}
+            onCategorySelect={handleCategoryChange}
+            onMenuOpen={handleMenuOpen}
+          />
+        }
+      />
+
       <div className="flex-1 relative overflow-hidden">
         {/* 지도 */}
         <MapboxMap
@@ -200,7 +227,6 @@ export function OptimizedMapClient({
           categories={allCategories}
           initialCategory={currentCategory}
           onCourseClick={handleCourseDetailNavigation}
-          onCategoryChange={handleCategoryChange}
           selectedCourse={selectedCourse}
           selectedCourses={selectedCourses}
         />

@@ -168,9 +168,9 @@ export function CategoryFullScreen({
           {/* 바텀시트 메인 컨테이너 */}
           <motion.div
             className={`fixed bottom-2 left-2 right-2 z-50 flex flex-col ${
-              filteredCourses.length === 1
-                ? "rounded-[2.8125rem]"  // 1개: 전체 둥근
-                : "rounded-t-[2.8125rem]"  // 2개 이상: 위만 둥근
+              filteredCourses.length <= 2
+                ? "rounded-[2.8125rem]"  // 1-2개: 전체 둥근 (모든 카드 보임)
+                : "rounded-t-[2.8125rem]"  // 3개 이상: 위만 둥근 (스크롤 필요)
             }`}
             initial={{ height: "0vh" }}
             animate={{

@@ -8,6 +8,8 @@ import { getCoursePhotos } from "@/shared/lib/course-photos";
 import { CourseDetailMapWrapper } from "@/features/map/components/course-detail-map-wrapper";
 import { CourseStats } from "@/features/courses/components/course-stats";
 import { PhotoGallery } from "@/features/courses/components/photo-gallery";
+import { AppHeader } from "@/shared/components/layout/app-header";
+import { MenuButton } from "@/shared/components/layout/menu-button";
 import { splitTitleAtMidpoint } from "@/shared/lib/utils/text";
 import { DEFAULT_COURSE_DESCRIPTION } from "@/core/config/course";
 
@@ -75,6 +77,9 @@ export default async function CourseDetailPage({
 
   return (
     <div className={`min-h-screen bg-page-bg ${notoSans.className}`}>
+      {/* AppHeader - 로고 + 메뉴 */}
+      <AppHeader background="transparent" rightElement={<MenuButton />} />
+
       {/* 상단 지도 영역 - 헤더 공간 확보 */}
       <div className="w-full h-map-height pt-14 p-2.5">
         <CourseDetailMapWrapper courseId={courseId} />

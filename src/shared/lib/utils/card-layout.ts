@@ -156,10 +156,10 @@ export function getStackHeight(total: number): string {
 }
 
 /**
- * 카드 그림자 스타일 (기존 유지)
+ * 카드 그림자 스타일 (제거됨 - 깔끔한 플랫 디자인)
  */
 export function calculateCardShadow(index: number): string {
-  return `0 ${4 + index * 2}px ${12 + index * 4}px rgba(0,0,0,0.15)`;
+  return "none";
 }
 
 /**
