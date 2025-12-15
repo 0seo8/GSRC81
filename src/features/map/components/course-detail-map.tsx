@@ -394,19 +394,35 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     const totalDistanceKm = trailData.stats.totalDistance;
     const currentDistanceKm = animationProgress * totalDistanceKm;
 
-    // 현재 거리를 지난 댓글들 표시
-    const newVisibleComments = new Set<string>();
+    // 현재 거리를 지난 댓글들 중 새로 표시할 댓글들 찾기
     flightComments.forEach((comment) => {
       if (
         comment.distance_marker !== undefined &&
-        comment.distance_marker <= currentDistanceKm
+        comment.distance_marker <= currentDistanceKm &&
+        !visibleComments.has(comment.id)
       ) {
-        newVisibleComments.add(comment.id);
+        // 새로운 댓글 표시
+        setVisibleComments((prev) => new Set([...prev, comment.id]));
+
+        // 텍스트 길이에 따라 표시 시간 계산
+        // 기본 3초 + (글자수 / 15) * 1초 (최소 3초, 최대 5초)
+        const textLength = comment.message.length;
+        const displayDuration = Math.min(
+          Math.max(3000, 3000 + (textLength / 15) * 1000),
+          5000
+        );
+
+        // 계산된 시간 후 해당 댓글 제거
+        setTimeout(() => {
+          setVisibleComments((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(comment.id);
+            return newSet;
+          });
+        }, displayDuration);
       }
     });
-
-    setVisibleComments(newVisibleComments);
-  }, [isAnimating, animationProgress, trailData, flightComments]);
+  }, [isAnimating, animationProgress, trailData, flightComments, visibleComments]);
 
   // 경로 레이어 클릭 이벤트 등록
   useEffect(() => {
@@ -576,6 +592,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
             longitude={startPoint.lng}
             latitude={startPoint.lat}
             anchor="bottom"
+            style={{ pointerEvents: 'none' }}
           >
             <div className="bg-green-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
               <Flag className="w-4 h-4" />
@@ -589,6 +606,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
             longitude={endPoint.lng}
             latitude={endPoint.lat}
             anchor="bottom"
+            style={{ pointerEvents: 'none' }}
           >
             <div className="bg-red-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
               <Flag className="w-4 h-4" />
@@ -606,12 +624,16 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
                 longitude={marker.position.lng}
                 latitude={marker.position.lat}
                 anchor="center"
+                style={{ pointerEvents: 'none' }}
               >
                 <motion.div
-                  initial={{ scale: 0, opacity: 0 }}
+                  initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{
+                    duration: 0.4,
+                    ease: "easeInOut"
+                  }}
                   className="bg-blue-500 text-white px-2 py-1 rounded-full shadow-lg border-2 border-white font-bold text-xs"
                 >
                   {marker.km}km
@@ -667,11 +689,16 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
                 longitude={comment.longitude!}
                 latitude={comment.latitude!}
                 anchor="bottom"
+                style={{ pointerEvents: 'none' }}
               >
                 <motion.div
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
+                  initial={{ scale: 0.8, opacity: 0, y: 10 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.8, opacity: 0, y: 10 }}
+                  transition={{
+                    duration: 0.4,
+                    ease: "easeInOut"
+                  }}
                   className="relative max-w-xs"
                 >
                   {/* 말풍선 */}

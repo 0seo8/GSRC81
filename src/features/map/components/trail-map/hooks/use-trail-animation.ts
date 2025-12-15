@@ -165,12 +165,25 @@ export const useTrailAnimation = (
         const pointLat = point.lat;
         const pointLng = point.lng;
 
+        // 다음 포인트 예측으로 부드러운 카메라 이동
+        // 현재 포인트와 다음 포인트 사이를 보간
+        let targetLat = pointLat;
+        let targetLng = pointLng;
+
+        if (currentIndex < pointCount - 2) {
+          const nextPoint = points[currentIndex + 1];
+          const interpolationFactor = 0.3; // 30% 앞을 미리 봄
+          targetLat = pointLat + (nextPoint.lat - pointLat) * interpolationFactor;
+          targetLng = pointLng + (nextPoint.lng - pointLng) * interpolationFactor;
+        }
+
+        // 매우 짧은 duration으로 부드러운 이동 (requestAnimationFrame 주기와 동기화)
         map.easeTo({
-          center: [pointLng, pointLat],
+          center: [targetLng, targetLat],
           zoom: FLIGHT_CONFIG.FLIGHT_ZOOM,
           pitch: FLIGHT_CONFIG.FLIGHT_PITCH,
           bearing: FLIGHT_CONFIG.FLIGHT_BEARING,
-          duration: 200,
+          duration: 0, // duration을 0으로 설정하여 즉시 적용하되 easeTo의 easing 효과는 유지
           essential: true,
         });
 

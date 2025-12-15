@@ -8,6 +8,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { GPXUploadForm } from "@/features/admin/components/GPX-upload-form";
+import { DuplicateCourseModal } from "@/features/admin/components/duplicate-course-modal";
 import { supabase } from "@/shared/lib/supabase";
 import { GPXDataSchema } from "@/core/validation/gpx";
 import { UnifiedGPXData } from "@/types/unified";
@@ -15,6 +16,11 @@ import {
   SUCCESS_MESSAGES,
   ERROR_MESSAGES,
 } from "@/core/config/messages";
+import {
+  checkForDuplicates,
+  type CourseForDuplicateCheck,
+  type DuplicateCheckResult,
+} from "@/shared/lib/utils/gpx-duplicate-checker";
 
 const notoSans = Noto_Sans({
   subsets: ["latin"],
@@ -25,8 +31,18 @@ const notoSans = Noto_Sans({
 export default function NewCoursePage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [duplicateCheck, setDuplicateCheck] =
+    useState<DuplicateCheckResult | null>(null);
+  const [pendingSubmit, setPendingSubmit] = useState<{
+    formData: FormData;
+    gpxData: unknown;
+  } | null>(null);
 
-  const handleGPXSubmit = async (formData: FormData, gpxData: unknown) => {
+  const handleGPXSubmit = async (
+    formData: FormData,
+    gpxData: unknown,
+    skipDuplicateCheck = false
+  ) => {
     try {
       setSubmitting(true);
 
@@ -35,6 +51,53 @@ export default function NewCoursePage() {
 
       const { startPoint, coordinates, distance, duration, elevationGain } =
         validatedGPX;
+
+      // 중복 검사 (skipDuplicateCheck가 false일 때만)
+      if (!skipDuplicateCheck) {
+        // 기존 코스 조회
+        const { data: existingCourses, error: queryError } = await supabase
+          .from("courses")
+          .select("id, title, start_latitude, start_longitude, distance_km, avg_time_min, difficulty, gpx_data")
+          .eq("is_active", true);
+
+        if (queryError) {
+          console.error("Failed to query existing courses:", queryError);
+        } else if (existingCourses && existingCourses.length > 0) {
+          // 중복 검사 수행
+          const newCourseForCheck: CourseForDuplicateCheck = {
+            id: "new",
+            title: formData.get("title") as string,
+            start_latitude: startPoint.lat,
+            start_longitude: startPoint.lng,
+            distance_km: parseFloat(formData.get("distance_km") as string) || distance,
+            avg_time_min: parseInt(formData.get("avg_time_min") as string) || duration,
+            difficulty: formData.get("difficulty") as string,
+            gpx_data: {
+              points: coordinates,
+            },
+          };
+
+          const duplicateResult = checkForDuplicates(
+            newCourseForCheck,
+            existingCourses as CourseForDuplicateCheck[]
+          );
+
+          // 중복 발견 시
+          if (duplicateResult.proceed === false) {
+            // 완전 동일 - 등록 차단
+            setDuplicateCheck(duplicateResult);
+            setPendingSubmit(null);
+            setSubmitting(false);
+            return;
+          } else if (duplicateResult.proceed === "CONFIRM") {
+            // 유사 - 사용자 확인 필요
+            setDuplicateCheck(duplicateResult);
+            setPendingSubmit({ formData, gpxData });
+            setSubmitting(false);
+            return;
+          }
+        }
+      }
 
       // 통계 계산
       const bounds = {
@@ -131,6 +194,20 @@ export default function NewCoursePage() {
     }
   };
 
+  // 중복 확인 모달에서 "계속 등록" 클릭 시
+  const handleConfirmDuplicate = () => {
+    if (pendingSubmit) {
+      setDuplicateCheck(null);
+      handleGPXSubmit(pendingSubmit.formData, pendingSubmit.gpxData, true);
+    }
+  };
+
+  // 중복 확인 모달 닫기
+  const handleCloseDuplicateModal = () => {
+    setDuplicateCheck(null);
+    setPendingSubmit(null);
+  };
+
   return (
     <ProtectedAdminRoute>
       <div className={`min-h-screen bg-page-bg ${notoSans.className}`}>
@@ -171,6 +248,16 @@ export default function NewCoursePage() {
             </div>
           </div>
         </div>
+
+        {/* 중복 확인 모달 */}
+        {duplicateCheck && (
+          <DuplicateCourseModal
+            isOpen={true}
+            onClose={handleCloseDuplicateModal}
+            onConfirm={handleConfirmDuplicate}
+            duplicateResult={duplicateCheck}
+          />
+        )}
       </div>
     </ProtectedAdminRoute>
   );
