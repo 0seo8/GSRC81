@@ -8,8 +8,6 @@ export async function POST(request: NextRequest) {
     const {
       course_id,
       message,
-      latitude,
-      longitude,
       author_nickname = "익명",
     } = body;
 

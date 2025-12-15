@@ -2,7 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import KakaoProvider from "next-auth/providers/kakao";
 import { supabaseAdmin } from "./supabase";
 
-1; // 카카오 프로필 타입 확장 (실제 API 응답 구조 반영)
+// 카카오 프로필 타입 확장 (실제 API 응답 구조 반영)
 interface KakaoProfile {
   id: string | number;
   connected_at?: string;

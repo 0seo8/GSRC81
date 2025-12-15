@@ -26,7 +26,7 @@ export function CourseCard({
   isExpanded = false,
 }: CourseCardProps) {
   const layout = calculateCardLayout(index, totalCourses);
-  const shadow = calculateCardShadow(index);
+  const shadow = calculateCardShadow();
 
   // 확장 시 모든 카드를 80px(5rem) 위로 이동
   const getBottomPosition = () => {

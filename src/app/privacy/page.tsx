@@ -51,7 +51,7 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-lg font-semibold mb-3">1. 개인정보의 수집 및 이용 목적</h2>
               <p className="leading-relaxed text-sm mb-2">
-                GSRC81(이하 "크루")은 다음의 목적을 위하여 개인정보를 처리합니다:
+                GSRC81(이하 &ldquo;크루&rdquo;)은 다음의 목적을 위하여 개인정보를 처리합니다:
               </p>
               <ul className="list-disc list-inside pl-4 text-sm space-y-1">
                 <li>회원 가입 및 관리</li>

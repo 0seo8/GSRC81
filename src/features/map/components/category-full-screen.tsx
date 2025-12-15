@@ -27,7 +27,6 @@ interface CategoryFullScreenProps {
 export function CategoryFullScreen({
   isOpen,
   onClose,
-  courses: _courses,
   categories,
   initialCategory = "jingwan",
   onCourseClick,

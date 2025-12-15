@@ -13,7 +13,6 @@ interface ImageUploaderProps {
 export default function ImageUploader({
   onUpload,
   currentUrl,
-  bucket = "course-photos",
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentUrl || null);

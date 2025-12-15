@@ -19,7 +19,6 @@ import {
   Edit,
   Save,
   X,
-  Trash2,
   Loader2,
   ArrowLeft,
 } from "lucide-react";

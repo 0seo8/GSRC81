@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import { Upload, FileText, MapPin, Tag } from "lucide-react";
+import { Upload, FileText, MapPin } from "lucide-react";
 import ImageUploader from "@/shared/components/common/ImageUploader";
 import { supabase } from "@/shared/lib/supabase";
 
