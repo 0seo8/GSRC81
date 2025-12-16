@@ -46,12 +46,10 @@ export function CategoryFullScreen({
     return [];
   }, [selectedCourses, selectedCourse]);
 
-  // 카테고리 네비게이션 훅
+  // 카테고리 네비게이션 훅 (스와이프 기능 제거로 인해 현재 카테고리 정보만 사용)
   const {
-    currentCategoryIndex,
     currentCategory,
     dongNames,
-    handleCategoryChange,
   } = useCategoryNavigation({
     categories,
     initialCategory,
@@ -59,12 +57,9 @@ export function CategoryFullScreen({
     filteredCourses,
   });
 
-  // 드래그 핸들링 훅
+  // 드래그 핸들링 훅 (스와이프 기능 제거, 상하 드래그만 지원)
   const { isDragging, handleHeaderDrag, snapManager } = useBottomSheetDrag({
     onClose,
-    onCategoryChange: handleCategoryChange,
-    currentCategoryIndex,
-    totalCategories: categories.length,
   });
 
   // 디자인 설정
