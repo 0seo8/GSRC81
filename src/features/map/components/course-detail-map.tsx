@@ -456,73 +456,37 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     });
   }, [isAnimating, animationProgress, trailData, flightComments]);
 
-  // 경로 레이어 클릭 이벤트 등록
+  // 지도 전체 클릭 이벤트 등록 (레이어에 의존하지 않음)
   useEffect(() => {
     if (!mapRef.current) return;
 
     const map = mapRef.current.getMap();
 
-    const handleLayerClick = (e: mapboxgl.MapLayerMouseEvent) => {
+    // 지도 전체 클릭 핸들러
+    const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
+      console.log("🗺️ 지도 클릭됨 (전역):", e.lngLat);
       const { lng, lat } = e.lngLat;
       handleTrailLayerClick(lng, lat);
     };
 
-    const handleMouseEnter = () => {
-      map.getCanvas().style.cursor = "pointer";
-    };
-
-    const handleMouseLeave = () => {
-      map.getCanvas().style.cursor = "";
-    };
-
-    // 레이어가 로드될 때까지 대기 (재시도 로직 추가)
-    const setupLayerEvents = () => {
-      const trySetup = (retries = 0) => {
-        if (map.getLayer("trail-clickable")) {
-          console.log("✅ trail-clickable 레이어 찾음, 이벤트 등록 중...");
-
-          // 레이어 클릭 이벤트 등록
-          map.on("click", "trail-clickable", handleLayerClick);
-
-          // 마우스 커서 변경 (경로 위에서만 포인터)
-          map.on("mouseenter", "trail-clickable", handleMouseEnter);
-          map.on("mouseleave", "trail-clickable", handleMouseLeave);
-
-          console.log("✅ 이벤트 리스너 등록 완료");
-        } else if (retries < 10) {
-          // 레이어가 아직 없으면 100ms 후 재시도 (최대 10번)
-          console.log(`⏳ 레이어 대기 중... (${retries + 1}/10)`);
-          setTimeout(() => trySetup(retries + 1), 100);
-        } else {
-          console.log("❌ trail-clickable 레이어를 찾을 수 없음 (10번 시도 후)");
-        }
-      };
-
-      trySetup();
-    };
-
-    // 스타일이 로드된 후 이벤트 등록
-    if (map.isStyleLoaded()) {
-      setupLayerEvents();
-    } else {
-      map.once("styledata", setupLayerEvents);
-    }
-
-    // sourcedata 이벤트로 추가 보험 (레이어가 추가될 때 다시 시도)
-    const handleSourceData = (e: any) => {
-      if (e.sourceId === "trail" && !map.hasEventListeners("click")) {
-        setupLayerEvents();
+    // 지도가 로드되면 클릭 이벤트 등록
+    const setupMapClick = () => {
+      if (map.loaded()) {
+        console.log("✅ 지도 로드됨, 클릭 이벤트 등록");
+        map.on("click", handleMapClick);
+      } else {
+        map.once("load", () => {
+          console.log("✅ 지도 로드됨, 클릭 이벤트 등록");
+          map.on("click", handleMapClick);
+        });
       }
     };
-    map.on("sourcedata", handleSourceData);
+
+    setupMapClick();
 
     return () => {
-      if (map.getLayer("trail-clickable")) {
-        map.off("click", "trail-clickable", handleLayerClick);
-        map.off("mouseenter", "trail-clickable", handleMouseEnter);
-        map.off("mouseleave", "trail-clickable", handleMouseLeave);
-      }
-      map.off("sourcedata", handleSourceData);
+      map.off("click", handleMapClick);
+      console.log("🧹 클릭 이벤트 제거됨");
     };
   }, [handleTrailLayerClick]);
 
