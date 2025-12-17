@@ -152,9 +152,15 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
   // 경로 레이어 클릭 핸들러 (레이어 위에서만 동작)
   const handleTrailLayerClick = useCallback(
     (lng: number, lat: number) => {
-      if (isAnimating) return; // 애니메이션 중에는 클릭 비활성화
+      console.log("🖱️ 지도 클릭됨:", { lng, lat, isAnimating });
+
+      if (isAnimating) {
+        console.log("⚠️ 애니메이션 중이라 클릭 비활성화됨");
+        return; // 애니메이션 중에는 클릭 비활성화
+      }
 
       const nearestPoint = findNearestRoutePoint(lng, lat);
+      console.log("📍 가장 가까운 경로 지점:", nearestPoint);
 
       if (nearestPoint) {
         setClickedPoint({
@@ -163,6 +169,9 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
           distanceMarker: nearestPoint.distanceMarker,
         });
         setShowCommentModal(true);
+        console.log("✅ 댓글 모달 열림");
+      } else {
+        console.log("❌ 경로 지점을 찾을 수 없음");
       }
     },
     [isAnimating, findNearestRoutePoint],
@@ -466,16 +475,30 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
       map.getCanvas().style.cursor = "";
     };
 
-    // 레이어가 로드될 때까지 대기
+    // 레이어가 로드될 때까지 대기 (재시도 로직 추가)
     const setupLayerEvents = () => {
-      if (map.getLayer("trail-clickable")) {
-        // 레이어 클릭 이벤트 등록
-        map.on("click", "trail-clickable", handleLayerClick);
+      const trySetup = (retries = 0) => {
+        if (map.getLayer("trail-clickable")) {
+          console.log("✅ trail-clickable 레이어 찾음, 이벤트 등록 중...");
 
-        // 마우스 커서 변경 (경로 위에서만 포인터)
-        map.on("mouseenter", "trail-clickable", handleMouseEnter);
-        map.on("mouseleave", "trail-clickable", handleMouseLeave);
-      }
+          // 레이어 클릭 이벤트 등록
+          map.on("click", "trail-clickable", handleLayerClick);
+
+          // 마우스 커서 변경 (경로 위에서만 포인터)
+          map.on("mouseenter", "trail-clickable", handleMouseEnter);
+          map.on("mouseleave", "trail-clickable", handleMouseLeave);
+
+          console.log("✅ 이벤트 리스너 등록 완료");
+        } else if (retries < 10) {
+          // 레이어가 아직 없으면 100ms 후 재시도 (최대 10번)
+          console.log(`⏳ 레이어 대기 중... (${retries + 1}/10)`);
+          setTimeout(() => trySetup(retries + 1), 100);
+        } else {
+          console.log("❌ trail-clickable 레이어를 찾을 수 없음 (10번 시도 후)");
+        }
+      };
+
+      trySetup();
     };
 
     // 스타일이 로드된 후 이벤트 등록
@@ -485,12 +508,21 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
       map.once("styledata", setupLayerEvents);
     }
 
+    // sourcedata 이벤트로 추가 보험 (레이어가 추가될 때 다시 시도)
+    const handleSourceData = (e: any) => {
+      if (e.sourceId === "trail" && !map.hasEventListeners("click")) {
+        setupLayerEvents();
+      }
+    };
+    map.on("sourcedata", handleSourceData);
+
     return () => {
       if (map.getLayer("trail-clickable")) {
         map.off("click", "trail-clickable", handleLayerClick);
         map.off("mouseenter", "trail-clickable", handleMouseEnter);
         map.off("mouseleave", "trail-clickable", handleMouseLeave);
       }
+      map.off("sourcedata", handleSourceData);
     };
   }, [handleTrailLayerClick]);
 
