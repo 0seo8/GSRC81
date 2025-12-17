@@ -7,7 +7,7 @@ import Map, {
   Marker,
   MapRef,
 } from "react-map-gl/mapbox";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Flag, MessageSquare } from "lucide-react";
 import { convertToLegacyCourse } from "@/types/unified";
 import { getCourseByIdV2 } from "@/shared/lib/courses-data-v2";
@@ -44,11 +44,12 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
   } | null>(null);
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [flightComments, setFlightComments] = useState<CourseComment[]>([]);
-  const [visibleComments, setVisibleComments] = useState<Set<string>>(
-    new Set(),
-  );
+  // 초기 상태: 빈 Set (댓글 없음)
+  const [visibleComments, setVisibleComments] = useState<Set<string>>(new Set());
 
   const mapRef = useRef<MapRef>(null);
+  // 이미 표시된 댓글 추적 (ref로 관리하여 무한 루프 방지)
+  const shownCommentsRef = useRef<Set<string>>(new Set());
 
   // Custom hooks
   const {
@@ -375,18 +376,30 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     }
   }, [courseId]);
 
-  // 댓글 로드
+  // 댓글 로드 (로드 시에도 표시하지 않음)
   useEffect(() => {
     if (courseId) {
       loadFlightComments();
+      // 로드 직후에도 댓글 숨김 상태 유지
+      setVisibleComments(new Set());
     }
   }, [courseId, loadFlightComments]);
 
+  // 애니메이션 상태 변경 시 댓글 상태 관리
+  useEffect(() => {
+    if (!isAnimating) {
+      // 비행모드가 아닐 때는 항상 모든 댓글 숨김
+      setVisibleComments(new Set());
+      shownCommentsRef.current.clear();
+    }
+  }, [isAnimating]);
+
   // 애니메이션 진행에 따라 댓글 표시 관리
   useEffect(() => {
+    // 비행모드가 아니거나 데이터가 없으면 모든 댓글 즉시 숨김
     if (!isAnimating || !trailData) {
-      // 애니메이션이 아닐 때는 모든 댓글 숨김
       setVisibleComments(new Set());
+      shownCommentsRef.current.clear();
       return;
     }
 
@@ -396,11 +409,21 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
 
     // 현재 거리를 지난 댓글들 중 새로 표시할 댓글들 찾기
     flightComments.forEach((comment) => {
-      if (
-        comment.distance_marker !== undefined &&
-        comment.distance_marker <= currentDistanceKm &&
-        !visibleComments.has(comment.id)
-      ) {
+      // 거리 마커가 없는 댓글은 무시
+      if (comment.distance_marker === undefined || comment.distance_marker === null) {
+        return;
+      }
+
+      // 이미 한 번 표시된 댓글은 건너뛰기
+      if (shownCommentsRef.current.has(comment.id)) {
+        return;
+      }
+
+      // 현재 진행 지점을 지난 댓글만 표시
+      if (comment.distance_marker <= currentDistanceKm) {
+        // 표시된 댓글로 마킹
+        shownCommentsRef.current.add(comment.id);
+
         // 새로운 댓글 표시
         setVisibleComments((prev) => new Set([...prev, comment.id]));
 
@@ -412,7 +435,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
           5000
         );
 
-        // 계산된 시간 후 해당 댓글 제거
+        // 계산된 시간 후 해당 댓글 제거 (fade-out)
         setTimeout(() => {
           setVisibleComments((prev) => {
             const newSet = new Set(prev);
@@ -422,7 +445,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
         }, displayDuration);
       }
     });
-  }, [isAnimating, animationProgress, trailData, flightComments, visibleComments]);
+  }, [isAnimating, animationProgress, trailData, flightComments]);
 
   // 경로 레이어 클릭 이벤트 등록
   useEffect(() => {
@@ -674,46 +697,48 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
           </Marker>
         )}
 
-        {/* 댓글 말풍선 마커들 - 비행모드일 때만 표시 */}
-        {isAnimating &&
-          flightComments
-            .filter(
-              (comment) =>
-                comment.latitude &&
-                comment.longitude &&
-                visibleComments.has(comment.id),
-            )
-            .map((comment) => (
-              <Marker
-                key={comment.id}
-                longitude={comment.longitude!}
-                latitude={comment.latitude!}
-                anchor="bottom"
-                style={{ pointerEvents: 'none' }}
-              >
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0, y: 10 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.8, opacity: 0, y: 10 }}
-                  transition={{
-                    duration: 0.4,
-                    ease: "easeInOut"
-                  }}
-                  className="relative max-w-xs"
+        {/* 댓글 말풍선 마커들 - 비행모드일 때만 표시 (초기에는 완전히 숨김) */}
+        <AnimatePresence mode="sync">
+          {isAnimating && flightComments.length > 0 && visibleComments.size > 0 &&
+            flightComments
+              .filter(
+                (comment) =>
+                  comment.latitude &&
+                  comment.longitude &&
+                  visibleComments.has(comment.id),
+              )
+              .map((comment) => (
+                <Marker
+                  key={comment.id}
+                  longitude={comment.longitude!}
+                  latitude={comment.latitude!}
+                  anchor="bottom"
+                  style={{ pointerEvents: 'none' }}
                 >
-                  {/* 말풍선 */}
-                  <div className="bg-black text-white rounded-lg shadow-lg p-3 relative max-w-[200px]">
-                    {/* 말풍선 꼬리 */}
-                    <div className="absolute bottom-0 left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-black transform translate-y-full"></div>
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0, y: 10 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.8, opacity: 0, y: 10 }}
+                    transition={{
+                      duration: 0.4,
+                      ease: "easeInOut"
+                    }}
+                    className="relative max-w-xs"
+                  >
+                    {/* 말풍선 */}
+                    <div className="bg-black text-white rounded-lg shadow-lg p-3 relative max-w-[200px]">
+                      {/* 말풍선 꼬리 */}
+                      <div className="absolute bottom-0 left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-black transform translate-y-full"></div>
 
-                    {/* 댓글 내용만 표시 */}
-                    <p className="text-white leading-relaxed font-inter text-[0.625rem]">
-                      {comment.message}
-                    </p>
-                  </div>
-                </motion.div>
-              </Marker>
-            ))}
+                      {/* 댓글 내용만 표시 */}
+                      <p className="text-white leading-relaxed font-inter text-[0.625rem]">
+                        {comment.message}
+                      </p>
+                    </div>
+                  </motion.div>
+                </Marker>
+              ))}
+        </AnimatePresence>
       </Map>
 
       {/* 댓글 입력 모달 */}

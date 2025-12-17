@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
-import { getCourseById } from "@/shared/lib/courses-data";
+import { getCourseById, getCourses } from "@/shared/lib/courses-data";
 import { CourseCommentsList } from "@/features/courses/components/course-comments-list";
 import { getCourseComments } from "@/shared/lib/comments";
 import { getCoursePhotos } from "@/shared/lib/course-photos";
@@ -24,6 +24,23 @@ interface CourseDetailPageProps {
     id: string;
   }>;
 }
+
+// 빌드 시 정적 페이지 생성 (ISR)
+// 모든 코스를 미리 빌드하여 초기 로딩 성능 향상
+export async function generateStaticParams() {
+  try {
+    const courses = await getCourses();
+    return courses.map((course) => ({
+      id: course.id,
+    }));
+  } catch (error) {
+    console.error("Failed to generate static params:", error);
+    return [];
+  }
+}
+
+// ISR: 1시간마다 재검증
+export const revalidate = 3600;
 
 // SEO를 위한 동적 메타데이터 생성
 export async function generateMetadata({
