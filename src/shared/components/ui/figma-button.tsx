@@ -6,11 +6,11 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/shared/lib/utils";
 
 const figmaButtonVariants = cva(
-  "button-figma inline-flex items-center justify-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 font-medium text-xs py-3.5",
+  "button-figma inline-flex items-center justify-center transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 font-medium text-xs py-3.5 active:scale-[0.98] transform",
   {
     variants: {
       variant: {
-        default: "bg-button-bg text-figma-primary hover:bg-button-hover w-full",
+        default: "bg-button-bg text-figma-primary hover:bg-button-hover hover:shadow-sm w-full",
         primary: "bg-figma-primary text-figma-white hover:bg-figma-secondary",
         secondary:
           "bg-figma-secondary text-figma-primary hover:bg-figma-tertiary",

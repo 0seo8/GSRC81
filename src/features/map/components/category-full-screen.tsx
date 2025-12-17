@@ -46,13 +46,24 @@ export function CategoryFullScreen({
     return [];
   }, [selectedCourses, selectedCourse]);
 
+  // 실제 선택된 코스의 카테고리를 결정 (클릭한 코스 기반)
+  const actualCategory = useMemo(() => {
+    if (filteredCourses.length > 0) {
+      // 첫 번째 코스의 카테고리를 사용 (클러스터인 경우도 첫 번째 것 사용)
+      const categoryKey = filteredCourses[0].category_key || "jingwan";
+      return categories.find(cat => cat.key === categoryKey) || categories[0];
+    }
+    // 선택된 코스가 없으면 initialCategory 사용 (fallback)
+    return categories.find(cat => cat.key === initialCategory) || categories[0];
+  }, [filteredCourses, categories, initialCategory]);
+
   // 카테고리 네비게이션 훅 (스와이프 기능 제거로 인해 현재 카테고리 정보만 사용)
   const {
     currentCategory,
     dongNames,
   } = useCategoryNavigation({
     categories,
-    initialCategory,
+    initialCategory: actualCategory.key,
     onCategoryChange,
     filteredCourses,
   });
@@ -62,8 +73,8 @@ export function CategoryFullScreen({
     onClose,
   });
 
-  // 디자인 설정
-  const currentDesign = getCategoryDesign(currentCategory?.key);
+  // 디자인 설정 - 실제 카테고리 기반으로 가져오기
+  const currentDesign = getCategoryDesign(actualCategory.key);
 
   // 스크롤 컨테이너 ref
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -184,9 +195,9 @@ export function CategoryFullScreen({
             {/* 헤더 */}
             <div className="shrink-0">
               <BottomSheetHeader
-                categoryName={currentCategory?.name}
+                categoryName={actualCategory?.name}
                 dongNames={dongNames}
-                isAllCategory={currentCategory?.key === "all"}
+                isAllCategory={actualCategory?.key === "all"}
                 onHeaderDrag={handleHeaderDrag}
               />
             </div>
