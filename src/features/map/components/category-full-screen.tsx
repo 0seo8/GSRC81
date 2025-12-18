@@ -51,17 +51,16 @@ export function CategoryFullScreen({
     if (filteredCourses.length > 0) {
       // 첫 번째 코스의 카테고리를 사용 (클러스터인 경우도 첫 번째 것 사용)
       const categoryKey = filteredCourses[0].category_key || "jingwan";
-      return categories.find(cat => cat.key === categoryKey) || categories[0];
+      return categories.find((cat) => cat.key === categoryKey) || categories[0];
     }
     // 선택된 코스가 없으면 initialCategory 사용 (fallback)
-    return categories.find(cat => cat.key === initialCategory) || categories[0];
+    return (
+      categories.find((cat) => cat.key === initialCategory) || categories[0]
+    );
   }, [filteredCourses, categories, initialCategory]);
 
   // 카테고리 네비게이션 훅 (스와이프 기능 제거로 인해 현재 카테고리 정보만 사용)
-  const {
-    currentCategory,
-    dongNames,
-  } = useCategoryNavigation({
+  const { currentCategory, dongNames } = useCategoryNavigation({
     categories,
     initialCategory: actualCategory.key,
     onCategoryChange,
@@ -137,8 +136,12 @@ export function CategoryFullScreen({
       }
     };
 
-    scrollContainer.addEventListener("touchstart", handleTouchStart, { passive: true });
-    scrollContainer.addEventListener("touchmove", handleTouchMove, { passive: true });
+    scrollContainer.addEventListener("touchstart", handleTouchStart, {
+      passive: true,
+    });
+    scrollContainer.addEventListener("touchmove", handleTouchMove, {
+      passive: true,
+    });
 
     return () => {
       scrollContainer.removeEventListener("touchstart", handleTouchStart);
@@ -164,7 +167,7 @@ export function CategoryFullScreen({
             onClick={(e) => {
               // 마커를 클릭한 경우가 아니면 닫기
               const target = e.target as HTMLElement;
-              if (!target.closest('.mapboxgl-marker')) {
+              if (!target.closest(".mapboxgl-marker")) {
                 onClose();
               }
             }}
@@ -174,8 +177,8 @@ export function CategoryFullScreen({
           <motion.div
             className={`fixed bottom-2 left-2 right-2 z-50 flex flex-col ${
               filteredCourses.length <= 2
-                ? "rounded-[2.8125rem]"  // 1-2개: 전체 둥근 (모든 카드 보임)
-                : "rounded-t-[2.8125rem]"  // 3개 이상: 위만 둥근 (스크롤 필요)
+                ? "rounded-[2.8125rem]" // 1-2개: 전체 둥근 (모든 카드 보임)
+                : "rounded-t-[2.8125rem]" // 3개 이상: 위만 둥근 (스크롤 필요)
             }`}
             initial={{ height: "0vh" }}
             animate={{
@@ -203,7 +206,10 @@ export function CategoryFullScreen({
             </div>
 
             {/* 카드 스크롤 영역 */}
-            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-[0.4375rem] pb-0 flex flex-col justify-end">
+            <div
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto px-[0.4375rem] pb-0 flex flex-col justify-end"
+            >
               <RefactoredCourseCardStack
                 courses={filteredCourses}
                 cardColors={currentDesign.cardColors}

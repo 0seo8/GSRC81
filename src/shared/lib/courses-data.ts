@@ -24,7 +24,7 @@ const supabaseServer = createClient(supabaseUrl, supabaseAnonKey, {
         ...options,
         signal: AbortSignal.timeout(10000), // 10초 타임아웃
         // Next.js 캐싱 전략: 1시간 캐시 + ISR
-        cache: 'force-cache',
+        cache: "force-cache",
         next: { revalidate: 3600 }, // 1시간마다 재검증 (map 페이지와 동일)
       });
     },

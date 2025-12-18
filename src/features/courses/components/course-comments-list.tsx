@@ -62,7 +62,7 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                 style={{
                   display: "grid",
                   gridTemplateColumns: "48px 1fr 48px",
-                  gap: "0.75rem"
+                  gap: "0.75rem",
                 }}
               >
                 {/* 왼쪽 프로필 영역 */}
@@ -79,7 +79,9 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                 {/* 가운데 댓글 영역 (항상 같은 위치) */}
                 <div>
                   {/* 작성자 정보 */}
-                  <div className={`flex items-center space-x-2 mb-2 ${isEven ? "justify-start" : "justify-end"}`}>
+                  <div
+                    className={`flex items-center space-x-2 mb-2 ${isEven ? "justify-start" : "justify-end"}`}
+                  >
                     <span className="font-medium text-black text-sm">
                       {comment.author_nickname}
                     </span>
@@ -94,7 +96,9 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                   </div>
 
                   {/* 말풍선 */}
-                  <div className={`flex ${isEven ? "justify-start" : "justify-end"}`}>
+                  <div
+                    className={`flex ${isEven ? "justify-start" : "justify-end"}`}
+                  >
                     <div
                       className="relative bg-black text-white px-3 py-3 inline-block group"
                       style={{
@@ -103,7 +107,8 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                           : "18px 0px 18px 18px",
                       }}
                     >
-                      <p className="leading-relaxed whitespace-pre-wrap"
+                      <p
+                        className="leading-relaxed whitespace-pre-wrap"
                         style={{ fontSize: "0.875rem" }}
                       >
                         {comment.message}

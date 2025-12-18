@@ -65,6 +65,7 @@ GSRC81 프로젝트는 **NextAuth + Kakao OAuth**를 사용하여 인증하고, 
 ### 1. `createServerSupabaseClient()` - 서버 전용 (RLS 우회)
 
 **용도:**
+
 - 관리자 작업
 - 사용자별 데이터 검증 후 처리
 - 크로스 유저 쿼리
@@ -97,6 +98,7 @@ export async function POST(req: Request) {
 ### 2. `createPublicSupabaseClient()` - 공개 데이터 (RLS 적용)
 
 **용도:**
+
 - 서버 사이드 렌더링 (SSR)
 - 공개 데이터 조회
 - RLS 정책을 존중해야 하는 작업
@@ -122,6 +124,7 @@ export default async function CoursesPage() {
 ### 3. `createBrowserSupabaseClient()` - 클라이언트 사이드 (RLS 적용)
 
 **용도:**
+
 - 클라이언트 컴포넌트
 - 실시간 구독
 - 공개 데이터 조회
@@ -172,26 +175,26 @@ export function CourseList() {
 
 ### 📖 공개 데이터 정책 (누구나 조회 가능)
 
-| 테이블 | 조건 | 설명 |
-|--------|------|------|
-| `course_categories` | `is_active = true` | 활성화된 카테고리만 |
-| `courses` | `is_active = true` | 활성화된 코스만 |
-| `course_comments` | `is_deleted = false AND hidden_by_admin = false` | 삭제/숨김 처리 안된 댓글 |
-| `course_photos` | `true` | 모든 사진 |
-| `course_comment_photos` | `true` | 모든 댓글 사진 |
-| `course_location_notes` | `is_active = true` | 활성화된 위치 노트 |
-| `app_settings` | `setting_key IN ('app_notice', 'maintenance_mode', 'app_version')` | 공개 설정만 |
-| `access_codes` | `is_active = true AND expires_at > now()` | 활성화되고 만료 안된 코드 |
+| 테이블                  | 조건                                                               | 설명                      |
+| ----------------------- | ------------------------------------------------------------------ | ------------------------- |
+| `course_categories`     | `is_active = true`                                                 | 활성화된 카테고리만       |
+| `courses`               | `is_active = true`                                                 | 활성화된 코스만           |
+| `course_comments`       | `is_deleted = false AND hidden_by_admin = false`                   | 삭제/숨김 처리 안된 댓글  |
+| `course_photos`         | `true`                                                             | 모든 사진                 |
+| `course_comment_photos` | `true`                                                             | 모든 댓글 사진            |
+| `course_location_notes` | `is_active = true`                                                 | 활성화된 위치 노트        |
+| `app_settings`          | `setting_key IN ('app_notice', 'maintenance_mode', 'app_version')` | 공개 설정만               |
+| `access_codes`          | `is_active = true AND expires_at > now()`                          | 활성화되고 만료 안된 코드 |
 
 ### ✍️ 사용자 쓰기 정책
 
 사용자별 쓰기 작업은 **서버 사이드에서 NextAuth 세션 확인 후** 처리합니다:
 
-| 작업 | 처리 방법 |
-|------|----------|
-| 댓글 작성 | 서버에서 세션 확인 → `createServerSupabaseClient()` 사용 |
-| 사진 업로드 | 서버에서 세션 확인 → `createServerSupabaseClient()` 사용 |
-| 댓글/사진 삭제 | 서버에서 세션 확인 + kakao_user_id 일치 확인 → 삭제 |
+| 작업           | 처리 방법                                                |
+| -------------- | -------------------------------------------------------- |
+| 댓글 작성      | 서버에서 세션 확인 → `createServerSupabaseClient()` 사용 |
+| 사진 업로드    | 서버에서 세션 확인 → `createServerSupabaseClient()` 사용 |
+| 댓글/사진 삭제 | 서버에서 세션 확인 + kakao_user_id 일치 확인 → 삭제      |
 
 **예시 코드:**
 
@@ -247,6 +250,7 @@ export async function POST(req: Request) {
 ### ✅ 해야 할 것
 
 1. **서버에서 세션 검증**
+
    ```typescript
    const session = await getServerSession(authOptions);
    if (!session) {
@@ -255,6 +259,7 @@ export async function POST(req: Request) {
    ```
 
 2. **관리자 권한 확인**
+
    ```typescript
    if (!session.user.isAdmin) {
      return new Response("Forbidden", { status: 403 });
@@ -262,6 +267,7 @@ export async function POST(req: Request) {
    ```
 
 3. **사용자 소유권 확인**
+
    ```typescript
    // 댓글 삭제시 작성자 확인
    const { data: comment } = await supabase
@@ -283,12 +289,14 @@ export async function POST(req: Request) {
 ### ❌ 하지 말아야 할 것
 
 1. **클라이언트에서 SECRET_KEY 사용**
+
    ```typescript
    // ❌ 절대 안됨!
    const supabase = createClient(url, SECRET_KEY);
    ```
 
 2. **클라이언트에서 직접 데이터 수정**
+
    ```typescript
    // ❌ RLS 정책에 의해 차단됨
    await supabase.from("courses").insert({ ... });
@@ -327,7 +335,7 @@ const { data } = await supabaseAdmin.from("courses").select("*");
 import {
   createBrowserSupabaseClient,
   createPublicSupabaseClient,
-  createServerSupabaseClient
+  createServerSupabaseClient,
 } from "@/shared/lib/supabase";
 
 // 클라이언트: 공개 데이터 조회
@@ -360,6 +368,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGci... # 서버 전용 (필수)
 ```
 
 > **참고**:
+>
 > - `PUBLISHABLE_KEY`가 없으면 자동으로 `ANON_KEY`를 사용합니다.
 > - `SERVICE_ROLE_KEY`는 Supabase의 표준 환경 변수 이름입니다.
 

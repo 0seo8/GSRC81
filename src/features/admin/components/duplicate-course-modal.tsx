@@ -66,7 +66,7 @@ export function DuplicateCourseModal({
               onClick={() => {
                 window.open(
                   `/admin/courses/${existingCourse.id}/manage`,
-                  "_blank"
+                  "_blank",
                 );
                 onClose();
               }}
@@ -139,9 +139,7 @@ export function DuplicateCourseModal({
             </div>
             <DialogDescription className="text-sm text-gray-600 space-y-3">
               <p>
-                {existingCourses.length > 1
-                  ? "다음 코스들과"
-                  : "다음 코스와"}{" "}
+                {existingCourses.length > 1 ? "다음 코스들과" : "다음 코스와"}{" "}
                 시작/종료 지점이 같습니다:
               </p>
               <ul className="space-y-2 max-h-32 overflow-y-auto">

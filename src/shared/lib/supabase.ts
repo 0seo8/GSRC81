@@ -10,8 +10,14 @@ if (typeof window === "undefined") {
   console.log("Supabase Environment Variables Check:");
   console.log("- URL:", supabaseUrl ? "✓ Set" : "✗ Missing");
   console.log("- ANON_KEY:", supabaseAnonKey ? "✓ Set" : "✗ Missing");
-  console.log("- PUBLISHABLE_KEY:", supabasePublishableKey ? "✓ Set" : "✗ Missing");
-  console.log("- SERVICE_ROLE_KEY:", supabaseServiceRoleKey ? "✓ Set" : "✗ Missing");
+  console.log(
+    "- PUBLISHABLE_KEY:",
+    supabasePublishableKey ? "✓ Set" : "✗ Missing",
+  );
+  console.log(
+    "- SERVICE_ROLE_KEY:",
+    supabaseServiceRoleKey ? "✓ Set" : "✗ Missing",
+  );
 }
 
 if (!supabaseUrl) {
@@ -35,7 +41,9 @@ if (!clientKey) {
  */
 export function createServerSupabaseClient() {
   if (!supabaseServiceRoleKey) {
-    console.warn("⚠️ SUPABASE_SERVICE_ROLE_KEY not set, falling back to client key");
+    console.warn(
+      "⚠️ SUPABASE_SERVICE_ROLE_KEY not set, falling back to client key",
+    );
     return createPublicSupabaseClient();
   }
 

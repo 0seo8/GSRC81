@@ -11,18 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui/card";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  MapPin,
-} from "lucide-react";
+import { Plus, Edit, Trash2, MapPin } from "lucide-react";
 import Link from "next/link";
-import {
-  CourseV2,
-  getDistance,
-  getDuration,
-} from "@/types/unified";
+import { CourseV2, getDistance, getDuration } from "@/types/unified";
 import { toast } from "sonner";
 import {
   getDifficultyLabel,
@@ -98,8 +89,7 @@ export default function CoursesManagePage() {
             <h1 className="text-2xl font-bold text-gray-900">코스 관리</h1>
             <Link href="/admin/courses/new">
               <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                새 코스 등록
+                <Plus className="w-4 h-4 mr-2" />새 코스 등록
               </Button>
             </Link>
           </div>

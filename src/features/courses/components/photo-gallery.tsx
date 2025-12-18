@@ -20,7 +20,7 @@ interface PhotoGalleryProps {
 export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   photos,
   isAdmin = false,
-  onDeletePhoto
+  onDeletePhoto,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -71,10 +71,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
           }
         `}</style>
         {photos.map((photo, index) => (
-          <div
-            key={photo.id}
-            className="flex-shrink-0 w-full snap-center"
-          >
+          <div key={photo.id} className="flex-shrink-0 w-full snap-center">
             <div className="bg-white overflow-hidden rounded-lg relative group">
               <Image
                 src={photo.file_url}
@@ -116,9 +113,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
               key={index}
               onClick={() => scrollToIndex(index)}
               className={`w-2 h-2 rounded-full transition-all ${
-                index === currentIndex
-                  ? "bg-black w-6"
-                  : "bg-gray-300"
+                index === currentIndex ? "bg-black w-6" : "bg-gray-300"
               }`}
               aria-label={`사진 ${index + 1}로 이동`}
             />

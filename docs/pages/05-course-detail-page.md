@@ -416,6 +416,7 @@ app/(main)/courses/[id]/
 ### Problem Statement
 
 **Before**: Users could click anywhere on the map to place comments, which resulted in:
+
 - ❌ Comments being placed far from the actual route
 - ❌ Unintentional comment placement when trying to pan/zoom the map
 - ❌ Poor user experience with unclear interaction boundaries
@@ -446,6 +447,7 @@ const trailClickableLayer = {
 ```
 
 **Key Points**:
+
 - 20px width provides comfortable click/tap target for mobile
 - Transparent layer sits above visible route line
 - Follows exact route geometry
@@ -485,24 +487,26 @@ useEffect(() => {
 #### 3. Removed General Map Click Handler
 
 **Before**:
+
 ```typescript
 <Map onClick={handleMapClick} ... />
 ```
 
 **After**:
+
 ```typescript
 <Map ... /> // No onClick - only layer clicks work
 ```
 
 ### User Experience Improvements
 
-| Aspect | Before | After |
-|--------|--------|-------|
-| Comment Placement | Anywhere on map | Only on route ✅ |
-| Visual Feedback | None | Cursor changes to pointer ✅ |
-| Map Navigation | Competed with comment clicks | Works normally ✅ |
-| Mobile Usability | Hard to hit route precisely | 20px tap target ✅ |
-| Accidental Clicks | Common | Prevented ✅ |
+| Aspect            | Before                       | After                        |
+| ----------------- | ---------------------------- | ---------------------------- |
+| Comment Placement | Anywhere on map              | Only on route ✅             |
+| Visual Feedback   | None                         | Cursor changes to pointer ✅ |
+| Map Navigation    | Competed with comment clicks | Works normally ✅            |
+| Mobile Usability  | Hard to hit route precisely  | 20px tap target ✅           |
+| Accidental Clicks | Common                       | Prevented ✅                 |
 
 ### Technical Benefits
 

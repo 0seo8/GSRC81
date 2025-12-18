@@ -12,10 +12,7 @@ import { DuplicateCourseModal } from "@/features/admin/components/duplicate-cour
 import { supabase } from "@/shared/lib/supabase";
 import { GPXDataSchema } from "@/core/validation/gpx";
 import { UnifiedGPXData } from "@/types/unified";
-import {
-  SUCCESS_MESSAGES,
-  ERROR_MESSAGES,
-} from "@/core/config/messages";
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "@/core/config/messages";
 import {
   checkForDuplicates,
   type CourseForDuplicateCheck,
@@ -41,7 +38,7 @@ export default function NewCoursePage() {
   const handleGPXSubmit = async (
     formData: FormData,
     gpxData: unknown,
-    skipDuplicateCheck = false
+    skipDuplicateCheck = false,
   ) => {
     try {
       setSubmitting(true);
@@ -57,7 +54,9 @@ export default function NewCoursePage() {
         // 기존 코스 조회
         const { data: existingCourses, error: queryError } = await supabase
           .from("courses")
-          .select("id, title, start_latitude, start_longitude, distance_km, avg_time_min, difficulty, gpx_data")
+          .select(
+            "id, title, start_latitude, start_longitude, distance_km, avg_time_min, difficulty, gpx_data",
+          )
           .eq("is_active", true);
 
         if (queryError) {
@@ -69,8 +68,10 @@ export default function NewCoursePage() {
             title: formData.get("title") as string,
             start_latitude: startPoint.lat,
             start_longitude: startPoint.lng,
-            distance_km: parseFloat(formData.get("distance_km") as string) || distance,
-            avg_time_min: parseInt(formData.get("avg_time_min") as string) || duration,
+            distance_km:
+              parseFloat(formData.get("distance_km") as string) || distance,
+            avg_time_min:
+              parseInt(formData.get("avg_time_min") as string) || duration,
             difficulty: formData.get("difficulty") as string,
             gpx_data: {
               points: coordinates,
@@ -79,7 +80,7 @@ export default function NewCoursePage() {
 
           const duplicateResult = checkForDuplicates(
             newCourseForCheck,
-            existingCourses as CourseForDuplicateCheck[]
+            existingCourses as CourseForDuplicateCheck[],
           );
 
           // 중복 발견 시
@@ -134,8 +135,10 @@ export default function NewCoursePage() {
         description: formData.get("description") as string,
         start_latitude: startPoint.lat,
         start_longitude: startPoint.lng,
-        distance_km: parseFloat(formData.get("distance_km") as string) || distance,
-        avg_time_min: parseInt(formData.get("avg_time_min") as string) || duration,
+        distance_km:
+          parseFloat(formData.get("distance_km") as string) || distance,
+        avg_time_min:
+          parseInt(formData.get("avg_time_min") as string) || duration,
         difficulty: formData.get("difficulty") as string,
         category_id: (formData.get("category_id") as string) || null,
         elevation_gain: elevationGain || 0,
@@ -221,7 +224,9 @@ export default function NewCoursePage() {
               <ArrowLeft className="w-5 h-5 mr-2" />
               코스 목록으로
             </Link>
-            <h1 className="text-lg font-semibold text-gray-900">새 코스 등록</h1>
+            <h1 className="text-lg font-semibold text-gray-900">
+              새 코스 등록
+            </h1>
           </div>
         </div>
 
@@ -242,7 +247,10 @@ export default function NewCoursePage() {
                   <h2 className="text-xl font-semibold text-black mb-6">
                     GPX 파일로 코스 등록
                   </h2>
-                  <GPXUploadForm onSubmit={handleGPXSubmit} loading={submitting} />
+                  <GPXUploadForm
+                    onSubmit={handleGPXSubmit}
+                    loading={submitting}
+                  />
                 </div>
               )}
             </div>

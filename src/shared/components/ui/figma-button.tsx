@@ -10,7 +10,8 @@ const figmaButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-button-bg text-figma-primary hover:bg-button-hover hover:shadow-sm w-full",
+        default:
+          "bg-button-bg text-figma-primary hover:bg-button-hover hover:shadow-sm w-full",
         primary: "bg-figma-primary text-figma-white hover:bg-figma-secondary",
         secondary:
           "bg-figma-secondary text-figma-primary hover:bg-figma-tertiary",

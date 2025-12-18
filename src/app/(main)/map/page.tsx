@@ -1,4 +1,8 @@
-import { getCourses, getCourseCategories } from "@/shared/lib/courses-data";
+import { createClient } from "@/lib/supabase/server";
+import {
+  courseRepository,
+  categoryRepository,
+} from "@/lib/supabase/repositories";
 import { OptimizedMapClient } from "@/features/map/components/optimized-map-client";
 import { Metadata } from "next";
 
@@ -20,13 +24,17 @@ export const revalidate = 3600;
  * - loading.tsx가 자동으로 Suspense 경계 제공
  * - error.tsx가 자동으로 Error Boundary 제공
  * - ISR을 통한 데이터 캐싱 및 재검증
- * - 불필요한 wrapper 없이 직접 클라이언트 컴포넌트 사용
+ * - Repository 패턴으로 타입 안전한 데이터 접근
  */
 export default async function MapPage() {
+  const supabase = await createClient();
+  const courseRepo = courseRepository(supabase);
+  const categoryRepo = categoryRepository(supabase);
+
   // 카테고리와 전체 코스를 병렬로 로드
   const [categories, courses] = await Promise.all([
-    getCourseCategories(),
-    getCourses(),
+    categoryRepo.getActiveCategories(),
+    courseRepo.getActiveCourses(),
   ]);
 
   return <OptimizedMapClient courses={courses} categories={categories} />;

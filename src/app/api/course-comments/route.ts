@@ -5,11 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const {
-      course_id,
-      message,
-      author_nickname = "익명",
-    } = body;
+    const { course_id, message, author_nickname = "익명" } = body;
 
     // 필수 필드 검증
     if (!course_id || !message) {

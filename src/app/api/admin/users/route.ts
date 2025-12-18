@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     if (!isAdmin) {
       return NextResponse.json(
         { error: "Unauthorized: Admin permission required" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 

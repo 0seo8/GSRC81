@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase, supabaseAdmin } from "@/shared/lib/supabase";
-import { getCurrentUser, checkAdminPermission } from "@/features/admin/lib/auth-helpers";
+import {
+  getCurrentUser,
+  checkAdminPermission,
+} from "@/features/admin/lib/auth-helpers";
 
 interface RouteParams {
   params: Promise<{
@@ -30,7 +33,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (!isAdmin) {
       return NextResponse.json(
         { error: "Unauthorized: Admin permission required" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 

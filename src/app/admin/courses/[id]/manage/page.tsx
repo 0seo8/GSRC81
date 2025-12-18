@@ -15,13 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import {
-  Edit,
-  Save,
-  X,
-  Loader2,
-  ArrowLeft,
-} from "lucide-react";
+import { Edit, Save, X, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { CourseDetailMapWrapper } from "@/features/map/components/course-detail-map-wrapper";
@@ -29,7 +23,10 @@ import { CourseCommentsList } from "@/features/courses/components/course-comment
 import { CourseStats } from "@/features/courses/components/course-stats";
 import { PhotoGallery } from "@/features/courses/components/photo-gallery";
 import { splitTitleAtMidpoint } from "@/shared/lib/utils/text";
-import { DEFAULT_COURSE_DESCRIPTION, DIFFICULTY_LABELS } from "@/core/config/course";
+import {
+  DEFAULT_COURSE_DESCRIPTION,
+  DIFFICULTY_LABELS,
+} from "@/core/config/course";
 import ImageUploader from "@/shared/components/common/ImageUploader";
 import type { CoursePhoto } from "@/shared/lib/course-photos";
 import type { CourseComment } from "@/shared/lib/comments";
@@ -109,7 +106,7 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
           .eq("course_id", courseId)
           .order("created_at", { ascending: false }),
         fetch(`/api/course-photos?course_id=${courseId}`).then((res) =>
-          res.json()
+          res.json(),
         ),
       ]);
 
@@ -128,7 +125,9 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
         elevation_gain: (courseData.elevation_gain || 0).toString(),
         difficulty: courseData.difficulty,
       });
-      setDescriptionForm(courseData.detail_description || courseData.description || "");
+      setDescriptionForm(
+        courseData.detail_description || courseData.description || "",
+      );
     } catch (error) {
       console.error("Failed to load course data:", error);
       toast.error("코스 정보를 불러오는데 실패했습니다");
@@ -216,9 +215,12 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
   };
 
   // 댓글 삭제
-  const handleDeleteComment = async (commentId: string, authorNickname: string) => {
+  const handleDeleteComment = async (
+    commentId: string,
+    authorNickname: string,
+  ) => {
     const confirmed = window.confirm(
-      `${authorNickname}님의 댓글을 삭제하시겠습니까?`
+      `${authorNickname}님의 댓글을 삭제하시겠습니까?`,
     );
     if (!confirmed) return;
 
@@ -327,7 +329,10 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
         {/* 상단 네비게이션 */}
         <div className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-10 px-4 py-3">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <Link href="/admin/courses" className="flex items-center text-gray-600 hover:text-gray-900">
+            <Link
+              href="/admin/courses"
+              className="flex items-center text-gray-600 hover:text-gray-900"
+            >
               <ArrowLeft className="w-5 h-5 mr-2" />
               코스 목록으로
             </Link>
@@ -358,8 +363,12 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                       </h1>
                       <div className="flex items-start gap-2">
                         <div className="text-right">
-                          <div className="text-xs font-medium text-black">BY</div>
-                          <div className="text-xs font-medium text-black">GSRC81</div>
+                          <div className="text-xs font-medium text-black">
+                            BY
+                          </div>
+                          <div className="text-xs font-medium text-black">
+                            GSRC81
+                          </div>
                         </div>
                         <Button
                           size="sm"
@@ -432,7 +441,10 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                           step="0.1"
                           value={statsForm.distance_km}
                           onChange={(e) =>
-                            setStatsForm({ ...statsForm, distance_km: e.target.value })
+                            setStatsForm({
+                              ...statsForm,
+                              distance_km: e.target.value,
+                            })
                           }
                         />
                       </div>
@@ -444,7 +456,10 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                           type="number"
                           value={statsForm.avg_time_min}
                           onChange={(e) =>
-                            setStatsForm({ ...statsForm, avg_time_min: e.target.value })
+                            setStatsForm({
+                              ...statsForm,
+                              avg_time_min: e.target.value,
+                            })
                           }
                         />
                       </div>
@@ -456,7 +471,10 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                           type="number"
                           value={statsForm.elevation_gain}
                           onChange={(e) =>
-                            setStatsForm({ ...statsForm, elevation_gain: e.target.value })
+                            setStatsForm({
+                              ...statsForm,
+                              elevation_gain: e.target.value,
+                            })
                           }
                         />
                       </div>
@@ -477,11 +495,13 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.entries(DIFFICULTY_LABELS).map(([value, label]) => (
-                              <SelectItem key={value} value={value}>
-                                {label}
-                              </SelectItem>
-                            ))}
+                            {Object.entries(DIFFICULTY_LABELS).map(
+                              ([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              ),
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -498,7 +518,9 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                           setStatsForm({
                             distance_km: course.distance_km.toString(),
                             avg_time_min: course.avg_time_min.toString(),
-                            elevation_gain: (course.elevation_gain || 0).toString(),
+                            elevation_gain: (
+                              course.elevation_gain || 0
+                            ).toString(),
                             difficulty: course.difficulty,
                           });
                           setEditingStats(false);
@@ -518,7 +540,8 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                   {!editingDescription ? (
                     <>
                       <p className="text-course-detail-description text-black">
-                        {course.detail_description || DEFAULT_COURSE_DESCRIPTION}
+                        {course.detail_description ||
+                          DEFAULT_COURSE_DESCRIPTION}
                       </p>
                       <Button
                         size="sm"
@@ -547,7 +570,9 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
                           variant="outline"
                           onClick={() => {
                             setDescriptionForm(
-                              course.detail_description || course.description || ""
+                              course.detail_description ||
+                                course.description ||
+                                "",
                             );
                             setEditingDescription(false);
                           }}

@@ -134,10 +134,8 @@ export default function AdminUsersPage() {
       // 사용자 목록에서 해당 사용자의 is_admin 상태를 즉시 업데이트
       setUsers((prevUsers) =>
         prevUsers.map((u) =>
-          u.id === user.id
-            ? { ...u, is_admin: action === "grant" }
-            : u
-        )
+          u.id === user.id ? { ...u, is_admin: action === "grant" } : u,
+        ),
       );
 
       setConfirmDialog({ isOpen: false, user: null, action: null });
@@ -149,7 +147,10 @@ export default function AdminUsersPage() {
       }
     } catch (error: unknown) {
       console.error("Failed to toggle admin:", error);
-      const message = error instanceof Error ? error.message : "관리자 권한 변경에 실패했습니다";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "관리자 권한 변경에 실패했습니다";
       toast.error(message);
     }
   };

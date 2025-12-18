@@ -22,7 +22,7 @@ export function MapSkeleton() {
                 linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)
               `,
-              backgroundSize: '50px 50px'
+              backgroundSize: "50px 50px",
             }}
           ></div>
 
@@ -33,9 +33,7 @@ export function MapSkeleton() {
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center bg-white/90 backdrop-blur-sm px-8 py-6 rounded-2xl shadow-lg">
               <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-300 border-t-blue-600 mx-auto mb-3"></div>
-              <p className="text-sm font-medium text-gray-700">
-                지도 로딩 중
-              </p>
+              <p className="text-sm font-medium text-gray-700">지도 로딩 중</p>
               <p className="text-xs text-gray-500 mt-1">
                 코스 정보를 불러오고 있습니다
               </p>
@@ -49,8 +47,14 @@ export function MapSkeleton() {
 
           {/* 가상 마커들 (지도 분위기 연출) */}
           <div className="absolute top-1/3 left-1/4 w-6 h-6 bg-blue-400/30 rounded-full animate-pulse"></div>
-          <div className="absolute top-1/2 right-1/3 w-6 h-6 bg-blue-400/30 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-          <div className="absolute bottom-1/3 left-1/2 w-6 h-6 bg-blue-400/30 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          <div
+            className="absolute top-1/2 right-1/3 w-6 h-6 bg-blue-400/30 rounded-full animate-pulse"
+            style={{ animationDelay: "0.2s" }}
+          ></div>
+          <div
+            className="absolute bottom-1/3 left-1/2 w-6 h-6 bg-blue-400/30 rounded-full animate-pulse"
+            style={{ animationDelay: "0.4s" }}
+          ></div>
         </div>
       </div>
     </div>

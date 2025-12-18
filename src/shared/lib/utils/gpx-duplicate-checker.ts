@@ -39,7 +39,7 @@ function coordinatesMatch(
   lat1: number,
   lng1: number,
   lat2: number,
-  lng2: number
+  lng2: number,
 ): boolean {
   return (
     Math.abs(lat1 - lat2) < COORDINATE_THRESHOLD &&
@@ -52,7 +52,7 @@ function coordinatesMatch(
  */
 export function isSameStartEnd(
   course1: CourseForDuplicateCheck,
-  course2: CourseForDuplicateCheck
+  course2: CourseForDuplicateCheck,
 ): boolean {
   // 끝점 계산
   const end1 = getEndPoint(course1);
@@ -64,7 +64,7 @@ export function isSameStartEnd(
     course1.start_latitude,
     course1.start_longitude,
     course2.start_latitude,
-    course2.start_longitude
+    course2.start_longitude,
   );
 
   const endMatch = coordinatesMatch(end1.lat, end1.lng, end2.lat, end2.lng);
@@ -76,7 +76,7 @@ export function isSameStartEnd(
  * 끝점 좌표 가져오기
  */
 function getEndPoint(
-  course: CourseForDuplicateCheck
+  course: CourseForDuplicateCheck,
 ): { lat: number; lng: number } | null {
   const points = course.gpx_data?.points;
   if (!points || points.length === 0) return null;
@@ -90,7 +90,7 @@ function getEndPoint(
  */
 export function isSimilarRoute(
   course1: CourseForDuplicateCheck,
-  course2: CourseForDuplicateCheck
+  course2: CourseForDuplicateCheck,
 ): boolean {
   const sameStartEnd = isSameStartEnd(course1, course2);
   const distanceDiff = Math.abs(course1.distance_km - course2.distance_km);
@@ -103,11 +103,10 @@ export function isSimilarRoute(
  */
 export function isDuplicateRoute(
   course1: CourseForDuplicateCheck,
-  course2: CourseForDuplicateCheck
+  course2: CourseForDuplicateCheck,
 ): boolean {
   return (
-    course1.title.trim().toLowerCase() ===
-      course2.title.trim().toLowerCase() &&
+    course1.title.trim().toLowerCase() === course2.title.trim().toLowerCase() &&
     isSimilarRoute(course1, course2) &&
     course1.difficulty === course2.difficulty &&
     Math.abs(course1.avg_time_min - course2.avg_time_min) < TIME_THRESHOLD_MIN
@@ -119,16 +118,14 @@ export function isDuplicateRoute(
  */
 export function checkForDuplicates(
   newCourse: CourseForDuplicateCheck,
-  existingCourses: CourseForDuplicateCheck[]
+  existingCourses: CourseForDuplicateCheck[],
 ): DuplicateCheckResult {
   if (existingCourses.length === 0) {
     return { proceed: true };
   }
 
   // 1. 완전 동일 체크
-  const duplicate = existingCourses.find((c) =>
-    isDuplicateRoute(c, newCourse)
-  );
+  const duplicate = existingCourses.find((c) => isDuplicateRoute(c, newCourse));
   if (duplicate) {
     return {
       proceed: false,
@@ -139,9 +136,7 @@ export function checkForDuplicates(
   }
 
   // 2. 매우 유사 체크 (시작/끝 + 거리 비슷)
-  const verySimilar = existingCourses.find((c) =>
-    isSimilarRoute(c, newCourse)
-  );
+  const verySimilar = existingCourses.find((c) => isSimilarRoute(c, newCourse));
   if (verySimilar) {
     return {
       proceed: "CONFIRM",

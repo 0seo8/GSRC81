@@ -1,9 +1,12 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
-import { getCourseById, getCourses } from "@/shared/lib/courses-data";
+import { createClient } from "@/lib/supabase/server";
+import {
+  courseRepository,
+  commentRepository,
+} from "@/lib/supabase/repositories";
 import { CourseCommentsList } from "@/features/courses/components/course-comments-list";
-import { getCourseComments } from "@/shared/lib/comments";
 import { getCoursePhotos } from "@/shared/lib/course-photos";
 import { CourseDetailMapWrapper } from "@/features/map/components/course-detail-map-wrapper";
 import { CourseStats } from "@/features/courses/components/course-stats";
@@ -29,7 +32,8 @@ interface CourseDetailPageProps {
 // 모든 코스를 미리 빌드하여 초기 로딩 성능 향상
 export async function generateStaticParams() {
   try {
-    const courses = await getCourses();
+    const supabase = await createClient();
+    const courses = await courseRepository(supabase).getActiveCourses();
     return courses.map((course) => ({
       id: course.id,
     }));
@@ -47,27 +51,29 @@ export async function generateMetadata({
   params,
 }: CourseDetailPageProps): Promise<Metadata> {
   const { id } = await params;
-  const course = await getCourseById(id).catch(() => null);
 
-  if (!course) {
+  try {
+    const supabase = await createClient();
+    const course = await courseRepository(supabase).getCourseById(id);
+
+    return {
+      title: `${course.title} | GSRC81 MAPS`,
+      description:
+        course.detail_description ||
+        course.description ||
+        `${course.distance_km}km의 ${course.title} 러닝 코스를 지금 확인해보세요.`,
+      openGraph: {
+        title: course.title,
+        description: course.description || undefined,
+        type: "website",
+      },
+    };
+  } catch {
     return {
       title: "코스를 찾을 수 없습니다 | GSRC81 MAPS",
       description: "요청하신 러닝 코스를 찾을 수 없습니다.",
     };
   }
-
-  return {
-    title: `${course.title} | GSRC81 MAPS`,
-    description:
-      course.detail_description ||
-      course.description ||
-      `${course.distance_km}km의 ${course.title} 러닝 코스를 지금 확인해보세요.`,
-    openGraph: {
-      title: course.title,
-      description: course.description,
-      type: "website",
-    },
-  };
 }
 
 // 서버 컴포넌트로 변경
@@ -77,10 +83,14 @@ export default async function CourseDetailPage({
   // 서버에서 params를 직접 await
   const { id: courseId } = await params;
 
+  const supabase = await createClient();
+  const courseRepo = courseRepository(supabase);
+  const commentRepo = commentRepository(supabase);
+
   // 서버에서 데이터 병렬 fetching
-  const [course, comments, photos] = await Promise.all([
-    getCourseById(courseId).catch(() => null),
-    getCourseComments(courseId).catch(() => []),
+  const [course, commentsData, photos] = await Promise.all([
+    courseRepo.getCourseById(courseId).catch(() => null),
+    commentRepo.getCommentsByCourse(courseId).catch(() => []),
     getCoursePhotos(courseId).catch(() => []),
   ]);
 
@@ -88,6 +98,25 @@ export default async function CourseDetailPage({
   if (!course) {
     notFound();
   }
+
+  // 타입 변환: CommentWithPhotos -> CourseComment
+  const comments = commentsData.map((comment) => ({
+    id: comment.id,
+    course_id: comment.course_id,
+    author_nickname: comment.author_nickname,
+    message: comment.message,
+    created_at: comment.created_at || new Date().toISOString(),
+    likes_count: comment.likes_count,
+    avatar_url: comment.avatar_url || undefined,
+    author_user_key: comment.author_user_key || undefined,
+    is_deleted: comment.is_deleted || false,
+    is_flagged: comment.is_flagged || false,
+    hidden_by_admin: comment.hidden_by_admin || false,
+    is_visible_in_flight: comment.is_visible_in_flight || true,
+    latitude: comment.latitude || undefined,
+    longitude: comment.longitude || undefined,
+    distance_marker: comment.distance_marker || undefined,
+  }));
 
   // 제목을 중간 지점에서 두 줄로 분할
   const [firstLine, secondLine] = splitTitleAtMidpoint(course.title);

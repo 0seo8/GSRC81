@@ -6,9 +6,7 @@ interface UseBottomSheetDragProps {
   onClose: () => void;
 }
 
-export function useBottomSheetDrag({
-  onClose,
-}: UseBottomSheetDragProps) {
+export function useBottomSheetDrag({ onClose }: UseBottomSheetDragProps) {
   const [isDragging, setIsDragging] = useState(false);
 
   // Snap points 관리

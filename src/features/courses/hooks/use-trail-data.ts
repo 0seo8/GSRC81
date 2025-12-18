@@ -9,7 +9,10 @@ import {
 } from "@/shared/lib/comments";
 import { getCoursePhotos, CoursePhoto } from "@/shared/lib/course-photos";
 import { convertToLegacyCourse } from "@/types/unified";
-import { TrailData, TrailGeoJSON } from "@/features/map/components/trail-map/types";
+import {
+  TrailData,
+  TrailGeoJSON,
+} from "@/features/map/components/trail-map/types";
 
 interface UseTrailDataReturn {
   trailData: TrailData | null;
