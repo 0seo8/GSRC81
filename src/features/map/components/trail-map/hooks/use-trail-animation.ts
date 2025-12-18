@@ -14,6 +14,7 @@ export const useTrailAnimation = (
   const [isAnimating, setIsAnimating] = useState(false);
   const [isFullRouteView, setIsFullRouteView] = useState(true); // 초기에는 전체 보기로 시작
   const [animationProgress, setAnimationProgress] = useState(1); // 전체 경로 표시
+  const [currentActualDistanceKm, setCurrentActualDistanceKm] = useState(0); // 실제 누적 거리 (km)
   const [savedProgress, setSavedProgress] = useState(0);
   const animationRef = useRef<number | null>(null);
 
@@ -31,6 +32,7 @@ export const useTrailAnimation = (
 
     setIsAnimating(true);
     setIsFullRouteView(false);
+    setCurrentActualDistanceKm(0); // 거리 초기화
     onResetKmMarkers();
 
     // V2 구조에서 포인트 추출 - trailData.course.gpx_data.points 사용
@@ -56,7 +58,6 @@ export const useTrailAnimation = (
     }
 
     if (points.length === 0) {
-      console.error("❌ No points available for animation");
       return;
     }
 
@@ -122,15 +123,43 @@ export const useTrailAnimation = (
     let lastCalculatedIndex = 0;
     let lastCumulativeDistance = 0;
 
+    // 거리 기반으로 포인트 인덱스 찾기 (선형 보간 포함)
+    const findIndexAtDistance = (
+      targetDistanceMeters: number,
+    ): { index: number; ratio: number } => {
+      let cumulativeDistance = 0;
+
+      for (let i = 1; i < points.length; i++) {
+        const segmentDistance = calculateDistance(
+          points[i - 1].lat,
+          points[i - 1].lng,
+          points[i].lat,
+          points[i].lng,
+        );
+
+        if (cumulativeDistance + segmentDistance >= targetDistanceMeters) {
+          // 선형 보간으로 정확한 위치 계산
+          const remaining = targetDistanceMeters - cumulativeDistance;
+          const ratio = segmentDistance > 0 ? remaining / segmentDistance : 0;
+          return { index: i - 1, ratio: Math.min(Math.max(ratio, 0), 1) };
+        }
+
+        cumulativeDistance += segmentDistance;
+      }
+
+      return { index: points.length - 1, ratio: 0 };
+    };
+
     const animate = () => {
       const elapsed = Date.now() - startTime;
       const timeProgress = Math.min(elapsed / totalDuration, 1);
 
-      currentIndex = Math.min(
-        Math.floor(timeProgress * (pointCount - 1)),
-        pointCount - 1,
-      );
+      // ✅ 실제 거리 기반으로 포인트 찾기 (포인트 인덱스 대신)
+      const targetDistanceMeters = timeProgress * totalDistanceKm * 1000;
+      const { index: baseIndex, ratio: interpolationRatio } =
+        findIndexAtDistance(targetDistanceMeters);
 
+      currentIndex = baseIndex;
       const actualProgress = currentIndex / (pointCount - 1);
       setAnimationProgress(actualProgress);
 
@@ -154,7 +183,11 @@ export const useTrailAnimation = (
           lastCalculatedIndex = currentIndex;
         }
 
-        const currentKmMark = Math.floor(lastCumulativeDistance / 1000);
+        // 실제 누적 거리를 state로 노출 (댓글 동기화용)
+        const distanceKm = lastCumulativeDistance / 1000;
+        setCurrentActualDistanceKm(distanceKm);
+
+        const currentKmMark = Math.floor(distanceKm);
 
         // 새로운 km 지점을 지났는지 확인 (이미 표시되지 않은 것만)
         if (currentKmMark > 0 && !shownKmMarkers.has(currentKmMark)) {
@@ -162,20 +195,18 @@ export const useTrailAnimation = (
           shownKmMarkers.add(currentKmMark);
         }
 
-        const pointLat = point.lat;
-        const pointLng = point.lng;
+        // ✅ 선형 보간으로 정확한 위치 계산
+        const currentPoint = points[currentIndex];
+        const nextIndex = Math.min(currentIndex + 1, points.length - 1);
+        const nextPoint = points[nextIndex];
 
-        // 다음 포인트 예측으로 부드러운 카메라 이동
-        // 현재 포인트와 다음 포인트 사이를 보간
-        let targetLat = pointLat;
-        let targetLng = pointLng;
-
-        if (currentIndex < pointCount - 2) {
-          const nextPoint = points[currentIndex + 1];
-          const interpolationFactor = 0.3; // 30% 앞을 미리 봄
-          targetLat = pointLat + (nextPoint.lat - pointLat) * interpolationFactor;
-          targetLng = pointLng + (nextPoint.lng - pointLng) * interpolationFactor;
-        }
+        // 두 포인트 사이를 보간하여 정확한 위치 계산
+        const targetLat =
+          currentPoint.lat +
+          (nextPoint.lat - currentPoint.lat) * interpolationRatio;
+        const targetLng =
+          currentPoint.lng +
+          (nextPoint.lng - currentPoint.lng) * interpolationRatio;
 
         // 매우 짧은 duration으로 부드러운 이동 (requestAnimationFrame 주기와 동기화)
         map.easeTo({
@@ -208,6 +239,7 @@ export const useTrailAnimation = (
           setIsAnimating(false);
           setIsFullRouteView(true);
           setAnimationProgress(1);
+          setCurrentActualDistanceKm(0); // 거리 리셋
           setSavedProgress(0);
 
           setTimeout(() => {
@@ -280,6 +312,7 @@ export const useTrailAnimation = (
     setIsAnimating(false);
     setIsFullRouteView(true);
     setAnimationProgress(1);
+    setCurrentActualDistanceKm(0); // 거리 리셋
 
     const bounds = trailData.stats.bounds;
 
@@ -315,6 +348,7 @@ export const useTrailAnimation = (
     isAnimating,
     isFullRouteView,
     animationProgress,
+    currentActualDistanceKm, // 실제 거리 노출 (댓글 동기화용)
     savedProgress,
     startTrailAnimation,
     showFullRoute,

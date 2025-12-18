@@ -1,19 +1,17 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import Map, {
-  Source,
-  Layer,
-  Marker,
-  MapRef,
-} from "react-map-gl/mapbox";
+import Map, { Source, Layer, Marker, MapRef } from "react-map-gl/mapbox";
 import { motion, AnimatePresence } from "framer-motion";
 import { Flag, MessageSquare } from "lucide-react";
 import { convertToLegacyCourse } from "@/types/unified";
 import { getCourseByIdV2 } from "@/shared/lib/courses-data-v2";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-import { TrailData, TrailGeoJSON } from "@/features/map/components/trail-map/types";
+import {
+  TrailData,
+  TrailGeoJSON,
+} from "@/features/map/components/trail-map/types";
 import { INITIAL_VIEW_STATE } from "@/features/map/components/trail-map/constants";
 import { useTrailAnimation } from "@/features/map/components/trail-map/hooks/use-trail-animation";
 import { useLocationTracking } from "@/features/map/components/trail-map/hooks/use-location-tracking";
@@ -45,7 +43,9 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [flightComments, setFlightComments] = useState<CourseComment[]>([]);
   // 초기 상태: 빈 Set (댓글 없음)
-  const [visibleComments, setVisibleComments] = useState<Set<string>>(new Set());
+  const [visibleComments, setVisibleComments] = useState<Set<string>>(
+    new Set(),
+  );
 
   const mapRef = useRef<MapRef>(null);
   // 이미 표시된 댓글 추적 (ref로 관리하여 무한 루프 방지)
@@ -67,6 +67,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     isAnimating,
     isFullRouteView,
     animationProgress,
+    currentActualDistanceKm, // 실제 누적 거리 (댓글 동기화용)
     savedProgress,
     startTrailAnimation,
     showFullRoute,
@@ -152,15 +153,11 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
   // 경로 레이어 클릭 핸들러 (레이어 위에서만 동작)
   const handleTrailLayerClick = useCallback(
     (lng: number, lat: number) => {
-      console.log("🖱️ 지도 클릭됨:", { lng, lat, isAnimating });
-
       if (isAnimating) {
-        console.log("⚠️ 애니메이션 중이라 클릭 비활성화됨");
         return; // 애니메이션 중에는 클릭 비활성화
       }
 
       const nearestPoint = findNearestRoutePoint(lng, lat);
-      console.log("📍 가장 가까운 경로 지점:", nearestPoint);
 
       if (nearestPoint) {
         setClickedPoint({
@@ -169,7 +166,6 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
           distanceMarker: nearestPoint.distanceMarker,
         });
         setShowCommentModal(true);
-        console.log("✅ 댓글 모달 열림");
       } else {
         console.log("❌ 경로 지점을 찾을 수 없음");
       }
@@ -412,14 +408,15 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
       return;
     }
 
-    // 현재 진행 거리 계산 (km 단위)
-    const totalDistanceKm = trailData.stats.totalDistance;
-    const currentDistanceKm = animationProgress * totalDistanceKm;
+    const currentDistanceKm = currentActualDistanceKm;
 
     // 현재 거리를 지난 댓글들 중 새로 표시할 댓글들 찾기
     flightComments.forEach((comment) => {
       // 거리 마커가 없는 댓글은 무시
-      if (comment.distance_marker === undefined || comment.distance_marker === null) {
+      if (
+        comment.distance_marker === undefined ||
+        comment.distance_marker === null
+      ) {
         return;
       }
 
@@ -441,7 +438,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
         const textLength = comment.message.length;
         const displayDuration = Math.min(
           Math.max(3000, 3000 + (textLength / 15) * 1000),
-          5000
+          5000,
         );
 
         // 계산된 시간 후 해당 댓글 제거 (fade-out)
@@ -454,7 +451,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
         }, displayDuration);
       }
     });
-  }, [isAnimating, animationProgress, trailData, flightComments]);
+  }, [isAnimating, currentActualDistanceKm, trailData, flightComments]);
 
   // 지도 전체 클릭 이벤트 등록 (레이어에 의존하지 않음)
   useEffect(() => {
@@ -464,7 +461,6 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
 
     // 지도 전체 클릭 핸들러
     const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
-      console.log("🗺️ 지도 클릭됨 (전역):", e.lngLat);
       const { lng, lat } = e.lngLat;
       handleTrailLayerClick(lng, lat);
     };
@@ -472,11 +468,9 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     // 지도가 로드되면 클릭 이벤트 등록
     const setupMapClick = () => {
       if (map.loaded()) {
-        console.log("✅ 지도 로드됨, 클릭 이벤트 등록");
         map.on("click", handleMapClick);
       } else {
         map.once("load", () => {
-          console.log("✅ 지도 로드됨, 클릭 이벤트 등록");
           map.on("click", handleMapClick);
         });
       }
@@ -486,7 +480,6 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
 
     return () => {
       map.off("click", handleMapClick);
-      console.log("🧹 클릭 이벤트 제거됨");
     };
   }, [handleTrailLayerClick]);
 
@@ -611,7 +604,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
             longitude={startPoint.lng}
             latitude={startPoint.lat}
             anchor="bottom"
-            style={{ pointerEvents: 'none' }}
+            style={{ pointerEvents: "none" }}
           >
             <div className="bg-green-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
               <Flag className="w-4 h-4" />
@@ -625,7 +618,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
             longitude={endPoint.lng}
             latitude={endPoint.lat}
             anchor="bottom"
-            style={{ pointerEvents: 'none' }}
+            style={{ pointerEvents: "none" }}
           >
             <div className="bg-red-500 text-white rounded-full p-2 shadow-lg border-2 border-white">
               <Flag className="w-4 h-4" />
@@ -643,7 +636,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
                 longitude={marker.position.lng}
                 latitude={marker.position.lat}
                 anchor="center"
-                style={{ pointerEvents: 'none' }}
+                style={{ pointerEvents: "none" }}
               >
                 <motion.div
                   initial={{ scale: 0.8, opacity: 0 }}
@@ -651,7 +644,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
                   exit={{ scale: 0.8, opacity: 0 }}
                   transition={{
                     duration: 0.4,
-                    ease: "easeInOut"
+                    ease: "easeInOut",
                   }}
                   className="bg-blue-500 text-white px-2 py-1 rounded-full shadow-lg border-2 border-white font-bold text-xs"
                 >
@@ -695,7 +688,9 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
 
         {/* 댓글 말풍선 마커들 - 비행모드일 때만 표시 (초기에는 완전히 숨김) */}
         <AnimatePresence mode="sync">
-          {isAnimating && flightComments.length > 0 && visibleComments.size > 0 &&
+          {isAnimating &&
+            flightComments.length > 0 &&
+            visibleComments.size > 0 &&
             flightComments
               .filter(
                 (comment) =>
@@ -709,7 +704,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
                   longitude={comment.longitude!}
                   latitude={comment.latitude!}
                   anchor="bottom"
-                  style={{ pointerEvents: 'none' }}
+                  style={{ pointerEvents: "none" }}
                 >
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0, y: 10 }}
@@ -717,7 +712,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
                     exit={{ scale: 0.8, opacity: 0, y: 10 }}
                     transition={{
                       duration: 0.4,
-                      ease: "easeInOut"
+                      ease: "easeInOut",
                     }}
                     className="relative max-w-xs"
                   >
