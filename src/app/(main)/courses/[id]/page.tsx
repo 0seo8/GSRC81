@@ -156,7 +156,7 @@ export default async function CourseDetailPage({
                 distance={course.distance_km}
                 time={course.avg_time_min || 30}
                 elevation={course.elevation_gain || 32}
-                difficulty={course.difficulty}
+                difficulty={course.difficulty || "medium"}
               />
 
               {/* 코스 설명 */}

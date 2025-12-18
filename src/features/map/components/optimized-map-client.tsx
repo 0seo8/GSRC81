@@ -13,10 +13,8 @@ import { MenuButton } from "@/shared/components/layout/menu-button";
 import { useMapState } from "@/features/map/hooks/use-map-state";
 import { useMapBounds } from "@/features/map/hooks/use-map-bounds";
 import { useGeolocation } from "@/shared/hooks/use-geolocation";
-import {
-  type CourseWithComments,
-  type CourseCategory,
-} from "@/shared/lib/courses-data";
+import { type CourseCategory } from "@/shared/lib/courses-data";
+import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
 import { addAllCategory } from "@/shared/lib/category-utils";
 import {
   MAPBOX_TOKEN,
@@ -26,7 +24,7 @@ import {
 } from "@/core/config/map";
 
 interface OptimizedMapClientProps {
-  courses: CourseWithComments[];
+  courses: CourseWithCategory[];
   categories: CourseCategory[];
 }
 
@@ -61,7 +59,7 @@ export function OptimizedMapClient({
       return courses;
     }
     return courses.filter(
-      (course) => (course.category_key || "jingwan") === currentCategory,
+      (course) => (course.course_categories?.key || "jingwan") === currentCategory,
     );
   }, [courses, currentCategory]);
 

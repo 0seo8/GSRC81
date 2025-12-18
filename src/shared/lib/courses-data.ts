@@ -151,11 +151,11 @@ export interface CourseCategory {
   id: string;
   key: string;
   name: string;
-  description?: string;
-  cover_image_url?: string;
-  sort_order: number;
-  is_active: boolean;
-  created_at: string;
+  description?: string | null;
+  cover_image_url?: string | null;
+  sort_order: number | null;
+  is_active: boolean | null;
+  created_at: string | null;
 }
 
 export async function getCourseCategories(): Promise<CourseCategory[]> {
