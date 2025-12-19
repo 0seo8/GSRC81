@@ -33,6 +33,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   // 댓글 관련 상태
   const [clickedPoint, setClickedPoint] = useState<{
@@ -248,6 +249,15 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
   }, [trailData, isAnimating, animationProgress]);
 
   const onMapLoad = useCallback(() => {
+    console.log("🗺️ Map onLoad triggered", {
+      hasMapRef: !!mapRef.current,
+      hasTrailData: !!trailData,
+      isAnimating,
+    });
+
+    // Map이 로드되었음을 표시
+    setIsMapLoaded(true);
+
     if (!mapRef.current || !trailData || isAnimating) return;
 
     setTimeout(() => {
@@ -457,9 +467,20 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
       return;
     }
 
+    if (!isMapLoaded) {
+      console.log("⚠️ Map not loaded yet");
+      return;
+    }
+
+    if (!trailData) {
+      console.log("⚠️ Trail data not ready yet");
+      return;
+    }
+
     const map = mapRef.current.getMap();
     console.log("🗺️ Setting up map click events", {
       mapLoaded: map.loaded(),
+      isMapLoadedState: isMapLoaded,
       hasTrailData: !!trailData,
       pointsCount: trailData?.geoJSON?.features?.[0]?.geometry?.coordinates?.length,
     });
@@ -517,7 +538,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
       console.log("🧹 Cleaning up map click event");
       map.off("click", handleMapClick);
     };
-  }, [trailData, isAnimating, findNearestRoutePoint]);
+  }, [isMapLoaded, trailData, isAnimating, findNearestRoutePoint]);
 
   // 트레일 라인 스타일
   const trailLineLayer = {
