@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Noto_Sans } from "next/font/google";
 import { ProtectedAdminRoute } from "@/shared/components/common/protected-admin-route";
-import { supabase } from "@/shared/lib/supabase";
+import { supabase, supabaseAdmin } from "@/shared/lib/supabase";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
@@ -219,18 +219,22 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
     commentId: string,
     authorNickname: string,
   ) => {
-    const confirmed = window.confirm(
-      `${authorNickname}님의 댓글을 삭제하시겠습니까?`,
-    );
-    if (!confirmed) return;
+    // toast로 확인 메시지 표시 후 삭제 진행
+    if (!window.confirm(`${authorNickname}님의 댓글을 삭제하시겠습니까?`)) {
+      return;
+    }
 
     try {
-      const { error } = await supabase
+      // Admin 클라이언트 사용 (RLS 우회)
+      const { error } = await supabaseAdmin
         .from("course_comments")
         .delete()
         .eq("id", commentId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Delete error:", error);
+        throw error;
+      }
 
       toast.success("댓글이 삭제되었습니다");
       await loadCourseData();
