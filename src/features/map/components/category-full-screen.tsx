@@ -48,7 +48,7 @@ export function CategoryFullScreen({
   const actualCategory = useMemo(() => {
     if (filteredCourses.length > 0) {
       // 첫 번째 코스의 카테고리를 사용 (클러스터인 경우도 첫 번째 것 사용)
-      const categoryKey = filteredCourses[0].category_key || "jingwan";
+      const categoryKey = filteredCourses[0].course_categories?.key || "jingwan";
       return categories.find((cat) => cat.key === categoryKey) || categories[0];
     }
     // 선택된 코스가 없으면 initialCategory 사용 (fallback)
