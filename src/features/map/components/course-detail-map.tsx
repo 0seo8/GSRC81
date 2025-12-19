@@ -249,12 +249,6 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
   }, [trailData, isAnimating, animationProgress]);
 
   const onMapLoad = useCallback(() => {
-    console.log("🗺️ Map onLoad triggered", {
-      hasMapRef: !!mapRef.current,
-      hasTrailData: !!trailData,
-      isAnimating,
-    });
-
     // Map이 로드되었음을 표시
     setIsMapLoaded(true);
 
@@ -267,21 +261,13 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
 
   // V2 API를 사용한 데이터 로드
   const loadCourseData = async (courseId: string): Promise<TrailData> => {
-    console.log("📡 Fetching course data from API, courseId:", courseId);
     const courseV2 = await getCourseByIdV2(courseId);
-    console.log("📦 API Response:", {
-      hasCourse: !!courseV2,
-      hasGpxData: !!courseV2?.gpx_data,
-      pointsCount: courseV2?.gpx_data?.points?.length,
-    });
 
     if (!courseV2) {
-      console.error("❌ Course not found in API response");
       throw new Error("코스를 찾을 수 없습니다.");
     }
 
     if (!courseV2.gpx_data?.points || courseV2.gpx_data.points.length === 0) {
-      console.error("❌ No GPX points in course data");
       throw new Error("코스 경로 데이터가 없습니다.");
     }
 
@@ -331,16 +317,10 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log("📊 Starting to load course data, courseId:", courseId);
         setLoading(true);
         setError(null);
 
         const data = await loadCourseData(courseId);
-        console.log("✅ Course data loaded successfully:", {
-          hasGeoJSON: !!data.geoJSON,
-          pointsCount: data.geoJSON?.features?.[0]?.geometry?.coordinates?.length,
-          bounds: data.stats.bounds,
-        });
         setTrailData(data);
 
         // 초기 중심점 설정
@@ -366,24 +346,17 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
           zoom: initialZoom,
         }));
       } catch (err) {
-        console.error("❌ Failed to load trail data:", err);
-        console.error("Error details:", {
-          message: err instanceof Error ? err.message : "Unknown error",
-          stack: err instanceof Error ? err.stack : undefined,
-        });
         setError(
           err instanceof Error
             ? err.message
             : "트레일 데이터를 불러올 수 없습니다.",
         );
       } finally {
-        console.log("📊 Data loading finished, loading state:", false);
         setLoading(false);
       }
     };
 
     if (courseId) {
-      console.log("🚀 Initiating data load for courseId:", courseId);
       loadData();
     }
   }, [courseId]);
@@ -462,59 +435,32 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
 
   // 지도 전체 클릭 이벤트 등록 (레이어에 의존하지 않음)
   useEffect(() => {
-    if (!mapRef.current) {
-      console.log("⚠️ Map ref not ready");
-      return;
-    }
-
-    if (!isMapLoaded) {
-      console.log("⚠️ Map not loaded yet");
-      return;
-    }
-
-    if (!trailData) {
-      console.log("⚠️ Trail data not ready yet");
+    if (!mapRef.current || !isMapLoaded || !trailData) {
       return;
     }
 
     const map = mapRef.current.getMap();
-    console.log("🗺️ Setting up map click events", {
-      mapLoaded: map.loaded(),
-      isMapLoadedState: isMapLoaded,
-      hasTrailData: !!trailData,
-      pointsCount: trailData?.geoJSON?.features?.[0]?.geometry?.coordinates?.length,
-    });
 
     // 지도 전체 클릭 핸들러 - 직접 로직 구현 (의존성 문제 방지)
     const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
       const { lng, lat } = e.lngLat;
-      console.log("🖱️ Map click event triggered:", { lng, lat, hasTrailData: !!trailData });
 
       // trailData가 없으면 무시
-      if (!trailData) {
-        console.log("⚠️ Click ignored: Trail data not loaded");
-        return;
-      }
+      if (!trailData) return;
 
       // 애니메이션 중이면 무시
-      if (isAnimating) {
-        console.log("⚠️ Click ignored: Animation in progress");
-        return;
-      }
+      if (isAnimating) return;
 
       // 가장 가까운 경로 지점 찾기
       const nearestPoint = findNearestRoutePoint(lng, lat);
 
       if (nearestPoint) {
-        console.log("✅ Nearest point found:", nearestPoint);
         setClickedPoint({
           lng: nearestPoint.lng,
           lat: nearestPoint.lat,
           distanceMarker: nearestPoint.distanceMarker,
         });
         setShowCommentModal(true);
-      } else {
-        console.log("❌ 경로 지점을 찾을 수 없음");
       }
     };
 
@@ -522,22 +468,15 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     // onLoad 콜백 이후에 실행되므로 map은 이미 준비된 상태
     const setupMapClick = () => {
       if (map.loaded()) {
-        console.log("✅ Map already loaded (loaded=true), adding click event");
         map.on("click", handleMapClick);
       } else {
-        // onLoad가 실행되었지만 map.loaded()가 false인 경우
-        // 타이밍 이슈로 인해 발생할 수 있음
-        console.log("⚠️ Map onLoad fired but loaded()=false, adding event anyway");
-
+        // onLoad가 실행되었지만 map.loaded()가 false인 경우 (타이밍 이슈)
         // loaded() 상태와 관계없이 이벤트 등록 시도
         try {
           map.on("click", handleMapClick);
-          console.log("✅ Click event added successfully");
-        } catch (err) {
-          console.error("❌ Failed to add click event:", err);
+        } catch {
           // 실패 시 한번 더 시도
           map.once("load", () => {
-            console.log("✅ Map load event fired, adding click event");
             map.on("click", handleMapClick);
           });
         }
@@ -547,7 +486,6 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     setupMapClick();
 
     return () => {
-      console.log("🧹 Cleaning up map click event");
       map.off("click", handleMapClick);
     };
   }, [isMapLoaded, trailData, isAnimating, findNearestRoutePoint]);
