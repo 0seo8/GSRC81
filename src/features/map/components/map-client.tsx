@@ -11,14 +11,11 @@ import { MapTokenError } from "./map-token-error";
 import { MapEmptyState } from "./map-empty-state";
 import { useMapState } from "@/features/map/hooks/use-map-state";
 import { useMapBounds } from "@/features/map/hooks/use-map-bounds";
-import {
-  type CourseWithComments,
-  type CourseCategory,
-  getCourses,
-} from "@/shared/lib/courses-data";
+import { type CourseCategory, getCourses } from "@/shared/lib/courses-data";
+import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
 
 interface MapClientProps {
-  courses: CourseWithComments[];
+  courses: CourseWithCategory[];
   categories: CourseCategory[];
 }
 
@@ -28,7 +25,7 @@ export function MapClient({ courses, categories }: MapClientProps) {
   const [clickedCourseCategory, setClickedCourseCategory] = useState<
     string | null
   >(null);
-  const [allCourses, setAllCourses] = useState<CourseWithComments[]>(courses);
+  const [allCourses, setAllCourses] = useState<CourseWithCategory[]>(courses);
   const [currentMapCategory, setCurrentMapCategory] =
     useState<string>("jingwan");
 
@@ -36,13 +33,13 @@ export function MapClient({ courses, categories }: MapClientProps) {
   const loadCategoryIfNeeded = useCallback(
     async (categoryKey: string) => {
       const hasCategory = allCourses.some(
-        (course) => (course.category_key || "jingwan") === categoryKey,
+        (course) => (course.course_categories?.key || "jingwan") === categoryKey,
       );
 
       if (!hasCategory) {
         try {
           const categoryCourses = await getCourses(categoryKey);
-          setAllCourses((prev) => [...prev, ...categoryCourses]);
+          setAllCourses((prev) => [...prev, ...categoryCourses] as CourseWithCategory[]);
         } catch (error) {
           console.error(`Failed to load ${categoryKey} courses:`, error);
         }
@@ -53,7 +50,7 @@ export function MapClient({ courses, categories }: MapClientProps) {
 
   // 지도에 표시할 코스를 현재 카테고리로 필터링
   const mapCourses = allCourses.filter(
-    (course) => (course.category_key || "jingwan") === currentMapCategory,
+    (course) => (course.course_categories?.key || "jingwan") === currentMapCategory,
   );
 
   const {
@@ -70,8 +67,8 @@ export function MapClient({ courses, categories }: MapClientProps) {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
 
   // 새로운 클릭 핸들러들
-  const handleCourseClick = async (course: CourseWithComments) => {
-    const categoryKey = course.category_key || "jingwan";
+  const handleCourseClick = async (course: CourseWithCategory) => {
+    const categoryKey = course.course_categories?.key || "jingwan";
     await loadCategoryIfNeeded(categoryKey);
     setClickedCourseCategory(categoryKey);
     setCurrentMapCategory(categoryKey);

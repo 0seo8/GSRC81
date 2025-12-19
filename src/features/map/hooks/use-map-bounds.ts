@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { type CourseWithComments } from "@/shared/lib/courses-data";
+import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
 
 export function useMapBounds(
   map: mapboxgl.Map | null,
-  courses: CourseWithComments[],
+  courses: CourseWithCategory[],
 ) {
   // 코스들의 좌표 범위에 맞춰 지도 범위 설정
   const fitMapToCourses = useCallback(() => {
