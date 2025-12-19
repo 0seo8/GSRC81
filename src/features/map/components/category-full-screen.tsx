@@ -2,10 +2,8 @@
 
 import { useMemo, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  type CourseWithComments,
-  type CourseCategory,
-} from "@/shared/lib/courses-data";
+import { type CourseCategory } from "@/shared/lib/courses-data";
+import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
 import { getCategoryDesign } from "@/core/config/category-designs";
 import { useBottomSheetDrag } from "@/features/map/hooks/use-bottom-sheet-drag";
 import { useCategoryNavigation } from "@/features/map/hooks/use-category-navigation";
@@ -15,13 +13,13 @@ import { RefactoredCourseCardStack } from "@/features/map/components/refactored-
 interface CategoryFullScreenProps {
   isOpen: boolean;
   onClose: () => void;
-  courses: CourseWithComments[];
+  courses: CourseWithCategory[];
   categories: CourseCategory[];
   initialCategory?: string;
   onCourseClick: (courseId: string) => void;
   onCategoryChange?: (categoryKey: string) => void;
-  selectedCourse?: CourseWithComments | null;
-  selectedCourses?: CourseWithComments[];
+  selectedCourse?: CourseWithCategory | null;
+  selectedCourses?: CourseWithCategory[];
 }
 
 export function CategoryFullScreen({

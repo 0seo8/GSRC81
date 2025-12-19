@@ -79,7 +79,7 @@ const CourseMarkerComponent = function CourseMarker({
         },
         properties: {
           id: course.id,
-          category_key: course.category_key || "jingwan",
+          category_key: course.course_categories?.key || "jingwan",
           title: course.title,
         },
       })),
