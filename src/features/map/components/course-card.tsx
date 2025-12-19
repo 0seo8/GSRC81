@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CourseWithComments } from "@/shared/lib/courses-data";
+import { CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
 import {
   calculateCardLayout,
   calculateCardShadow,
@@ -7,7 +7,7 @@ import {
 } from "@/shared/lib/utils/card-layout";
 
 interface CourseCardProps {
-  course: CourseWithComments;
+  course: CourseWithCategory;
   index: number;
   totalCourses: number;
   cardColor: string;
