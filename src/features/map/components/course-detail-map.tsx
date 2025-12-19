@@ -519,16 +519,28 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     };
 
     // 지도가 로드되면 클릭 이벤트 등록
+    // onLoad 콜백 이후에 실행되므로 map은 이미 준비된 상태
     const setupMapClick = () => {
       if (map.loaded()) {
-        console.log("✅ Map already loaded, adding click event");
+        console.log("✅ Map already loaded (loaded=true), adding click event");
         map.on("click", handleMapClick);
       } else {
-        console.log("⏳ Waiting for map to load...");
-        map.once("load", () => {
-          console.log("✅ Map loaded, adding click event");
+        // onLoad가 실행되었지만 map.loaded()가 false인 경우
+        // 타이밍 이슈로 인해 발생할 수 있음
+        console.log("⚠️ Map onLoad fired but loaded()=false, adding event anyway");
+
+        // loaded() 상태와 관계없이 이벤트 등록 시도
+        try {
           map.on("click", handleMapClick);
-        });
+          console.log("✅ Click event added successfully");
+        } catch (err) {
+          console.error("❌ Failed to add click event:", err);
+          // 실패 시 한번 더 시도
+          map.once("load", () => {
+            console.log("✅ Map load event fired, adding click event");
+            map.on("click", handleMapClick);
+          });
+        }
       }
     };
 
