@@ -150,29 +150,6 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     [trailData],
   );
 
-  // 경로 레이어 클릭 핸들러 (레이어 위에서만 동작)
-  const handleTrailLayerClick = useCallback(
-    (lng: number, lat: number) => {
-      if (isAnimating) {
-        return; // 애니메이션 중에는 클릭 비활성화
-      }
-
-      const nearestPoint = findNearestRoutePoint(lng, lat);
-
-      if (nearestPoint) {
-        setClickedPoint({
-          lng: nearestPoint.lng,
-          lat: nearestPoint.lat,
-          distanceMarker: nearestPoint.distanceMarker,
-        });
-        setShowCommentModal(true);
-      } else {
-        console.log("❌ 경로 지점을 찾을 수 없음");
-      }
-    },
-    [isAnimating, findNearestRoutePoint],
-  );
-
   // 댓글 로드 함수
   const loadFlightComments = useCallback(async () => {
     if (!courseId) return;
@@ -455,22 +432,50 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
 
   // 지도 전체 클릭 이벤트 등록 (레이어에 의존하지 않음)
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !trailData) {
+      console.log("⚠️ Map ref or trail data not ready");
+      return;
+    }
 
     const map = mapRef.current.getMap();
+    console.log("🗺️ Setting up map click events, map loaded:", map.loaded());
 
-    // 지도 전체 클릭 핸들러
+    // 지도 전체 클릭 핸들러 - 직접 로직 구현 (의존성 문제 방지)
     const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
       const { lng, lat } = e.lngLat;
-      handleTrailLayerClick(lng, lat);
+      console.log("🖱️ Map click event triggered:", { lng, lat });
+
+      // 애니메이션 중이면 무시
+      if (isAnimating) {
+        console.log("⚠️ Click ignored: Animation in progress");
+        return;
+      }
+
+      // 가장 가까운 경로 지점 찾기
+      const nearestPoint = findNearestRoutePoint(lng, lat);
+
+      if (nearestPoint) {
+        console.log("✅ Nearest point found:", nearestPoint);
+        setClickedPoint({
+          lng: nearestPoint.lng,
+          lat: nearestPoint.lat,
+          distanceMarker: nearestPoint.distanceMarker,
+        });
+        setShowCommentModal(true);
+      } else {
+        console.log("❌ 경로 지점을 찾을 수 없음");
+      }
     };
 
     // 지도가 로드되면 클릭 이벤트 등록
     const setupMapClick = () => {
       if (map.loaded()) {
+        console.log("✅ Map already loaded, adding click event");
         map.on("click", handleMapClick);
       } else {
+        console.log("⏳ Waiting for map to load...");
         map.once("load", () => {
+          console.log("✅ Map loaded, adding click event");
           map.on("click", handleMapClick);
         });
       }
@@ -479,9 +484,10 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     setupMapClick();
 
     return () => {
+      console.log("🧹 Cleaning up map click event");
       map.off("click", handleMapClick);
     };
-  }, [handleTrailLayerClick]);
+  }, [trailData, isAnimating, findNearestRoutePoint]);
 
   // 트레일 라인 스타일
   const trailLineLayer = {
