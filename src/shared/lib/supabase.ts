@@ -47,7 +47,8 @@ export function createServerSupabaseClient() {
     return createPublicSupabaseClient();
   }
 
-  return createClient(supabaseUrl, supabaseServiceRoleKey, {
+  // TypeScript 타입 체크: 모듈 레벨에서 이미 검증했으므로 이 시점에서 둘 다 반드시 string
+  return createClient(supabaseUrl as string, supabaseServiceRoleKey as string, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
@@ -63,7 +64,7 @@ export function createServerSupabaseClient() {
  * - Operations that should respect RLS
  */
 export function createPublicSupabaseClient() {
-  return createClient(supabaseUrl, clientKey, {
+  return createClient(supabaseUrl as string, clientKey as string, {
     auth: {
       persistSession: false,
     },
@@ -78,7 +79,7 @@ export function createPublicSupabaseClient() {
  * - Real-time subscriptions
  */
 export function createBrowserSupabaseClient() {
-  return createClient(supabaseUrl, clientKey, {
+  return createClient(supabaseUrl as string, clientKey as string, {
     auth: {
       persistSession: true,
       storageKey: "gsrc81-auth-token",
