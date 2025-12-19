@@ -1,12 +1,13 @@
 import { useState, useCallback, useEffect } from "react";
-import { CourseCategory, CourseWithComments } from "@/shared/lib/courses-data";
+import { CourseCategory } from "@/shared/lib/courses-data";
+import { CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
 import { getDongsFromCourses } from "@/shared/lib/location-utils";
 
 interface UseCategoryNavigationProps {
   categories: CourseCategory[];
   initialCategory?: string;
   onCategoryChange?: (categoryKey: string) => void;
-  filteredCourses: CourseWithComments[];
+  filteredCourses: CourseWithCategory[];
 }
 
 export function useCategoryNavigation({
