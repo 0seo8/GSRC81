@@ -158,6 +158,7 @@ export function commentRepository(supabase: SupabaseClient<Database>) {
      * 댓글 좋아요 증가
      */
     async incrementLikes(commentId: string) {
+      // @ts-ignore - RPC 함수 타입 정의 누락
       const { data, error } = await supabase.rpc("increment_comment_likes", {
         comment_id: commentId,
       });
