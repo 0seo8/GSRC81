@@ -452,18 +452,28 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
 
   // 지도 전체 클릭 이벤트 등록 (레이어에 의존하지 않음)
   useEffect(() => {
-    if (!mapRef.current || !trailData) {
-      console.log("⚠️ Map ref or trail data not ready");
+    if (!mapRef.current) {
+      console.log("⚠️ Map ref not ready");
       return;
     }
 
     const map = mapRef.current.getMap();
-    console.log("🗺️ Setting up map click events, map loaded:", map.loaded());
+    console.log("🗺️ Setting up map click events", {
+      mapLoaded: map.loaded(),
+      hasTrailData: !!trailData,
+      pointsCount: trailData?.geoJSON?.features?.[0]?.geometry?.coordinates?.length,
+    });
 
     // 지도 전체 클릭 핸들러 - 직접 로직 구현 (의존성 문제 방지)
     const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
       const { lng, lat } = e.lngLat;
-      console.log("🖱️ Map click event triggered:", { lng, lat });
+      console.log("🖱️ Map click event triggered:", { lng, lat, hasTrailData: !!trailData });
+
+      // trailData가 없으면 무시
+      if (!trailData) {
+        console.log("⚠️ Click ignored: Trail data not loaded");
+        return;
+      }
 
       // 애니메이션 중이면 무시
       if (isAnimating) {
