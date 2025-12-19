@@ -165,7 +165,12 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
 
   // 댓글 추가 성공 핸들러
   const handleCommentAdded = useCallback(() => {
-    loadFlightComments(); // 댓글 목록 새로고침
+    loadFlightComments(); // 비행모드 댓글 목록 새로고침
+
+    // 페이지 전체를 새로고침하여 Server Component 데이터도 업데이트
+    if (typeof window !== "undefined") {
+      window.location.reload();
+    }
   }, [loadFlightComments]);
 
   // 위치/경로보기 버튼 클릭 핸들러

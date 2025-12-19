@@ -42,6 +42,13 @@ export function CommentModal({
     // 사용자 고유 키 (NextAuth에서 제공하는 email 또는 id 사용)
     const authorUserKey = session?.user?.email || undefined;
 
+    console.log("💬 Comment submission data:", {
+      authorNickname,
+      avatarUrl,
+      authorUserKey,
+      hasSession: !!session,
+    });
+
     setIsSubmitting(true);
     try {
       const commentData: CreateCommentData = {
@@ -56,7 +63,9 @@ export function CommentModal({
         author_user_key: authorUserKey,
       };
 
-      await createComment(commentData);
+      console.log("📤 Sending comment data:", commentData);
+      const result = await createComment(commentData);
+      console.log("✅ Comment created:", result);
 
       // 성공적으로 등록된 후 처리
       setMessage("");
