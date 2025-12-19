@@ -93,7 +93,7 @@ export function CourseCard({
             {course.course_categories?.name + "러닝 코스"}
           </p>
           <p className="font-medium text-black text-xs">
-            {getDifficultyText(course.difficulty)}
+            {getDifficultyText(course.difficulty || "medium")}
           </p>
         </div>
         <div className="text-right flex flex-col items-end justify-center h-full">
