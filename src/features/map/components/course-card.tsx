@@ -90,7 +90,7 @@ export function CourseCard({
             {course.title}
           </h3>
           <p className="font-medium text-black text-xs">
-            {course.category_name + "러닝 코스"}
+            {course.course_categories?.name + "러닝 코스"}
           </p>
           <p className="font-medium text-black text-xs">
             {getDifficultyText(course.difficulty)}

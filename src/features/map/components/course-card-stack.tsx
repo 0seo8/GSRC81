@@ -1,8 +1,8 @@
-import { CourseWithComments } from "@/shared/lib/courses-data";
+import { CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
 import { CourseCard } from "./course-card";
 
 interface CourseCardStackProps {
-  courses: CourseWithComments[];
+  courses: CourseWithCategory[];
   cardColors: readonly string[];
   isDragging: boolean;
   onCourseClick: (courseId: string) => void;
