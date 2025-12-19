@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import {
   courseRepository,
   commentRepository,
@@ -32,7 +32,8 @@ interface CourseDetailPageProps {
 // 모든 코스를 미리 빌드하여 초기 로딩 성능 향상
 export async function generateStaticParams() {
   try {
-    const supabase = await createClient();
+    // 빌드 시점에는 cookies()를 사용할 수 없으므로 Admin Client 사용
+    const supabase = createAdminClient();
     const courses = await courseRepository(supabase).getActiveCourses();
     return courses.map((course) => ({
       id: course.id,
