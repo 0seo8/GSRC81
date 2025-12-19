@@ -110,7 +110,7 @@ export function OptimizedMapClient({
 
   // 마커 클릭: 선택된 코스만 바텀시트에 표시
   const handleCourseClick = useCallback(
-    (course: CourseWithComments) => {
+    (course: CourseWithCategory) => {
       mapHandleCourseClick(course);
       setIsFullscreenOpen(true);
     },
@@ -119,7 +119,7 @@ export function OptimizedMapClient({
 
   // 클러스터 클릭: 클러스터 내 코스들만 바텀시트에 표시
   const handleClusterClick = useCallback(
-    (coursesInCluster: CourseWithComments[]) => {
+    (coursesInCluster: CourseWithCategory[]) => {
       mapHandleClusterClick(coursesInCluster);
       setIsFullscreenOpen(true);
     },

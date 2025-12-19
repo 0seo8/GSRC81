@@ -1,9 +1,9 @@
-import { CourseWithComments } from "@/shared/lib/courses-data";
+import { CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
 import { CourseCard } from "./course-card";
 import { getStackHeight } from "@/shared/lib/utils/card-layout";
 
 interface RefactoredCourseCardStackProps {
-  courses: CourseWithComments[];
+  courses: CourseWithCategory[];
   cardColors: readonly string[];
   isDragging: boolean;
   onCourseClick: (courseId: string) => void;
