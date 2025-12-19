@@ -257,13 +257,21 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
 
   // V2 API를 사용한 데이터 로드
   const loadCourseData = async (courseId: string): Promise<TrailData> => {
+    console.log("📡 Fetching course data from API, courseId:", courseId);
     const courseV2 = await getCourseByIdV2(courseId);
+    console.log("📦 API Response:", {
+      hasCourse: !!courseV2,
+      hasGpxData: !!courseV2?.gpx_data,
+      pointsCount: courseV2?.gpx_data?.points?.length,
+    });
 
     if (!courseV2) {
+      console.error("❌ Course not found in API response");
       throw new Error("코스를 찾을 수 없습니다.");
     }
 
     if (!courseV2.gpx_data?.points || courseV2.gpx_data.points.length === 0) {
+      console.error("❌ No GPX points in course data");
       throw new Error("코스 경로 데이터가 없습니다.");
     }
 
@@ -313,10 +321,16 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
   useEffect(() => {
     const loadData = async () => {
       try {
+        console.log("📊 Starting to load course data, courseId:", courseId);
         setLoading(true);
         setError(null);
 
         const data = await loadCourseData(courseId);
+        console.log("✅ Course data loaded successfully:", {
+          hasGeoJSON: !!data.geoJSON,
+          pointsCount: data.geoJSON?.features?.[0]?.geometry?.coordinates?.length,
+          bounds: data.stats.bounds,
+        });
         setTrailData(data);
 
         // 초기 중심점 설정
@@ -342,18 +356,24 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
           zoom: initialZoom,
         }));
       } catch (err) {
-        console.error("Failed to load trail data:", err);
+        console.error("❌ Failed to load trail data:", err);
+        console.error("Error details:", {
+          message: err instanceof Error ? err.message : "Unknown error",
+          stack: err instanceof Error ? err.stack : undefined,
+        });
         setError(
           err instanceof Error
             ? err.message
             : "트레일 데이터를 불러올 수 없습니다.",
         );
       } finally {
+        console.log("📊 Data loading finished, loading state:", false);
         setLoading(false);
       }
     };
 
     if (courseId) {
+      console.log("🚀 Initiating data load for courseId:", courseId);
       loadData();
     }
   }, [courseId]);
