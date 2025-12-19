@@ -220,3 +220,51 @@ export async function toggleCommentVisibilityAction(
     };
   }
 }
+
+/**
+ * 관리자 전용: 댓글 강제 삭제 (Hard delete)
+ * Server-side에서 Admin 클라이언트 사용하여 RLS 우회
+ */
+export async function adminDeleteCommentAction(
+  commentId: string,
+  courseId: string,
+) {
+  "use server";
+
+  try {
+    // Server-side에서만 사용 가능한 Admin 클라이언트
+    const { createAdminClient } = await import("@/lib/supabase/server");
+    const supabase = createAdminClient();
+
+    // TODO: 관리자 권한 확인 (NextAuth 세션 체크)
+    // const session = await getServerSession();
+    // if (!session?.user?.isAdmin) {
+    //   return { error: "관리자 권한이 필요합니다", success: false };
+    // }
+
+    const { error } = await supabase
+      .from("course_comments")
+      .delete()
+      .eq("id", commentId);
+
+    if (error) {
+      console.error("Admin delete error:", error);
+      throw error;
+    }
+
+    // 캐시 무효화
+    revalidatePath(`/courses/${courseId}`);
+    revalidatePath(`/admin/courses/${courseId}/manage`);
+
+    return { success: true, error: null };
+  } catch (error) {
+    console.error("Error in admin delete:", error);
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "댓글 삭제 중 오류가 발생했습니다",
+      success: false,
+    };
+  }
+}

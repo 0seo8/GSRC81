@@ -4,7 +4,13 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Noto_Sans } from "next/font/google";
 import { ProtectedAdminRoute } from "@/shared/components/common/protected-admin-route";
-import { supabase, supabaseAdmin } from "@/shared/lib/supabase";
+import { supabase } from "@/shared/lib/supabase";
+import { adminDeleteCommentAction } from "@/app/actions/comments";
+import {
+  adminUpdateCourseTitleAction,
+  adminUpdateCourseStatsAction,
+  adminUpdateCourseDescriptionAction,
+} from "@/app/actions/admin-courses";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
@@ -145,19 +151,24 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
     }
 
     try {
-      const { error } = await supabase
-        .from("courses")
-        .update({ title: titleForm.trim() })
-        .eq("id", courseId);
+      // Server Action (server-side with Admin client)
+      const result = await adminUpdateCourseTitleAction(
+        courseId,
+        titleForm.trim(),
+      );
 
-      if (error) throw error;
+      if (result.error) {
+        throw new Error(result.error);
+      }
 
       toast.success("코스 이름이 업데이트되었습니다");
       setEditingTitle(false);
       await loadCourseData();
     } catch (error) {
       console.error("Failed to save title:", error);
-      toast.error("저장에 실패했습니다");
+      toast.error(
+        error instanceof Error ? error.message : "저장에 실패했습니다",
+      );
     }
   };
 
@@ -174,73 +185,82 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
     }
 
     try {
-      const { error } = await supabase
-        .from("courses")
-        .update({
-          distance_km: parseFloat(statsForm.distance_km),
-          avg_time_min: parseInt(statsForm.avg_time_min),
-          elevation_gain: parseInt(statsForm.elevation_gain) || 0,
-          difficulty: statsForm.difficulty,
-        })
-        .eq("id", courseId);
+      // Server Action (server-side with Admin client)
+      const result = await adminUpdateCourseStatsAction(courseId, {
+        distance_km: parseFloat(statsForm.distance_km),
+        avg_time_min: parseInt(statsForm.avg_time_min),
+        elevation_gain: parseInt(statsForm.elevation_gain) || 0,
+        difficulty: statsForm.difficulty,
+      });
 
-      if (error) throw error;
+      if (result.error) {
+        throw new Error(result.error);
+      }
 
       toast.success("코스 통계가 업데이트되었습니다");
       setEditingStats(false);
       await loadCourseData();
     } catch (error) {
       console.error("Failed to save stats:", error);
-      toast.error("저장에 실패했습니다");
+      toast.error(
+        error instanceof Error ? error.message : "저장에 실패했습니다",
+      );
     }
   };
 
   // 설명 저장
   const handleSaveDescription = async () => {
     try {
-      const { error } = await supabase
-        .from("courses")
-        .update({ detail_description: descriptionForm.trim() })
-        .eq("id", courseId);
+      // Server Action (server-side with Admin client)
+      const result = await adminUpdateCourseDescriptionAction(
+        courseId,
+        descriptionForm.trim(),
+      );
 
-      if (error) throw error;
+      if (result.error) {
+        throw new Error(result.error);
+      }
 
       toast.success("코스 설명이 업데이트되었습니다");
       setEditingDescription(false);
       await loadCourseData();
     } catch (error) {
       console.error("Failed to save description:", error);
-      toast.error("저장에 실패했습니다");
+      toast.error(
+        error instanceof Error ? error.message : "저장에 실패했습니다",
+      );
     }
   };
 
-  // 댓글 삭제
+  // 댓글 삭제 (Server Action 사용)
   const handleDeleteComment = async (
     commentId: string,
     authorNickname: string,
   ) => {
-    // toast로 확인 메시지 표시 후 삭제 진행
     if (!window.confirm(`${authorNickname}님의 댓글을 삭제하시겠습니까?`)) {
       return;
     }
 
-    try {
-      // Admin 클라이언트 사용 (RLS 우회)
-      const { error } = await supabaseAdmin
-        .from("course_comments")
-        .delete()
-        .eq("id", commentId);
+    if (!courseId) {
+      toast.error("코스 ID를 찾을 수 없습니다");
+      return;
+    }
 
-      if (error) {
-        console.error("Delete error:", error);
-        throw error;
+    try {
+      // Server Action 사용 (서버 사이드에서 Admin 클라이언트로 실행)
+      const result = await adminDeleteCommentAction(commentId, courseId);
+
+      if (result.error) {
+        throw new Error(result.error);
       }
 
       toast.success("댓글이 삭제되었습니다");
       await loadCourseData();
     } catch (error) {
       console.error("Failed to delete comment:", error);
-      toast.error("댓글 삭제에 실패했습니다");
+      toast.error(
+        error instanceof Error ? error.message : "댓글 삭제에 실패했습니다",
+      );
     }
   };
 
