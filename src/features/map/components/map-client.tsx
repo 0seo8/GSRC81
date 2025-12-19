@@ -75,9 +75,9 @@ export function MapClient({ courses, categories }: MapClientProps) {
     originalHandleCourseClick(course);
   };
 
-  const handleClusterClick = async (coursesInCluster: CourseWithComments[]) => {
+  const handleClusterClick = async (coursesInCluster: CourseWithCategory[]) => {
     const firstCourse = coursesInCluster[0];
-    const categoryKey = firstCourse.category_key || "jingwan";
+    const categoryKey = firstCourse.course_categories?.key || "jingwan";
     await loadCategoryIfNeeded(categoryKey);
     setClickedCourseCategory(categoryKey);
     setCurrentMapCategory(categoryKey);

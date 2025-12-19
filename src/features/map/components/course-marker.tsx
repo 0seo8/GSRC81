@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState, memo } from "react";
 import { createRoot } from "react-dom/client";
 import mapboxgl from "mapbox-gl";
-import { type CourseWithComments } from "@/shared/lib/courses-data";
+import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
 import { getCategoryColor } from "@/core/config/category-colors";
 import { NumberMarker } from "./number-marker";
 import { MarkerSkeleton } from "./marker-skeleton";
 
-type Course = CourseWithComments;
+type Course = CourseWithCategory;
 
 interface CourseMarkerProps {
   map: mapboxgl.Map;
