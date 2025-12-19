@@ -68,10 +68,18 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                 {/* 왼쪽 프로필 영역 */}
                 <div className="flex justify-center">
                   {isEven && (
-                    <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-sm font-medium">
-                        {comment.author_nickname.charAt(0)}
-                      </span>
+                    <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {comment.avatar_url ? (
+                        <img
+                          src={comment.avatar_url}
+                          alt={comment.author_nickname}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-white text-sm font-medium">
+                          {comment.author_nickname.charAt(0)}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -131,10 +139,18 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                 {/* 오른쪽 프로필 영역 */}
                 <div className="flex justify-center">
                   {!isEven && (
-                    <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-sm font-medium">
-                        {comment.author_nickname.charAt(0)}
-                      </span>
+                    <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {comment.avatar_url ? (
+                        <img
+                          src={comment.avatar_url}
+                          alt={comment.author_nickname}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-white text-sm font-medium">
+                          {comment.author_nickname.charAt(0)}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
