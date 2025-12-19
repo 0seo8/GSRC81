@@ -2,12 +2,12 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { CourseCardStack } from "./course-card-stack";
-import { type CourseWithComments } from "@/shared/lib/courses-data";
+import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
 import { useState, useMemo } from "react";
 
 interface CourseDrawerProps {
-  selectedCourses: CourseWithComments[];
-  selectedCourse: CourseWithComments | null;
+  selectedCourses: CourseWithCategory[];
+  selectedCourse: CourseWithCategory | null;
   onClose: () => void;
   onCourseClick: (courseId: string) => void;
 }
