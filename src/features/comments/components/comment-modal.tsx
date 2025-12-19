@@ -37,6 +37,10 @@ export function CommentModal({
 
     // 로그인된 사용자 닉네임 사용 (카카오 닉네임이 있으면 사용, 없으면 GSRC81 러너)
     const authorNickname = session?.user?.name || "GSRC81 러너";
+    // 사용자 프로필 이미지 (카카오 프로필 이미지)
+    const avatarUrl = session?.user?.image || undefined;
+    // 사용자 고유 키 (NextAuth에서 제공하는 email 또는 id 사용)
+    const authorUserKey = session?.user?.email || undefined;
 
     setIsSubmitting(true);
     try {
@@ -48,6 +52,8 @@ export function CommentModal({
         longitude: position.lng,
         distance_marker: position.distanceMarker,
         is_visible_in_flight: true,
+        avatar_url: avatarUrl,
+        author_user_key: authorUserKey,
       };
 
       await createComment(commentData);

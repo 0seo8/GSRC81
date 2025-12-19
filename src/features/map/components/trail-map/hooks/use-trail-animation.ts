@@ -208,14 +208,13 @@ export const useTrailAnimation = (
           currentPoint.lng +
           (nextPoint.lng - currentPoint.lng) * interpolationRatio;
 
-        // 매우 짧은 duration으로 부드러운 이동 (requestAnimationFrame 주기와 동기화)
-        map.easeTo({
+        // jumpTo를 사용하여 즉시 위치 이동 (떨림 현상 제거)
+        // easeTo는 내부 easing 계산으로 인해 requestAnimationFrame과 타이밍이 맞지 않아 떨림 발생
+        map.jumpTo({
           center: [targetLng, targetLat],
           zoom: FLIGHT_CONFIG.FLIGHT_ZOOM,
           pitch: FLIGHT_CONFIG.FLIGHT_PITCH,
           bearing: FLIGHT_CONFIG.FLIGHT_BEARING,
-          duration: 0, // duration을 0으로 설정하여 즉시 적용하되 easeTo의 easing 효과는 유지
-          essential: true,
         });
 
         animationRef.current = requestAnimationFrame(animate);

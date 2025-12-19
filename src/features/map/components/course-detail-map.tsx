@@ -641,10 +641,10 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
                 <motion.div
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.8, opacity: 0 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
                   transition={{
-                    duration: 0.4,
-                    ease: "easeInOut",
+                    duration: 0.7,
+                    ease: [0.4, 0, 0.2, 1], // Custom cubic-bezier for smooth fade
                   }}
                   className="bg-blue-500 text-white px-2 py-1 rounded-full shadow-lg border-2 border-white font-bold text-xs"
                 >
@@ -709,10 +709,10 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0, y: 10 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
-                    exit={{ scale: 0.8, opacity: 0, y: 10 }}
+                    exit={{ scale: 0.9, opacity: 0, y: -5 }}
                     transition={{
-                      duration: 0.4,
-                      ease: "easeInOut",
+                      duration: 0.7,
+                      ease: [0.4, 0, 0.2, 1], // Custom cubic-bezier for smooth fade
                     }}
                     className="relative max-w-xs"
                   >
