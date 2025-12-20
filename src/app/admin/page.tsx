@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAdmin } from "@/features/admin/context/AdminContext";
-import { supabase } from "@/shared/lib/supabase";
+import { supabase, supabaseAdmin } from "@/shared/lib/supabase";
 import { Button } from "@/shared/components/ui/button";
 import {
   Card,
@@ -68,27 +68,18 @@ export default function AdminDashboard() {
 
       if (coursesError) throw coursesError;
 
-      // 통계 데이터 로드
-      const [
-        { count: courseCount },
-        { count: commentCount },
-        { count: userCount },
-      ] = await Promise.all([
-        supabase.from("courses").select("*", { count: "exact", head: true }),
-        supabase
-          .from("course_comments")
-          .select("*", { count: "exact", head: true }),
-        supabase
-          .from("access_links")
-          .select("*", { count: "exact", head: true })
-          .eq("verified", true),
-      ]);
+      // 통계 데이터 로드 (API 사용 - RLS 우회)
+      const statsResponse = await fetch("/api/admin/stats");
+      if (!statsResponse.ok) {
+        throw new Error("Failed to fetch stats");
+      }
+      const statsData = await statsResponse.json();
 
       setCourses(coursesData || []);
       setStats({
-        totalCourses: courseCount || 0,
-        totalComments: commentCount || 0,
-        activeUsers: userCount || 0,
+        totalCourses: statsData.totalCourses || 0,
+        totalComments: statsData.totalComments || 0,
+        activeUsers: statsData.activeUsers || 0,
       });
     } catch (error) {
       console.error("Dashboard data load error:", error);
