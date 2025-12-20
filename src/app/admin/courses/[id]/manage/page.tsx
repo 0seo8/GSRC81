@@ -145,6 +145,11 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
 
   // 제목 저장
   const handleSaveTitle = async () => {
+    if (!courseId) {
+      toast.error("코스 ID를 찾을 수 없습니다");
+      return;
+    }
+
     if (!titleForm.trim()) {
       toast.error("코스 이름을 입력해주세요");
       return;
@@ -174,6 +179,11 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
 
   // 통계 저장
   const handleSaveStats = async () => {
+    if (!courseId) {
+      toast.error("코스 ID를 찾을 수 없습니다");
+      return;
+    }
+
     if (
       !statsForm.distance_km ||
       !statsForm.avg_time_min ||
@@ -210,6 +220,11 @@ export default function CourseManagePage({ params }: CourseManagePageProps) {
 
   // 설명 저장
   const handleSaveDescription = async () => {
+    if (!courseId) {
+      toast.error("코스 ID를 찾을 수 없습니다");
+      return;
+    }
+
     try {
       // Server Action (server-side with Admin client)
       const result = await adminUpdateCourseDescriptionAction(
