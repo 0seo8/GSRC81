@@ -130,18 +130,24 @@ export function calculateCardLayout(
     // bottom4 = 87 + 180 - 60 = 207
     // bottom5 = 207 + 180 - 60 = 327
     // bottom6 = 327 + 180 - 60 = 447
-    cardBottom = card3Top - FIGMA_CARD_SPECS.mediumOverlap +
-                 (mediumGapCount - 1) * (cardHeight - FIGMA_CARD_SPECS.mediumOverlap);
+    cardBottom =
+      card3Top -
+      FIGMA_CARD_SPECS.mediumOverlap +
+      (mediumGapCount - 1) * (cardHeight - FIGMA_CARD_SPECS.mediumOverlap);
   } else {
     // 카드 7+: 40px씩만 노출
     const card3Top = FIGMA_CARD_SPECS.overlap + cardHeight; // 267px
-    const card6Bottom = card3Top - FIGMA_CARD_SPECS.mediumOverlap +
-                       2 * (cardHeight - FIGMA_CARD_SPECS.mediumOverlap); // 447px
+    const card6Bottom =
+      card3Top -
+      FIGMA_CARD_SPECS.mediumOverlap +
+      2 * (cardHeight - FIGMA_CARD_SPECS.mediumOverlap); // 447px
     const card6Top = card6Bottom + cardHeight; // 627px
 
     const minGapCount = courseIndex - 5; // 카드7부터 개수
-    cardBottom = card6Top - FIGMA_CARD_SPECS.minOverlap +
-                 (minGapCount - 1) * (cardHeight - FIGMA_CARD_SPECS.minOverlap);
+    cardBottom =
+      card6Top -
+      FIGMA_CARD_SPECS.minOverlap +
+      (minGapCount - 1) * (cardHeight - FIGMA_CARD_SPECS.minOverlap);
   }
 
   return {
@@ -245,7 +251,11 @@ if (process.env.NODE_ENV === "development") {
   console.log("4개 카드:", getStackHeight(4), "→ 289px (229 + 60) ⭐ 새 규칙");
   console.log("5개 카드:", getStackHeight(5), "→ 349px (289 + 60) ⭐ 새 규칙");
   console.log("6개 카드:", getStackHeight(6), "→ 409px (349 + 60) ⭐ 새 규칙");
-  console.log("7개 카드:", getStackHeight(7), "→ 449px (409 + 40) ⭐ 최대 높이");
+  console.log(
+    "7개 카드:",
+    getStackHeight(7),
+    "→ 449px (409 + 40) ⭐ 최대 높이",
+  );
   console.log("10개 카드:", getStackHeight(10), "→ 569px (449 + 40×3)");
 
   console.groupEnd();

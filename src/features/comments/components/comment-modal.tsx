@@ -99,7 +99,7 @@ export function CommentModal({
               type: "spring",
               damping: 25,
               stiffness: 280,
-              duration: 0.3
+              duration: 0.3,
             }}
             className="fixed left-4 right-4 top-1/2 -translate-y-1/2 z-50 bg-white rounded-xl shadow-xl max-w-md mx-auto"
             onClick={(e) => e.stopPropagation()}

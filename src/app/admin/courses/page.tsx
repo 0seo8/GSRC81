@@ -81,14 +81,14 @@ export default function CoursesManagePage() {
 
   return (
     <ProtectedAdminRoute>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-base">
         {/* 메인 콘텐츠 */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* 새 코스 등록 버튼 */}
-          <div className="mb-8 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">코스 관리</h1>
-            <Link href="/admin/courses/new">
-              <Button>
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 safe-area-bottom">
+          {/* 헤더 - 모바일/데스크톱 통합 */}
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl font-bold text-lola-950 mb-4">코스 관리</h1>
+            <Link href="/admin/courses/new" className="block sm:inline-block">
+              <Button className="w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />새 코스 등록
               </Button>
             </Link>
@@ -97,13 +97,13 @@ export default function CoursesManagePage() {
           {/* 코스 목록 */}
           {loading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-track-primary mx-auto mb-4"></div>
+              <p className="text-lola-600">
                 {LOADING_MESSAGES.LOADING_COURSES}
               </p>
             </div>
           ) : courses.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {courses.map((course) => (
                 <CourseCard
                   key={course.id}
@@ -177,7 +177,7 @@ function CourseCard({ course, onDelete }: CourseCardProps) {
             size="sm"
             variant="outline"
             onClick={() => onDelete(course)}
-            className="text-red-600 hover:text-red-700 hover:border-red-300"
+            className="text-track-primary hover:text-track-primary/90 hover:border-track-primary"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -191,11 +191,11 @@ function CourseCard({ course, onDelete }: CourseCardProps) {
 function EmptyState() {
   return (
     <div className="text-center py-12">
-      <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-gray-900 mb-2">
+      <MapPin className="w-16 h-16 text-lola-400 mx-auto mb-4" />
+      <h3 className="text-lg font-medium text-lola-950 mb-2">
         {EMPTY_COURSE_MESSAGE.title}
       </h3>
-      <p className="text-gray-600 mb-6">
+      <p className="text-lola-600 mb-6">
         GPX 파일을 업로드하여 첫 번째 러닝 코스를 등록해보세요
       </p>
       <Link href="/admin/courses/new">

@@ -56,7 +56,7 @@ export function CommentAddModal({
             transition={{
               type: "spring",
               damping: 25,
-              stiffness: 280
+              stiffness: 280,
             }}
             className="fixed z-50 bg-white rounded-xl shadow-2xl max-w-sm w-full mx-4"
             style={{
