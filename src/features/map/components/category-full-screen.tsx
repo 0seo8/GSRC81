@@ -48,7 +48,8 @@ export function CategoryFullScreen({
   const actualCategory = useMemo(() => {
     if (filteredCourses.length > 0) {
       // 첫 번째 코스의 카테고리를 사용 (클러스터인 경우도 첫 번째 것 사용)
-      const categoryKey = filteredCourses[0].course_categories?.key || "jingwan";
+      const categoryKey =
+        filteredCourses[0].course_categories?.key || "jingwan";
       return categories.find((cat) => cat.key === categoryKey) || categories[0];
     }
     // 선택된 코스가 없으면 initialCategory 사용 (fallback)
@@ -178,18 +179,37 @@ export function CategoryFullScreen({
                 ? "rounded-[2.8125rem]" // 1-2개: 전체 둥근 (모든 카드 보임)
                 : "rounded-t-[2.8125rem]" // 3개 이상: 위만 둥근 (스크롤 필요)
             }`}
-            initial={{ height: "0vh" }}
+            initial={{
+              height: "0vh",
+              opacity: 0,
+              y: 50,
+            }}
             animate={{
               height: snapManager.getSnapHeight(snapManager.snapPoint),
+              opacity: 1,
+              y: 0,
             }}
-            exit={{ height: "0vh" }}
+            exit={{
+              height: "0vh",
+              opacity: 0,
+              y: 30,
+              transition: {
+                duration: 0.3,
+                ease: [0.4, 0, 1, 1],
+              },
+            }}
             transition={{
               type: "spring",
-              damping: 30,
-              stiffness: 300,
+              damping: 25,
+              stiffness: 280,
+              opacity: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] },
+              y: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] },
             }}
             style={{
               backgroundColor: currentDesign.backgroundColor,
+              willChange: "height, opacity, transform",
+              backfaceVisibility: "hidden",
+              transform: "translate3d(0, 0, 0)",
             }}
             onClick={(e) => e.stopPropagation()}
           >

@@ -35,7 +35,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       transition={{ duration: 0.3, ease: "easeOut" }}
       style={{
         willChange: "opacity",
-        backfaceVisibility: "hidden"
+        backfaceVisibility: "hidden",
       }}
       onAnimationComplete={() => {
         // Exit 애니메이션 완료 후에만 페이지 전환
@@ -59,7 +59,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               style={{
                 willChange: "transform, opacity",
                 backfaceVisibility: "hidden",
-                WebkitFontSmoothing: "antialiased"
+                WebkitFontSmoothing: "antialiased",
               }}
             >
               <div className="text-landing-slogan text-black leading-tight flex flex-col gap-[0.6875rem]">
@@ -78,9 +78,10 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
                     }}
                     className="overflow-hidden"
                     style={{
-                      willChange: index === currentStep ? "transform, opacity" : "auto",
+                      willChange:
+                        index === currentStep ? "transform, opacity" : "auto",
                       transform: "translate3d(0, 0, 0)",
-                      backfaceVisibility: "hidden" as const
+                      backfaceVisibility: "hidden" as const,
                     }}
                   >
                     {line}
@@ -109,7 +110,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
                 willChange: "transform, opacity",
                 transform: "translate3d(0, 0, 0)", // GPU acceleration
                 backfaceVisibility: "hidden",
-                WebkitFontSmoothing: "antialiased"
+                WebkitFontSmoothing: "antialiased",
               }}
             >
               <div className="text-center">

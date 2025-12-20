@@ -59,7 +59,8 @@ export function OptimizedMapClient({
       return courses;
     }
     return courses.filter(
-      (course) => (course.course_categories?.key || "jingwan") === currentCategory,
+      (course) =>
+        (course.course_categories?.key || "jingwan") === currentCategory,
     );
   }, [courses, currentCategory]);
 

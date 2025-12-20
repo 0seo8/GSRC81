@@ -33,13 +33,16 @@ export function MapClient({ courses, categories }: MapClientProps) {
   const loadCategoryIfNeeded = useCallback(
     async (categoryKey: string) => {
       const hasCategory = allCourses.some(
-        (course) => (course.course_categories?.key || "jingwan") === categoryKey,
+        (course) =>
+          (course.course_categories?.key || "jingwan") === categoryKey,
       );
 
       if (!hasCategory) {
         try {
           const categoryCourses = await getCourses(categoryKey);
-          setAllCourses((prev) => [...prev, ...categoryCourses] as CourseWithCategory[]);
+          setAllCourses(
+            (prev) => [...prev, ...categoryCourses] as CourseWithCategory[],
+          );
         } catch (error) {
           console.error(`Failed to load ${categoryKey} courses:`, error);
         }
@@ -50,7 +53,8 @@ export function MapClient({ courses, categories }: MapClientProps) {
 
   // 지도에 표시할 코스를 현재 카테고리로 필터링
   const mapCourses = allCourses.filter(
-    (course) => (course.course_categories?.key || "jingwan") === currentMapCategory,
+    (course) =>
+      (course.course_categories?.key || "jingwan") === currentMapCategory,
   );
 
   const {

@@ -48,19 +48,55 @@ export function CourseCard({
       key={course.id}
       layoutId={`course-card-${course.id}`}
       layout
-      initial={{ opacity: 0, y: 20 }}
+      initial={{
+        opacity: 0,
+        y: 40,
+        scale: 0.95,
+        filter: "blur(4px)",
+      }}
       animate={{
         opacity: 1,
         y: 0,
         scale: 1,
+        filter: "blur(0px)",
+      }}
+      whileHover={{
+        scale: index === 0 ? 1.02 : 1, // 맨 앞 카드만 호버 효과
+        y: index === 0 ? -4 : 0,
+        transition: {
+          duration: 0.2,
+          ease: "easeOut",
+        },
+      }}
+      whileTap={{
+        scale: 0.98,
+        transition: { duration: 0.1 },
       }}
       transition={{
         layout: {
-          duration: 0.4,
+          duration: 0.5,
           ease: [0.25, 0.1, 0.25, 1],
         },
-        duration: 0.3,
-        ease: [0.4, 0, 0.2, 1],
+        opacity: {
+          duration: 0.5,
+          delay: index * 0.08, // Stagger effect
+          ease: [0.25, 0.1, 0.25, 1],
+        },
+        y: {
+          duration: 0.6,
+          delay: index * 0.08,
+          ease: [0.25, 0.1, 0.25, 1],
+        },
+        scale: {
+          duration: 0.5,
+          delay: index * 0.08,
+          ease: [0.25, 0.1, 0.25, 1],
+        },
+        filter: {
+          duration: 0.6,
+          delay: index * 0.08,
+          ease: [0.25, 0.1, 0.25, 1],
+        },
       }}
       className="absolute left-0 right-0 px-[41px] py-[20px] cursor-pointer"
       style={{
@@ -70,6 +106,9 @@ export function CourseCard({
         zIndex: layout.zIndex,
         boxShadow: shadow,
         bottom: getBottomPosition(),
+        willChange: "transform, opacity, filter",
+        backfaceVisibility: "hidden",
+        transform: "translate3d(0, 0, 0)",
       }}
       onClick={(e) => {
         // 스크롤 중이 아닐 때만 클릭 이벤트 처리

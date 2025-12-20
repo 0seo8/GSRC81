@@ -119,15 +119,29 @@ export function BottomSheetHeader({
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
+      style={{
+        willChange: "transform",
+        backfaceVisibility: "hidden",
+      }}
     >
-      {/* 드래그 핸들 */}
+      {/* 드래그 핸들 - 애니메이션 추가 */}
       <div className="flex justify-center mb-2">
-        <div className="w-10 h-1 bg-white bg-opacity-50 rounded-full"></div>
+        <div
+          className="w-10 h-1 bg-white bg-opacity-50 rounded-full transition-all duration-300 hover:bg-opacity-80 hover:w-12"
+          style={{
+            willChange: "width, opacity",
+          }}
+        ></div>
       </div>
 
       {/* 카테고리 타이틀 - 왼쪽 정렬, 검정색 */}
       <div className="text-left mb-4">
-        <h2 className="text-category text-black whitespace-pre-line">
+        <h2
+          className="text-category text-black whitespace-pre-line"
+          style={{
+            textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+          }}
+        >
           {getTitle()}
         </h2>
       </div>
