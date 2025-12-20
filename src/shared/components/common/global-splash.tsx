@@ -25,7 +25,11 @@ export function GlobalSplash({ children }: { children: React.ReactNode }) {
   const handleSplashComplete = () => {
     // 이 세션에서 스플래시를 봤다고 표시
     sessionStorage.setItem(SPLASH_KEY, "true");
-    setShowSplash(false);
+
+    // Exit 애니메이션 시간(500ms)을 고려하여 지연
+    setTimeout(() => {
+      setShowSplash(false);
+    }, 600);
   };
 
   // 체크 중에는 로딩 표시 (깜빡임 방지)

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, memo } from "react";
 import { createRoot } from "react-dom/client";
 import mapboxgl from "mapbox-gl";
 import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
-import { getCategoryColor } from "@/core/config/category-colors";
+import { getCategoryDesign } from "@/core/config/category-designs";
 import { NumberMarker } from "./number-marker";
 import { MarkerSkeleton } from "./marker-skeleton";
 
@@ -141,7 +141,7 @@ const CourseMarkerComponent = function CourseMarker({
           currentCategoryRef.current === "all"
             ? "all"
             : currentCategoryRef.current;
-        const markerColor = getCategoryColor(categoryKey);
+        const markerColor = getCategoryDesign(categoryKey).markerColor;
 
         // React 컴포넌트 렌더링
         const root = createRoot(el);
