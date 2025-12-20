@@ -36,7 +36,7 @@
 
 /* iOS 전용 스타일 */
 .is-ios .ios-safe-bottom {
-  padding-bottom: max(env(safe-area-inset-bottom, 0), 20px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0), 1.25rem); /* 20px */
 }
 
 /* 하단 고정 요소용 */
@@ -127,10 +127,10 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 0.25rem);
+  --radius-md: calc(var(--radius) - 0.125rem);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 0.25rem);
 
   /* 정확한 폰트 시스템 */
   --font-poppins: var(--font-poppins);
@@ -368,7 +368,7 @@
   .text-header {
     font-family: var(--font-poppins);
     font-weight: 700;
-    font-size: 17px;
+    font-size: 1.0625rem; /* 17px */
     line-height: 1.4;
   }
 
@@ -416,7 +416,7 @@
   .text-distance {
     font-family: var(--font-poppins);
     font-weight: 600;
-    font-size: 70px;
+    font-size: 4.375rem; /* 70px */
     line-height: 1.4;
     letter-spacing: -0.05em;
   }
@@ -424,21 +424,21 @@
   .text-course {
     font-family: var(--font-noto-sans);
     font-weight: 700;
-    font-size: 17px;
+    font-size: 1.0625rem; /* 17px */
     line-height: 1.4;
   }
 
   .text-body {
     font-family: var(--font-noto-sans);
     font-weight: 500;
-    font-size: 12px;
+    font-size: 0.75rem; /* 12px */
     line-height: 1.4;
   }
 
   .text-comment {
     font-family: var(--font-inter);
     font-weight: 500;
-    font-size: 14px;
+    font-size: 0.875rem; /* 14px */
     line-height: 1.4;
   }
 
@@ -452,30 +452,30 @@
   .text-slogan {
     font-family: var(--font-poppins);
     font-weight: 700;
-    font-size: 45px;
+    font-size: 2.8125rem; /* 45px */
     line-height: 1.4;
   }
 
   /* Figma 기반 컴포넌트 스타일 (레이아웃 영향 최소화) */
   .course-card {
-    border-radius: 45px 45px 0px 0px;
+    border-radius: 2.8125rem 2.8125rem 0 0; /* 45px */
   }
 
   .course-card-last {
-    border-radius: 45px;
+    border-radius: 2.8125rem; /* 45px */
   }
 
   .comment-bubble {
-    border-radius: 18px;
+    border-radius: 1.125rem; /* 18px */
     background: var(--color-text-white);
   }
 
   .comment-bubble-sent {
-    border-radius: 0px 18px 18px 18px;
+    border-radius: 0 1.125rem 1.125rem 1.125rem; /* 18px */
   }
 
   .comment-bubble-received {
-    border-radius: 18px 0px 18px 18px;
+    border-radius: 1.125rem 0 1.125rem 1.125rem; /* 18px */
   }
 
   .button-figma {

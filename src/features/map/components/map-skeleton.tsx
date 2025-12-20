@@ -19,10 +19,10 @@ export function MapSkeleton() {
             className="absolute inset-0 opacity-20"
             style={{
               backgroundImage: `
-                linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)
+                linear-gradient(rgba(0,0,0,0.05) 0.0625rem, transparent 0.0625rem),
+                linear-gradient(90deg, rgba(0,0,0,0.05) 0.0625rem, transparent 0.0625rem)
               `,
-              backgroundSize: "50px 50px",
+              backgroundSize: "3.125rem 3.125rem",
             }}
           ></div>
 
@@ -42,7 +42,7 @@ export function MapSkeleton() {
 
           {/* 위치 버튼 Skeleton */}
           <div className="absolute top-4 right-4">
-            <div className="w-[30px] h-[30px] bg-white rounded-lg shadow-lg border border-gray-200 animate-pulse"></div>
+            <div className="w-8 h-8 bg-white rounded-lg shadow-lg border border-gray-200 animate-pulse"></div>
           </div>
 
           {/* 가상 마커들 (지도 분위기 연출) */}

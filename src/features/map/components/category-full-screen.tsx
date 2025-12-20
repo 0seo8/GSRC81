@@ -126,7 +126,7 @@ export function CategoryFullScreen({
       const touchCurrentY = e.touches[0].clientY;
       const touchDeltaY = touchCurrentY - touchStartY;
       const isAtTop = scrollTopAtTouchStart === 0;
-      const isScrollingUp = touchDeltaY > 30; // 30px 이상 아래로 드래그 (위로 스크롤)
+      const isScrollingUp = touchDeltaY > 30; // 1.875rem 이상 아래로 드래그 (위로 스크롤)
       const isMediumSize = snapManager.snapPoint === "medium";
 
       // 맨 위에서 위로 스크롤하면 전체화면으로 확장

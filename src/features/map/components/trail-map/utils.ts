@@ -21,6 +21,26 @@ export const calculateDistance = (
   return R * c; // 미터 단위
 };
 
+// 두 지점 사이의 방위각(bearing) 계산
+// 반환값: 0-360도 (0도 = 북쪽, 90도 = 동쪽, 180도 = 남쪽, 270도 = 서쪽)
+export const calculateBearing = (
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+): number => {
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
+
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x =
+    Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+
+  const θ = Math.atan2(y, x);
+  return ((θ * 180) / Math.PI + 360) % 360; // 0-360도 범위로 정규화
+};
+
 // 경로상의 km 지점 좌표들 계산
 export const calculateKmMarkers = (
   points: GpxCoordinate[] | CoursePoint[],

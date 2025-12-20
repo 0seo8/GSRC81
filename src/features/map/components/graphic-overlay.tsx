@@ -15,7 +15,7 @@ export function GraphicOverlay({
   opacity = 0.8,
 }: GraphicOverlayProps) {
   const [overlayStyle, setOverlayStyle] = useState({
-    transform: "translate(0px, 0px) scale(1)",
+    transform: "translate(0, 0) scale(1)",
     opacity: opacity,
   });
 
@@ -84,7 +84,7 @@ export function GraphicOverlay({
           transformOrigin: "center center",
           transition: "transform 0.3s ease-out, opacity 0.3s ease-out",
           maxWidth: "none",
-          width: "800px", // 기본 크기 (디자이너 이미지에 맞춰 조정)
+          width: "50rem", // 기본 크기 (디자이너 이미지에 맞춰 조정)
           height: "auto",
         }}
         onError={(e) => {

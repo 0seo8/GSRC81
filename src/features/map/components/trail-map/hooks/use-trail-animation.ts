@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { MapRef } from "react-map-gl/mapbox";
 import { TrailData, GpxCoordinate, KmMarker } from "../types";
 import { FLIGHT_CONFIG } from "../constants";
-import { calculateDistance } from "../utils";
+import { calculateDistance, calculateBearing } from "../utils";
 
 export const useTrailAnimation = (
   mapRef: React.RefObject<MapRef | null>,
@@ -123,6 +123,10 @@ export const useTrailAnimation = (
     let lastCalculatedIndex = 0;
     let lastCumulativeDistance = 0;
 
+    // bearing 계산을 위한 변수들
+    let lastBearing: number | null = null;
+    let lastBearingUpdateIndex = 0;
+
     // 거리 기반으로 포인트 인덱스 찾기 (선형 보간 포함)
     const findIndexAtDistance = (
       targetDistanceMeters: number,
@@ -164,8 +168,6 @@ export const useTrailAnimation = (
       setAnimationProgress(actualProgress);
 
       if (timeProgress < 1 && currentIndex < pointCount - 1) {
-        const point = points[currentIndex];
-
         // km 마커 표시 로직 - 실제 애니메이션 진행과 정확히 동기화
         // 효율적인 증분 거리 계산 (이전 계산에서 이어서)
         if (currentIndex > lastCalculatedIndex) {
@@ -208,15 +210,72 @@ export const useTrailAnimation = (
           currentPoint.lng +
           (nextPoint.lng - currentPoint.lng) * interpolationRatio;
 
+        // 🎯 bearing 계산 (성능 최적화: 매 5 포인트마다 또는 충분한 거리가 있을 때)
+        let currentBearing = lastBearing ?? FLIGHT_CONFIG.FLIGHT_BEARING;
+        const bearingUpdateInterval = 5; // 5 포인트마다 업데이트
+
+        if (
+          currentIndex - lastBearingUpdateIndex >= bearingUpdateInterval &&
+          nextIndex > currentIndex
+        ) {
+          // 현재 지점에서 5-10 포인트 앞을 보고 bearing 계산 (더 부드러운 전환)
+          const lookAheadDistance = Math.min(
+            10,
+            points.length - currentIndex - 1,
+          );
+          const lookAheadIndex = currentIndex + lookAheadDistance;
+          const lookAheadPoint = points[lookAheadIndex];
+
+          const newBearing = calculateBearing(
+            currentPoint.lat,
+            currentPoint.lng,
+            lookAheadPoint.lat,
+            lookAheadPoint.lng,
+          );
+
+          // bearing 변화가 5도 이상일 때만 업데이트 (미세한 떨림 방지)
+          const bearingDiff =
+            lastBearing !== null
+              ? Math.min(
+                  Math.abs(newBearing - lastBearing),
+                  360 - Math.abs(newBearing - lastBearing),
+                )
+              : 180;
+
+          if (bearingDiff >= 5 || lastBearing === null) {
+            currentBearing = newBearing;
+            lastBearing = newBearing;
+            lastBearingUpdateIndex = currentIndex;
+          }
+        }
+
+        // bearing 변화량에 따라 duration 동적 조정 (급커브에서 더 부드럽게)
+        const bearingChangeMagnitude =
+          lastBearing !== null
+            ? Math.min(
+                Math.abs(currentBearing - lastBearing),
+                360 - Math.abs(currentBearing - lastBearing),
+              )
+            : 0;
+        const dynamicDuration = Math.min(50 + bearingChangeMagnitude * 2, 150);
+
+        // 🎨 커브 감지 및 zoom/pitch 동적 조정 (선택적 개선)
+        // 커브가 심할수록 zoom을 약간 줄여서 전체 경로를 더 잘 볼 수 있게 함
+        const isCurve = bearingChangeMagnitude > 15; // 15도 이상 변화면 커브로 간주
+        const zoomAdjustment = isCurve ? -0.3 : 0; // 커브에서 약간 줌아웃
+        const dynamicZoom = FLIGHT_CONFIG.FLIGHT_ZOOM + zoomAdjustment;
+
+        // pitch도 커브에서 약간 조정 (더 넓은 시야)
+        const pitchAdjustment = isCurve ? -5 : 0; // 커브에서 약간 낮춤
+        const dynamicPitch = FLIGHT_CONFIG.FLIGHT_PITCH + pitchAdjustment;
+
         // easeTo를 사용하여 부드러운 카메라 이동
-        // duration을 짧게 설정하여 requestAnimationFrame과 동기화
-        // 60fps 기준 약 3-5 프레임 (50-80ms) 정도가 자연스러움
         map.easeTo({
           center: [targetLng, targetLat],
-          zoom: FLIGHT_CONFIG.FLIGHT_ZOOM,
-          pitch: FLIGHT_CONFIG.FLIGHT_PITCH,
-          bearing: FLIGHT_CONFIG.FLIGHT_BEARING,
-          duration: 50, // 짧은 duration으로 부드러운 전환
+          zoom: dynamicZoom, // 동적 zoom 적용
+          pitch: dynamicPitch, // 동적 pitch 적용
+          bearing: currentBearing, // 동적 bearing 적용
+          duration: dynamicDuration, // bearing 변화량에 따라 조정된 duration
           easing: (t: number) => t, // 선형 easing (일정한 속도)
         });
 
@@ -274,11 +333,20 @@ export const useTrailAnimation = (
     const startPointLat = startPoint.lat;
     const startPointLng = startPoint.lng;
 
+    // 초기 bearing 계산 (시작점에서 10포인트 앞을 바라봄)
+    const initialLookAhead = Math.min(10, points.length - 1);
+    const initialBearing = calculateBearing(
+      startPoint.lat,
+      startPoint.lng,
+      points[initialLookAhead].lat,
+      points[initialLookAhead].lng,
+    );
+
     map.easeTo({
       center: [startPointLng, startPointLat],
       zoom: FLIGHT_CONFIG.FLIGHT_ZOOM,
       pitch: FLIGHT_CONFIG.FLIGHT_PITCH,
-      bearing: FLIGHT_CONFIG.FLIGHT_BEARING,
+      bearing: initialBearing, // 초기 bearing 적용
       duration: 500,
       essential: true,
     });

@@ -13,12 +13,12 @@ const courseCardVariants = cva(
         jingwan: "bg-jingwan-primary text-white",
       },
       size: {
-        default: "w-[375px] h-[180px]",
-        small: "w-[375px] h-[130px]",
+        default: "w-[23.4375rem] h-[11.25rem]" /* 375px x 180px */,
+        small: "w-[23.4375rem] h-[8.125rem]" /* 375px x 130px */,
       },
       rounded: {
-        default: "rounded-t-[45px]",
-        last: "rounded-[45px]",
+        default: "rounded-t-[2.8125rem]" /* 45px */,
+        last: "rounded-[2.8125rem]" /* 45px */,
       },
     },
     defaultVariants: {

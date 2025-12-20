@@ -455,8 +455,8 @@ const TrailMapV3: React.FC<TrailMapProps> = ({ courseId, className = "" }) => {
                         className="relative"
                       >
                         <div
-                          className="bg-black text-white shadow-lg px-5 py-4 relative inline-block min-w-[160px] max-w-[240px]"
-                          style={{ borderRadius: "0 16px 16px 16px" }}
+                          className="bg-black text-white shadow-lg px-5 py-4 relative inline-block min-w-40 max-w-60"
+                          style={{ borderRadius: "0 1rem 1rem 1rem" }}
                         >
                           <div className="space-y-1">
                             <div className="flex items-center justify-between gap-2">

@@ -729,7 +729,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
                     className="relative max-w-xs"
                   >
                     {/* 말풍선 */}
-                    <div className="bg-black text-white rounded-lg shadow-lg p-3 relative max-w-[200px]">
+                    <div className="bg-black text-white rounded-lg shadow-lg p-3 relative max-w-50">
                       {/* 말풍선 꼬리 */}
                       <div className="absolute bottom-0 left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-black transform translate-y-full"></div>
 

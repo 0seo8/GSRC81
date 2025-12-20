@@ -77,7 +77,7 @@ export function Drawer({ isOpen, onClose, children, className }: DrawerProps) {
 
   const handleTouchEnd = () => {
     if (dragOffset > 100) {
-      // 100px 이상 드래그하면 닫기
+      // 6.25rem 이상 드래그하면 닫기
       onClose();
     }
     setDragOffset(0);
@@ -128,7 +128,7 @@ export function Drawer({ isOpen, onClose, children, className }: DrawerProps) {
         </div>
 
         {/* Content */}
-        <div className="px-4 pb-6 md:p-6 max-h-[80vh] md:max-h-[calc(90vh-120px)] overflow-y-auto">
+        <div className="px-4 pb-6 md:p-6 max-h-[80vh] md:max-h-[calc(90vh-7.5rem)] overflow-y-auto">
           {children}
         </div>
       </div>

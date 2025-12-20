@@ -28,7 +28,7 @@ export function CourseCard({
   const layout = calculateCardLayout(index, totalCourses);
   const shadow = calculateCardShadow();
 
-  // 확장 시 모든 카드를 80px(5rem) 위로 이동
+  // 확장 시 모든 카드를 5rem 위로 이동
   const getBottomPosition = () => {
     if (!isExpanded || totalCourses < 3) {
       return layout.bottom;
@@ -39,7 +39,7 @@ export function CourseCard({
     if (isNaN(currentBottom)) {
       return layout.bottom;
     }
-    // 80px = 5rem을 더함
+    // 5rem을 더함
     return `${currentBottom + 5}rem`;
   };
 
@@ -52,13 +52,13 @@ export function CourseCard({
         opacity: 0,
         y: 40,
         scale: 0.95,
-        filter: "blur(4px)",
+        filter: "blur(0.25rem)",
       }}
       animate={{
         opacity: 1,
         y: 0,
         scale: 1,
-        filter: "blur(0px)",
+        filter: "blur(0)",
       }}
       whileHover={{
         scale: index === 0 ? 1.02 : 1, // 맨 앞 카드만 호버 효과
@@ -98,7 +98,7 @@ export function CourseCard({
           ease: [0.25, 0.1, 0.25, 1],
         },
       }}
-      className="absolute left-0 right-0 px-[41px] py-[20px] cursor-pointer"
+      className="absolute left-0 right-0 px-[2.5625rem] py-5 cursor-pointer"
       style={{
         backgroundColor: cardColor,
         height: layout.height,
@@ -125,9 +125,7 @@ export function CourseCard({
     >
       <div className="flex justify-between items-start">
         <div className="flex-1">
-          <h3 className="font-bold text-black mb-[13px] text-lg">
-            {course.title}
-          </h3>
+          <h3 className="font-bold text-black mb-3 text-lg">{course.title}</h3>
           <p className="font-medium text-black text-xs">
             {course.course_categories?.name + "러닝 코스"}
           </p>

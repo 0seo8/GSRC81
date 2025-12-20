@@ -139,7 +139,7 @@ export function BottomSheetHeader({
         <h2
           className="text-category text-black whitespace-pre-line"
           style={{
-            textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+            textShadow: "0 0.0625rem 0.125rem rgba(0, 0, 0, 0.05)",
           }}
         >
           {getTitle()}

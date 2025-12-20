@@ -4,7 +4,7 @@ import { cn } from "@/shared/lib/utils";
 import Image from "next/image";
 
 const commentBubbleVariants = cva(
-  "comment-bubble p-2 max-w-[221px] transition-all duration-200",
+  "comment-bubble p-2 max-w-[13.8125rem] transition-all duration-200" /* 221px */,
   {
     variants: {
       variant: {

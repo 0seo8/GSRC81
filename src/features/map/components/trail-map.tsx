@@ -86,7 +86,7 @@ const POIMarker: React.FC<{ poi: POIPoint; onClick?: () => void }> = ({
         relative group
       `}
       onClick={onClick}
-      style={{ width: "32px", height: "32px" }}
+      style={{ width: "2rem", height: "2rem" }}
     >
       <IconComponent className="w-4 h-4" />
 
@@ -1161,7 +1161,7 @@ const TrailMap: React.FC<TrailMapProps> = ({
           </div> */}
 
           {/* 지도 */}
-          <div className="relative h-[500px] overflow-hidden">
+          <div className="relative h-[31.25rem] overflow-hidden">
             <Map
               ref={mapRef}
               {...viewState}
