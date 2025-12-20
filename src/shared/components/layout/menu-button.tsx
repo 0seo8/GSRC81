@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { Navigation, Shield } from "lucide-react";
+import { Navigation, Shield, Plus } from "lucide-react";
 
 interface MenuButtonProps {
   /**
@@ -106,6 +106,18 @@ export function MenuButton({
               <Navigation className="w-4 h-4 inline mr-2" />
               지도
             </a>
+
+            {/* 인증된 사용자(verified=true)에게만 코스 등록 메뉴 표시 */}
+            {session?.user?.isVerified && (
+              <a
+                href="/admin/courses/new"
+                className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Plus className="w-4 h-4 inline mr-2" />
+                코스 등록
+              </a>
+            )}
 
             {/* 관리자 권한이 있는 사용자에게만 표시 */}
             {session?.user?.isAdmin && (

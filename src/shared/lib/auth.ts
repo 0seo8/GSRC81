@@ -159,13 +159,13 @@ export const authOptions: NextAuthOptions = {
       ) {
         const { data: userInfo } = await supabaseAdmin
           .from("access_links")
-          .select("is_admin, is_active")
+          .select("is_admin, is_active, verified")
           .eq("kakao_user_id", token.kakaoId)
           .single();
 
         if (userInfo) {
           token.isAdmin = userInfo.is_admin || false;
-          token.isVerified = userInfo.is_active;
+          token.isVerified = userInfo.verified || false; // verified 컬럼 사용
         }
       }
 

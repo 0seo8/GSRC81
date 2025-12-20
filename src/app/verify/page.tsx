@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import {
   verifyAccessCode,
   isUserVerified,
+  createGuestUser,
 } from "@/shared/lib/auth/verification";
 import { AppHeader } from "@/shared/components/layout/app-header";
 
@@ -18,6 +19,7 @@ function VerifyContent() {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
   const [checking, setChecking] = useState(true);
 
   // 페이지 진입 시 자동으로 인증 상태 체크
@@ -69,6 +71,34 @@ function VerifyContent() {
     }
 
     // 검증 성공 → NextAuth 세션 갱신 후 /map으로
+    await updateSession();
+    router.push("/map");
+    router.refresh();
+  };
+
+  const handleGuestMode = async () => {
+    if (!kakaoUserId) {
+      setError("잘못된 접근입니다. 다시 로그인해주세요.");
+      return;
+    }
+
+    setGuestLoading(true);
+    setError("");
+
+    // 게스트 사용자 생성
+    const result = await createGuestUser(
+      kakaoUserId,
+      session?.user?.name || undefined,
+      session?.user?.image || undefined,
+    );
+
+    if (!result.success) {
+      setError(`❌ ${result.error}`);
+      setGuestLoading(false);
+      return;
+    }
+
+    // 게스트 모드 성공 → NextAuth 세션 갱신 후 /map으로
     await updateSession();
     router.push("/map");
     router.refresh();
@@ -137,14 +167,36 @@ function VerifyContent() {
           {/* Submit Button */}
           <button
             onClick={handleVerify}
-            disabled={loading || !code.trim()}
+            disabled={loading || guestLoading || !code.trim()}
             className="w-full bg-black hover:bg-gray-800 disabled:bg-gray-400 text-white font-semibold py-4 px-6 rounded-xl transition-colors duration-200"
           >
             {loading ? "확인 중..." : "인증하기"}
           </button>
 
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-base text-gray-500">또는</span>
+            </div>
+          </div>
+
+          {/* Guest Mode Button */}
+          <button
+            onClick={handleGuestMode}
+            disabled={loading || guestLoading}
+            className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-700 font-semibold py-4 px-6 rounded-xl border-2 border-gray-300 transition-colors duration-200"
+          >
+            {guestLoading ? "진입 중..." : "게스트로 계속하기"}
+          </button>
+
           {/* Help Text */}
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-2">
+            <p className="text-gray-500 text-xs leading-relaxed">
+              게스트 모드는 코스 조회만 가능합니다.
+            </p>
             <p className="text-gray-500 text-xs leading-relaxed">
               코드를 받지 못하셨나요?
               <br />

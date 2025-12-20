@@ -17,6 +17,7 @@ export interface VerificationResult {
     kakao_user_id: string;
     is_active: boolean;
     is_admin: boolean;
+    verified: boolean;
   };
 }
 
@@ -30,11 +31,12 @@ export async function isUserVerified(kakaoUserId: string): Promise<boolean> {
 
   const { data, error } = await supabase
     .from("access_links")
-    .select("id, is_active")
+    .select("id, is_active, verified")
     .eq("kakao_user_id", kakaoUserId)
     .maybeSingle();
 
-  return !error && !!data && data.is_active;
+  // verified = true인 사용자만 인증된 것으로 간주
+  return !error && !!data && data.is_active && data.verified === true;
 }
 
 /**
@@ -86,6 +88,7 @@ export async function verifyAccessCode(
         kakao_user_id: existingUser.kakao_user_id,
         is_active: existingUser.is_active,
         is_admin: existingUser.is_admin || false,
+        verified: existingUser.verified || false,
       },
     };
   }
@@ -123,7 +126,7 @@ export async function verifyAccessCode(
     }
   }
 
-  // 3. access_links 레코드 생성
+  // 3. access_links 레코드 생성 (코드 인증 사용자)
   const { data: newUser, error: insertError } = await supabase
     .from("access_links")
     .insert({
@@ -133,6 +136,7 @@ export async function verifyAccessCode(
       kakao_profile_url: kakaoProfileUrl || null,
       is_admin: false,
       is_active: true,
+      verified: true, // 코드 인증 사용자는 verified = true
     })
     .select()
     .single();
@@ -152,6 +156,83 @@ export async function verifyAccessCode(
       kakao_user_id: newUser.kakao_user_id,
       is_active: newUser.is_active,
       is_admin: newUser.is_admin || false,
+      verified: newUser.verified || false,
+    },
+  };
+}
+
+/**
+ * 게스트 사용자 생성
+ *
+ * @param kakaoUserId - 카카오 사용자 ID
+ * @param kakaoNickname - 카카오 닉네임 (선택)
+ * @param kakaoProfileUrl - 카카오 프로필 URL (선택)
+ * @returns 검증 결과
+ */
+export async function createGuestUser(
+  kakaoUserId: string,
+  kakaoNickname?: string,
+  kakaoProfileUrl?: string,
+): Promise<VerificationResult> {
+  if (!kakaoUserId) {
+    return {
+      success: false,
+      error: "사용자 ID가 필요합니다.",
+    };
+  }
+
+  // 1. 이미 등록된 사용자인지 확인
+  const { data: existingUser } = await supabase
+    .from("access_links")
+    .select("*")
+    .eq("kakao_user_id", kakaoUserId)
+    .maybeSingle();
+
+  if (existingUser) {
+    // 이미 등록된 사용자 (게스트 또는 인증 사용자)
+    return {
+      success: true,
+      data: {
+        id: existingUser.id,
+        kakao_user_id: existingUser.kakao_user_id,
+        is_active: existingUser.is_active,
+        is_admin: existingUser.is_admin || false,
+        verified: existingUser.verified || false,
+      },
+    };
+  }
+
+  // 2. 새로운 게스트 사용자 생성
+  const { data: newGuest, error: insertError } = await supabase
+    .from("access_links")
+    .insert({
+      access_code_id: null, // 게스트는 코드 없음
+      kakao_user_id: kakaoUserId,
+      kakao_nickname: kakaoNickname || null,
+      kakao_profile_url: kakaoProfileUrl || null,
+      is_admin: false,
+      is_active: true,
+      verified: false, // 게스트는 verified = false
+    })
+    .select()
+    .single();
+
+  if (insertError || !newGuest) {
+    console.error("Guest user creation error:", insertError);
+    return {
+      success: false,
+      error: "게스트 사용자 등록 중 오류가 발생했습니다.",
+    };
+  }
+
+  return {
+    success: true,
+    data: {
+      id: newGuest.id,
+      kakao_user_id: newGuest.kakao_user_id,
+      is_active: newGuest.is_active,
+      is_admin: newGuest.is_admin || false,
+      verified: newGuest.verified || false,
     },
   };
 }
