@@ -95,21 +95,26 @@ export function CommentModal({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", duration: 0.3 }}
-            className="fixed left-4 right-4 top-1/2 -translate-y-1/2 z-50 bg-white rounded-2xl shadow-xl max-w-md mx-auto"
+            transition={{
+              type: "spring",
+              damping: 25,
+              stiffness: 280,
+              duration: 0.3
+            }}
+            className="fixed left-4 right-4 top-1/2 -translate-y-1/2 z-50 bg-white rounded-xl shadow-xl max-w-md mx-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 헤더 */}
             <div className="flex items-center justify-between p-6 pb-4">
               <div className="flex items-center space-x-3">
-                <div className="bg-orange-100 p-2 rounded-full">
-                  <MessageSquare className="w-5 h-5 text-orange-600" />
+                <div className="bg-track-primary/10 p-2 rounded-full">
+                  <MessageSquare className="w-5 h-5 text-track-primary" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg font-semibold text-lola-950">
                     코멘트 추가
                   </h3>
-                  <div className="flex items-center text-sm text-gray-500 mt-1">
+                  <div className="flex items-center text-sm text-lola-600 mt-1">
                     <MapPin className="w-3 h-3 mr-1" />
                     {position.distanceMarker.toFixed(1)}km 지점
                   </div>
@@ -117,9 +122,9 @@ export function CommentModal({
               </div>
               <button
                 onClick={handleClose}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-lola-100 rounded-full transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-lola-600" />
               </button>
             </div>
 
@@ -130,7 +135,7 @@ export function CommentModal({
                 <div>
                   <label
                     htmlFor="message"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="block text-sm font-medium text-lola-700 mb-2"
                   >
                     메시지
                   </label>
@@ -139,12 +144,12 @@ export function CommentModal({
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="이 지점에 대한 코멘트를 남겨주세요"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors resize-none"
+                    className="w-full px-3 py-2 border border-lola-300 rounded-lg focus:ring-2 focus:ring-track-primary focus:border-track-primary outline-none transition-colors resize-none"
                     rows={3}
                     maxLength={200}
                     required
                   />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <div className="flex justify-between text-xs text-lola-600 mt-1">
                     <span>비행모드에서 말풍선으로 표시됩니다</span>
                     <span>{message.length}/200</span>
                   </div>
@@ -164,7 +169,7 @@ export function CommentModal({
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 bg-orange-500 hover:bg-orange-600"
+                  className="flex-1 bg-track-primary hover:bg-track-primary/90"
                   disabled={isSubmitting || !message.trim()}
                 >
                   {isSubmitting ? "등록 중..." : "등록"}

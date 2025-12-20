@@ -50,11 +50,15 @@ export function CommentAddModal({
 
           {/* 모달 */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed z-50 bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4"
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{
+              type: "spring",
+              damping: 25,
+              stiffness: 280
+            }}
+            className="fixed z-50 bg-white rounded-xl shadow-2xl max-w-sm w-full mx-4"
             style={{
               left: "50%",
               top: "50%",
@@ -62,10 +66,12 @@ export function CommentAddModal({
             }}
           >
             {/* 헤더 */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between p-6 border-b border-lola-200">
               <div className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-blue-500" />
-                <h3 className="text-lg font-semibold text-gray-900">
+                <div className="bg-track-primary/10 p-2 rounded-full">
+                  <MessageSquare className="w-5 h-5 text-track-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-lola-950">
                   코멘트 추가
                 </h3>
               </div>
@@ -73,7 +79,7 @@ export function CommentAddModal({
                 variant="ghost"
                 size="sm"
                 onClick={handleClose}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-lola-600 hover:text-lola-700"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -81,7 +87,7 @@ export function CommentAddModal({
 
             {/* 내용 */}
             <div className="p-6">
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-lola-600 mb-4">
                 이 위치에 대한 코멘트를 남겨주세요.
               </p>
 
@@ -89,13 +95,13 @@ export function CommentAddModal({
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="예: 여기서 물 보충 가능해요!"
-                className="w-full h-24 p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full h-24 p-3 border border-lola-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-track-primary focus:border-track-primary"
                 maxLength={200}
                 autoFocus
               />
 
               <div className="flex justify-between items-center mt-2">
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-lola-500">
                   {comment.length}/200
                 </span>
               </div>
@@ -113,7 +119,7 @@ export function CommentAddModal({
               </Button>
               <Button
                 onClick={handleSubmit}
-                className="flex-1 bg-blue-500 hover:bg-blue-600"
+                className="flex-1 bg-track-primary hover:bg-track-primary/90"
                 disabled={!comment.trim() || isSubmitting}
               >
                 {isSubmitting ? "등록 중..." : "등록"}
