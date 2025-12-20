@@ -35,7 +35,7 @@ export default function LoginPage() {
         </div>
 
         {/* Login Form - 하단 고정 (thumb zone 최적화) */}
-        <div className="w-full max-w-sm pb-12">
+        <div className="w-full max-w-sm pb-6 safe-area-bottom">
           {/* 클라이언트 컴포넌트: 로그인 버튼만 */}
           <KakaoLoginButton />
 
