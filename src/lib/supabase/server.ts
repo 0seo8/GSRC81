@@ -1,4 +1,5 @@
 import { createServerClient as createSupabaseServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import type { Database } from "@/shared/types/database.types";
 
@@ -63,7 +64,10 @@ export async function createClient() {
  * - 백그라운드 작업
  * - Cross-user 쿼리
  *
- * ⚠️ 주의: Client Components에서 절대 사용 금지
+ * ⚠️ 주의:
+ * - Client Components에서 절대 사용 금지
+ * - SSR 클라이언트가 아닌 순수 supabase-js 클라이언트 사용
+ * - Service Role Key는 RLS를 완전히 우회함
  *
  * @example
  * ```typescript
@@ -78,18 +82,12 @@ export async function createClient() {
  * ```
  */
 export function createAdminClient() {
-  return createSupabaseServerClient<Database>(
+  // SSR 클라이언트 대신 순수 supabase-js 클라이언트 사용
+  // SSR 클라이언트는 사용자 세션을 공유하여 Service Role Key를 덮어쓸 수 있음
+  return createSupabaseClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
-      cookies: {
-        getAll() {
-          return [];
-        },
-        setAll() {
-          // Admin client는 쿠키 사용 안함
-        },
-      },
       auth: {
         persistSession: false,
         autoRefreshToken: false,

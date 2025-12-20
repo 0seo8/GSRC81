@@ -229,12 +229,17 @@ export async function adminDeleteCommentAction(
   commentId: string,
   courseId: string,
 ) {
-  "use server";
-
   try {
+    console.log("[SERVER ACTION] adminDeleteCommentAction 시작:", {
+      commentId,
+      courseId,
+    });
+
     // Server-side에서만 사용 가능한 Admin 클라이언트
     const { createAdminClient } = await import("@/lib/supabase/server");
     const supabase = createAdminClient();
+
+    console.log("[SERVER ACTION] Admin 클라이언트 생성 완료");
 
     // TODO: 관리자 권한 확인 (NextAuth 세션 체크)
     // const session = await getServerSession();
@@ -242,23 +247,31 @@ export async function adminDeleteCommentAction(
     //   return { error: "관리자 권한이 필요합니다", success: false };
     // }
 
-    const { error } = await supabase
+    console.log("[SERVER ACTION] DELETE 쿼리 실행 중...");
+    const { data, error } = await supabase
       .from("course_comments")
       .delete()
-      .eq("id", commentId);
+      .eq("id", commentId)
+      .select();
+
+    console.log("[SERVER ACTION] DELETE 결과:", { data, error });
 
     if (error) {
-      console.error("Admin delete error:", error);
+      console.error("[SERVER ACTION] Admin delete error:", error);
       throw error;
     }
+
+    console.log("[SERVER ACTION] 삭제 성공, 캐시 무효화 중...");
 
     // 캐시 무효화
     revalidatePath(`/courses/${courseId}`);
     revalidatePath(`/admin/courses/${courseId}/manage`);
 
+    console.log("[SERVER ACTION] 완료");
+
     return { success: true, error: null };
   } catch (error) {
-    console.error("Error in admin delete:", error);
+    console.error("[SERVER ACTION] Error in admin delete:", error);
     return {
       error:
         error instanceof Error
