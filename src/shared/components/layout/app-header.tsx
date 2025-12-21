@@ -43,7 +43,9 @@ export function AppHeader({
     <header className={`fixed top-0 left-0 right-0 z-50 ${bgClass}`}>
       <div className="relative flex items-center justify-center px-4 py-4">
         <Link href="/map" className="cursor-pointer">
-          <h1 className="text-[1.0625rem] font-bold tracking-wide text-black font-poppins hover:opacity-80 transition-opacity">
+          <h1
+            className={`text-[1.0625rem] font-bold tracking-wide font-poppins hover:opacity-80 transition-opacity ${LOGIN_CONFIG.COLORS.LOGO_TEXT}`}
+          >
             {LOGIN_CONFIG.TEXT.TITLE}
           </h1>
         </Link>

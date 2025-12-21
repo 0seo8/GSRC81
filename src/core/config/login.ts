@@ -17,9 +17,11 @@ export const LOGIN_CONFIG = {
     SAFE_AREA: "h-8",
   },
   COLORS: {
-    BACKGROUND: "bg-base", // #EBE7E4 - 따뜻한 베이지 톤
-    TEXT_SECONDARY: "text-gray-500",
-    TEXT_PRIMARY: "text-black",
+    BACKGROUND: "bg-base dark:bg-lola-950", // Light: #EBE7E4, Dark: Lola-950
+    TEXT_SECONDARY: "text-lola-600 dark:text-lola-400", // 다크모드 대응
+    TEXT_PRIMARY: "text-lola-950 dark:text-lola-50", // 다크모드 대응
+    LINK_HOVER: "hover:text-lola-700 dark:hover:text-lola-300", // 링크 hover 색상
+    LOGO_TEXT: "text-lola-950 dark:text-lola-50", // 로고 텍스트
   },
   TEXT: {
     TITLE: "GSRC81 MAPS",

@@ -49,14 +49,14 @@ export default function LoginPage() {
               카카오톡으로 로그인하면{" "}
               <Link
                 href="/terms"
-                className={`font-medium ${LOGIN_CONFIG.COLORS.TEXT_PRIMARY} underline hover:text-gray-700 transition-colors`}
+                className={`font-medium ${LOGIN_CONFIG.COLORS.TEXT_PRIMARY} underline ${LOGIN_CONFIG.COLORS.LINK_HOVER} transition-colors`}
               >
                 GSRC81의 회칙
               </Link>{" "}
               및{" "}
               <Link
                 href="/privacy"
-                className={`font-medium ${LOGIN_CONFIG.COLORS.TEXT_PRIMARY} underline hover:text-gray-700 transition-colors`}
+                className={`font-medium ${LOGIN_CONFIG.COLORS.TEXT_PRIMARY} underline ${LOGIN_CONFIG.COLORS.LINK_HOVER} transition-colors`}
               >
                 개인정보 처리방침
               </Link>
