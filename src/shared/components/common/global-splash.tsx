@@ -2,29 +2,44 @@
 
 import { useEffect, useState } from "react";
 import { SplashScreen } from "@/shared/components/common/splash-screen";
+import { Capacitor } from "@capacitor/core";
+import { SplashScreen as CapacitorSplash } from "@capacitor/splash-screen";
 
 const SPLASH_KEY = "gsrc81_splash_shown";
+
+// Capacitor 앱 여부 감지
+const isNativeApp =
+  typeof window !== "undefined" && Capacitor.isNativePlatform();
 
 export function GlobalSplash({ children }: { children: React.ReactNode }) {
   const [showSplash, setShowSplash] = useState(true);
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // sessionStorage 사용: 브라우저 탭이 열려있는 동안만 유효
-    // 탭을 닫고 다시 열면 다시 스플래시 표시 (디즈니+ 스타일)
-    const hasSeenSplash = sessionStorage.getItem(SPLASH_KEY);
+    const checkSplash = async () => {
+      // Capacitor 네이티브 앱이면 네이티브 스플래시를 즉시 숨김
+      if (isNativeApp) {
+        await CapacitorSplash.hide({ fadeOutDuration: 0 });
+      }
 
-    if (hasSeenSplash === "true") {
-      // 이미 이 세션에서 스플래시를 본 경우
-      setShowSplash(false);
-    }
+      // 환경에 따라 다른 Storage 사용
+      const storage = isNativeApp ? localStorage : sessionStorage;
+      const hasSeenSplash = storage.getItem(SPLASH_KEY);
 
-    setIsChecking(false);
+      if (hasSeenSplash === "true") {
+        setShowSplash(false);
+      }
+
+      setIsChecking(false);
+    };
+
+    checkSplash();
   }, []);
 
   const handleSplashComplete = () => {
-    // 이 세션에서 스플래시를 봤다고 표시
-    sessionStorage.setItem(SPLASH_KEY, "true");
+    // 환경에 따라 다른 Storage에 저장
+    const storage = isNativeApp ? localStorage : sessionStorage;
+    storage.setItem(SPLASH_KEY, "true");
 
     // Exit 애니메이션 시간(500ms)을 고려하여 지연
     setTimeout(() => {
