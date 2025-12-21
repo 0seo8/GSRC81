@@ -35,14 +35,16 @@ export default function LoginPage() {
         </div>
 
         {/* Login Form - 하단 고정 (thumb zone 최적화) */}
-        <div className="w-full max-w-sm pb-6 safe-area-bottom">
+        <div className="w-full max-w-sm pb-8 safe-area-bottom">
           {/* 클라이언트 컴포넌트: 로그인 버튼만 */}
           <KakaoLoginButton />
 
-          {/* Terms - 좌측 정렬로 가독성 향상 */}
-          <div className={`px-2 ${LOGIN_CONFIG.SPACING.TERMS_TOP}`}>
+          {/* Terms - 충분한 패딩과 여백으로 가독성 향상 */}
+          <div
+            className={`px-6 sm:px-8 ${LOGIN_CONFIG.SPACING.TERMS_TOP} pb-10`}
+          >
             <p
-              className={`${LOGIN_CONFIG.COLORS.TEXT_SECONDARY} text-xs text-left leading-relaxed mb-2`}
+              className={`${LOGIN_CONFIG.COLORS.TEXT_SECONDARY} text-xs text-left leading-relaxed mb-3`}
             >
               카카오톡으로 로그인하면{" "}
               <Link
