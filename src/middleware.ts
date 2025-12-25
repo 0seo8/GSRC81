@@ -42,13 +42,15 @@ export async function middleware(req: NextRequest) {
     // 로그인 안 됨 → /login 페이지 표시
   }
 
-  // ✅ 3. Protected paths check
-  const protectedPaths = ["/map", "/courses"];
-  const isProtectedPath = protectedPaths.some((path) =>
+  // ✅ 3. Protected paths check (게스트 모드 지원)
+  // /map과 /courses는 게스트도 조회 가능하도록 변경
+  // 코스 등록, 댓글 작성 등은 클라이언트 레벨에서 verified 체크
+  const strictProtectedPaths = ["/admin", "/settings"];
+  const isStrictProtectedPath = strictProtectedPaths.some((path) =>
     pathname.startsWith(path),
   );
 
-  if (isProtectedPath) {
+  if (isStrictProtectedPath) {
     const token = await getToken({
       req,
       secret: process.env.NEXTAUTH_SECRET,

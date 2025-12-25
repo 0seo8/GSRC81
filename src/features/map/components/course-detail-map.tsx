@@ -34,6 +34,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [is3DMode, setIs3DMode] = useState(false);
 
   // 댓글 관련 상태
   const [clickedPoint, setClickedPoint] = useState<{
@@ -183,6 +184,32 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     }
   }, [locationButtonState, findMyLocation, resetLocation, showFullRoute]);
 
+  // 3D 모드 활성화/비활성화 (비행 모드와 연동)
+  const enable3DMode = useCallback(() => {
+    if (!mapRef.current || is3DMode) return;
+
+    const map = mapRef.current.getMap();
+    map.setTerrain({ source: "mapbox-dem", exaggeration: 1.5 });
+    map.easeTo({
+      pitch: 60, // 카메라 각도
+      duration: 1000,
+    });
+    setIs3DMode(true);
+  }, [is3DMode]);
+
+  const disable3DMode = useCallback(() => {
+    if (!mapRef.current || !is3DMode) return;
+
+    const map = mapRef.current.getMap();
+    map.setTerrain(null);
+    map.easeTo({
+      pitch: 0,
+      bearing: 0,
+      duration: 1000,
+    });
+    setIs3DMode(false);
+  }, [is3DMode]);
+
   // 데이터 로드 완료 후 지도 다시 로드 트리거 (애니메이션 중이 아닐 때만)
   useEffect(() => {
     if (trailData && mapRef.current && !isAnimating) {
@@ -257,7 +284,24 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     // Map이 로드되었음을 표시
     setIsMapLoaded(true);
 
-    if (!mapRef.current || !trailData || isAnimating) return;
+    if (!mapRef.current) return;
+
+    const map = mapRef.current.getMap();
+
+    // 3D Terrain 소스 추가
+    if (!map.getSource("mapbox-dem")) {
+      map.addSource("mapbox-dem", {
+        type: "raster-dem",
+        url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+        tileSize: 512,
+        maxzoom: 14,
+      });
+    }
+
+    // 3D Terrain 초기 비활성화 (사용자가 켜기 전까지)
+    // map.setTerrain(null);
+
+    if (!trailData || isAnimating) return;
 
     setTimeout(() => {
       showFullRoute();
@@ -375,14 +419,19 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     }
   }, [courseId, loadFlightComments]);
 
-  // 애니메이션 상태 변경 시 댓글 상태 관리
+  // 애니메이션 상태 변경 시 댓글 상태 및 3D 모드 관리
   useEffect(() => {
-    if (!isAnimating) {
-      // 비행모드가 아닐 때는 항상 모든 댓글 숨김
+    if (isAnimating) {
+      // 비행 모드 시작 → 3D 활성화
+      enable3DMode();
+    } else {
+      // 비행 모드 종료 → 2D 복귀
+      disable3DMode();
+      // 모든 댓글 숨김
       setVisibleComments(new Set());
       shownCommentsRef.current.clear();
     }
-  }, [isAnimating]);
+  }, [isAnimating, enable3DMode, disable3DMode]);
 
   // 애니메이션 진행에 따라 댓글 표시 관리
   useEffect(() => {
