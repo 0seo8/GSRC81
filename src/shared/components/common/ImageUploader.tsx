@@ -4,16 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Upload, X } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
-
-// 파일 크기 및 타입 상수
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB (4K 사진 커버)
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-  "image/heic",
-];
+import { IMAGE_LIMITS, formatFileSize } from "@/shared/constants/file-limits";
 
 interface ImageUploaderProps {
   onUpload: (url: string) => void;
@@ -32,18 +23,22 @@ export default function ImageUploader({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 파일 타입 검증 (허용된 이미지 타입만)
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase())) {
+    // 파일 타입 검증
+    if (
+      !IMAGE_LIMITS.ALLOWED_MIME_TYPES.includes(
+        file.type.toLowerCase() as (typeof IMAGE_LIMITS.ALLOWED_MIME_TYPES)[number],
+      )
+    ) {
       toast.error(
-        `지원하지 않는 파일 형식입니다.\n허용: JPG, PNG, WebP, HEIC\n현재: ${file.type}`,
+        `지원하지 않는 파일 형식입니다.\n허용: ${IMAGE_LIMITS.ALLOWED_TYPES_DISPLAY}\n현재: ${file.type}`,
       );
       return;
     }
 
-    // 파일 크기 검증 (10MB)
-    if (file.size > MAX_IMAGE_SIZE) {
+    // 파일 크기 검증
+    if (file.size > IMAGE_LIMITS.MAX_FILE_SIZE) {
       toast.error(
-        `파일 크기는 ${(MAX_IMAGE_SIZE / 1024 / 1024).toFixed(0)}MB를 초과할 수 없습니다.\n현재 파일: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
+        `파일 크기는 ${IMAGE_LIMITS.MAX_FILE_SIZE_MB}MB를 초과할 수 없습니다.\n현재 파일: ${formatFileSize(file.size)}`,
       );
       return;
     }
@@ -116,7 +111,8 @@ export default function ImageUploader({
                   이미지를 선택하거나 드래그하세요
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  JPG, PNG, WebP, HEIC (최대 10MB)
+                  {IMAGE_LIMITS.ALLOWED_TYPES_DISPLAY} (최대{" "}
+                  {IMAGE_LIMITS.MAX_FILE_SIZE_MB}MB)
                 </p>
               </>
             )}

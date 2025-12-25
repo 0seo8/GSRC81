@@ -3,7 +3,7 @@
  * 모든 관리자 작업을 추적하고 기록합니다.
  */
 
-import { createClient } from "@/lib/supabase/client";
+// import { createClient } from "@/lib/supabase/client"; // 클라이언트 로그는 console로 처리
 
 // 작업 타입 정의
 export const AuditAction = {

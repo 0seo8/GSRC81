@@ -16,20 +16,12 @@ import { Upload, FileText, MapPin } from "lucide-react";
 import ImageUploader from "@/shared/components/common/ImageUploader";
 import { supabase } from "@/shared/lib/supabase";
 import { toast } from "sonner";
-
-// 파일 크기 상수
-const MAX_GPX_SIZE = 10 * 1024 * 1024; // 10MB (풀코스 마라톤 커버)
-const MAX_PHOTOS = 10; // 최대 사진 개수
-
-interface GPXData {
-  name: string;
-  distance: number;
-  startPoint: { lat: number; lng: number };
-  endPoint: { lat: number; lng: number };
-  duration: number;
-  elevationGain: number;
-  coordinates: Array<{ lat: number; lng: number; ele?: number }>;
-}
+import {
+  GPX_LIMITS,
+  IMAGE_LIMITS,
+  getFileExtension,
+} from "@/shared/constants/file-limits";
+import { useGPXParser, type GPXData } from "@/shared/hooks/use-gpx-parser";
 
 interface Category {
   id: string;
@@ -48,7 +40,7 @@ export function GPXUploadForm({
   loading = false,
 }: GPXUploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [gpxData, setGpxData] = useState<GPXData | null>(null);
+  const { gpxData, parsing, parseFile } = useGPXParser();
   const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
     title: "",
@@ -59,7 +51,6 @@ export function GPXUploadForm({
     category_id: "",
   });
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
-  const [parsing, setParsing] = useState(false);
 
   // 카테고리 목록 로드
   useEffect(() => {
@@ -81,165 +72,31 @@ export function GPXUploadForm({
     }
   };
 
-  const parseGPX = async (file: File): Promise<GPXData | null> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const xmlText = e.target?.result as string;
-          const parser = new DOMParser();
-          const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-
-          // XML 파싱 에러 체크
-          const parserError = xmlDoc.querySelector("parsererror");
-          if (parserError) {
-            toast.error("GPX 파일이 손상되었거나 형식이 올바르지 않습니다.");
-            resolve(null);
-            return;
-          }
-
-          // GPX 파일에서 트랙 포인트 추출
-          const trackPoints = Array.from(xmlDoc.querySelectorAll("trkpt"));
-
-          if (trackPoints.length === 0) {
-            toast.error(
-              "유효한 GPX 파일이 아닙니다.\n트랙 포인트(trkpt)가 없습니다.",
-            );
-            resolve(null);
-            return;
-          }
-
-          // 최소 트랙 포인트 수 검증 (최소 10개)
-          if (trackPoints.length < 10) {
-            toast.error(
-              `트랙 포인트가 너무 적습니다.\n최소 10개 이상 필요 (현재: ${trackPoints.length}개)`,
-            );
-            resolve(null);
-            return;
-          }
-
-          // 좌표 배열 생성
-          const coordinates = trackPoints.map((point) => ({
-            lat: parseFloat(point.getAttribute("lat") || "0"),
-            lng: parseFloat(point.getAttribute("lon") || "0"),
-            ele: point.querySelector("ele")
-              ? parseFloat(point.querySelector("ele")?.textContent || "0")
-              : undefined,
-          }));
-
-          // 거리 계산 (Haversine formula)
-          const calculateDistance = (
-            coord1: { lat: number; lng: number },
-            coord2: { lat: number; lng: number },
-          ) => {
-            const R = 6371; // Earth's radius in km
-            const dLat = ((coord2.lat - coord1.lat) * Math.PI) / 180;
-            const dLng = ((coord2.lng - coord1.lng) * Math.PI) / 180;
-            const a =
-              Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos((coord1.lat * Math.PI) / 180) *
-                Math.cos((coord2.lat * Math.PI) / 180) *
-                Math.sin(dLng / 2) *
-                Math.sin(dLng / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-          };
-
-          let totalDistance = 0;
-          for (let i = 1; i < coordinates.length; i++) {
-            totalDistance += calculateDistance(
-              coordinates[i - 1],
-              coordinates[i],
-            );
-          }
-
-          // 고도 상승 계산
-          let elevationGain = 0;
-          for (let i = 1; i < coordinates.length; i++) {
-            const prevEle = coordinates[i - 1].ele || 0;
-            const currEle = coordinates[i].ele || 0;
-            if (currEle > prevEle) {
-              elevationGain += currEle - prevEle;
-            }
-          }
-
-          // GPX 파일에서 이름 추출
-          const nameElement = xmlDoc.querySelector("name");
-          const gpxName =
-            nameElement?.textContent || file.name.replace(".gpx", "");
-
-          // 예상 소요시간 계산 (평균 5km/h 가정)
-          const estimatedDuration = Math.round((totalDistance / 5) * 60); // 분 단위
-
-          const gpxData: GPXData = {
-            name: gpxName,
-            distance: Math.round(totalDistance * 100) / 100, // 소수점 2자리
-            startPoint: coordinates[0],
-            endPoint: coordinates[coordinates.length - 1],
-            duration: estimatedDuration,
-            elevationGain: Math.round(elevationGain),
-            coordinates,
-          };
-
-          // 자동으로 제목, 거리, 시간 설정
-          if (!formData.title) {
-            setFormData((prev) => ({
-              ...prev,
-              title: gpxData.name,
-              distance_km: gpxData.distance.toString(),
-              avg_time_min: gpxData.duration.toString(),
-            }));
-          } else {
-            setFormData((prev) => ({
-              ...prev,
-              distance_km: gpxData.distance.toString(),
-              avg_time_min: gpxData.duration.toString(),
-            }));
-          }
-
-          resolve(gpxData);
-        } catch (error) {
-          console.error("GPX 파싱 오류:", error);
-          const errorMessage =
-            error instanceof Error ? error.message : "알 수 없는 오류";
-          toast.error(`GPX 파일 파싱 중 오류가 발생했습니다:\n${errorMessage}`);
-          resolve(null);
-        }
-      };
-
-      reader.onerror = () => {
-        toast.error("파일을 읽는 중 오류가 발생했습니다.");
-        resolve(null);
-      };
-
-      reader.readAsText(file);
-    });
-  };
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
     // 파일 확장자 검증
-    if (!selectedFile.name.toLowerCase().endsWith(".gpx")) {
+    const fileExtension = getFileExtension(selectedFile.name);
+    if (!GPX_LIMITS.ALLOWED_EXTENSIONS.includes(fileExtension as ".gpx")) {
       toast.error("GPX 파일만 업로드 가능합니다.");
       return;
     }
 
-    // 파일 크기 검증 (10MB)
-    if (selectedFile.size > MAX_GPX_SIZE) {
-      toast.error(
-        `파일 크기는 ${(MAX_GPX_SIZE / 1024 / 1024).toFixed(0)}MB를 초과할 수 없습니다.\n현재 파일: ${(selectedFile.size / 1024 / 1024).toFixed(2)}MB`,
-      );
-      return;
-    }
-
     setFile(selectedFile);
-    setParsing(true);
 
-    const parsed = await parseGPX(selectedFile);
-    setGpxData(parsed);
-    setParsing(false);
+    // Hook을 사용한 GPX 파싱 (파일 크기 검증 포함)
+    const parsed = await parseFile(selectedFile);
+
+    // 파싱 성공 시 폼 데이터 자동 설정
+    if (parsed) {
+      setFormData((prev) => ({
+        ...prev,
+        title: prev.title || parsed.name,
+        distance_km: parsed.distance.toString(),
+        avg_time_min: parsed.duration.toString(),
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -275,8 +132,10 @@ export function GPXUploadForm({
 
   const handlePhotoUpload = (url: string) => {
     // 최대 사진 개수 검증
-    if (uploadedPhotos.length >= MAX_PHOTOS) {
-      toast.error(`최대 ${MAX_PHOTOS}장까지만 업로드 가능합니다.`);
+    if (uploadedPhotos.length >= IMAGE_LIMITS.MAX_UPLOAD_COUNT) {
+      toast.error(
+        `최대 ${IMAGE_LIMITS.MAX_UPLOAD_COUNT}장까지만 업로드 가능합니다.`,
+      );
       return;
     }
     setUploadedPhotos((prev) => [...prev, url]);
@@ -506,20 +365,21 @@ export function GPXUploadForm({
 
         <div>
           <Label>
-            코스 사진 (선택) - {uploadedPhotos.length}/{MAX_PHOTOS}
+            코스 사진 (선택) - {uploadedPhotos.length}/
+            {IMAGE_LIMITS.MAX_UPLOAD_COUNT}
           </Label>
           <div className="space-y-3">
-            {uploadedPhotos.length < MAX_PHOTOS && (
+            {uploadedPhotos.length < IMAGE_LIMITS.MAX_UPLOAD_COUNT && (
               <ImageUploader
                 onUpload={handlePhotoUpload}
                 currentUrl=""
                 bucket="course-photos"
               />
             )}
-            {uploadedPhotos.length >= MAX_PHOTOS && (
+            {uploadedPhotos.length >= IMAGE_LIMITS.MAX_UPLOAD_COUNT && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-                최대 {MAX_PHOTOS}장까지 업로드 가능합니다. 사진을 삭제한 후
-                추가할 수 있습니다.
+                최대 {IMAGE_LIMITS.MAX_UPLOAD_COUNT}장까지 업로드 가능합니다.
+                사진을 삭제한 후 추가할 수 있습니다.
               </div>
             )}
             {uploadedPhotos.length > 0 && (
@@ -543,7 +403,7 @@ export function GPXUploadForm({
               </div>
             )}
             <p className="text-xs text-gray-500">
-              최대 {MAX_PHOTOS}장까지 업로드 가능합니다
+              최대 {IMAGE_LIMITS.MAX_UPLOAD_COUNT}장까지 업로드 가능합니다
             </p>
           </div>
         </div>
