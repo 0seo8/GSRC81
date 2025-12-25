@@ -29,31 +29,9 @@ export function useCapacitor() {
         const platform = Capacitor.getPlatform() as "ios" | "android" | "web";
 
         if (isNative) {
-          // Status Bar 설정
-          try {
-            const { StatusBar, Style } = await import("@capacitor/status-bar");
-
-            // iOS: 라이트 컨텐츠 (흰색 텍스트)
-            // Android: 다크 컨텐츠 (검은색 텍스트)
-            if (platform === "ios") {
-              await StatusBar.setStyle({ style: Style.Light });
-              await StatusBar.setBackgroundColor({ color: "#000000" });
-            } else {
-              await StatusBar.setStyle({ style: Style.Dark });
-              await StatusBar.setBackgroundColor({ color: "#E8E4DF" });
-            }
-          } catch (error) {
-            console.warn("StatusBar plugin not available:", error);
-          }
-
-          // Keyboard 설정
-          try {
-            const { Keyboard } = await import("@capacitor/keyboard");
-            await Keyboard.setAccessoryBarVisible({ isVisible: true });
-            await Keyboard.setScroll({ isDisabled: false });
-          } catch (error) {
-            console.warn("Keyboard plugin not available:", error);
-          }
+          console.log("🚀 Capacitor native platform detected:", platform);
+          // Status Bar와 Keyboard 설정은 플러그인이 설치된 경우에만 작동
+          // 현재는 기본 설정으로 진행
         }
 
         setStatus({
