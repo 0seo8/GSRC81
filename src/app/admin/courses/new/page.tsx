@@ -13,6 +13,8 @@ import { supabase } from "@/shared/lib/supabase";
 import { GPXDataSchema } from "@/core/validation/gpx";
 import { UnifiedGPXData } from "@/types/unified";
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "@/core/config/messages";
+import { logCourseCreate } from "@/shared/lib/audit-log";
+import { useSession } from "next-auth/react";
 import {
   checkForDuplicates,
   type CourseForDuplicateCheck,
@@ -27,6 +29,7 @@ const notoSans = Noto_Sans({
 
 export default function NewCoursePage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [submitting, setSubmitting] = useState(false);
   const [duplicateCheck, setDuplicateCheck] =
     useState<DuplicateCheckResult | null>(null);
@@ -178,6 +181,15 @@ export default function NewCoursePage() {
             // 사진 저장 실패는 에러로 처리하지 않음 (코스는 생성됨)
           }
         }
+      }
+
+      // 감사 로그 기록
+      if (session?.user?.id && session?.user?.name) {
+        await logCourseCreate(session.user.id, session.user.name, data.id, {
+          title: courseData.title,
+          distance_km: courseData.distance_km,
+          difficulty: courseData.difficulty,
+        });
       }
 
       toast.success(SUCCESS_MESSAGES.COURSE_CREATED);

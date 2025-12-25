@@ -15,6 +15,11 @@ import {
 import { Upload, FileText, MapPin } from "lucide-react";
 import ImageUploader from "@/shared/components/common/ImageUploader";
 import { supabase } from "@/shared/lib/supabase";
+import { toast } from "sonner";
+
+// 파일 크기 상수
+const MAX_GPX_SIZE = 10 * 1024 * 1024; // 10MB (풀코스 마라톤 커버)
+const MAX_PHOTOS = 10; // 최대 사진 개수
 
 interface GPXData {
   name: string;
@@ -85,11 +90,30 @@ export function GPXUploadForm({
           const parser = new DOMParser();
           const xmlDoc = parser.parseFromString(xmlText, "text/xml");
 
+          // XML 파싱 에러 체크
+          const parserError = xmlDoc.querySelector("parsererror");
+          if (parserError) {
+            toast.error("GPX 파일이 손상되었거나 형식이 올바르지 않습니다.");
+            resolve(null);
+            return;
+          }
+
           // GPX 파일에서 트랙 포인트 추출
           const trackPoints = Array.from(xmlDoc.querySelectorAll("trkpt"));
 
           if (trackPoints.length === 0) {
-            alert("유효한 GPX 파일이 아닙니다.");
+            toast.error(
+              "유효한 GPX 파일이 아닙니다.\n트랙 포인트(trkpt)가 없습니다.",
+            );
+            resolve(null);
+            return;
+          }
+
+          // 최소 트랙 포인트 수 검증 (최소 10개)
+          if (trackPoints.length < 10) {
+            toast.error(
+              `트랙 포인트가 너무 적습니다.\n최소 10개 이상 필요 (현재: ${trackPoints.length}개)`,
+            );
             resolve(null);
             return;
           }
@@ -176,10 +200,18 @@ export function GPXUploadForm({
           resolve(gpxData);
         } catch (error) {
           console.error("GPX 파싱 오류:", error);
-          alert("GPX 파일 파싱 중 오류가 발생했습니다.");
+          const errorMessage =
+            error instanceof Error ? error.message : "알 수 없는 오류";
+          toast.error(`GPX 파일 파싱 중 오류가 발생했습니다:\n${errorMessage}`);
           resolve(null);
         }
       };
+
+      reader.onerror = () => {
+        toast.error("파일을 읽는 중 오류가 발생했습니다.");
+        resolve(null);
+      };
+
       reader.readAsText(file);
     });
   };
@@ -188,8 +220,17 @@ export function GPXUploadForm({
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
+    // 파일 확장자 검증
     if (!selectedFile.name.toLowerCase().endsWith(".gpx")) {
-      alert("GPX 파일만 업로드 가능합니다.");
+      toast.error("GPX 파일만 업로드 가능합니다.");
+      return;
+    }
+
+    // 파일 크기 검증 (10MB)
+    if (selectedFile.size > MAX_GPX_SIZE) {
+      toast.error(
+        `파일 크기는 ${(MAX_GPX_SIZE / 1024 / 1024).toFixed(0)}MB를 초과할 수 없습니다.\n현재 파일: ${(selectedFile.size / 1024 / 1024).toFixed(2)}MB`,
+      );
       return;
     }
 
@@ -205,12 +246,17 @@ export function GPXUploadForm({
     e.preventDefault();
 
     if (!file || !gpxData) {
-      alert("GPX 파일을 선택해주세요.");
+      toast.error("GPX 파일을 선택해주세요.");
       return;
     }
 
     if (!formData.title.trim()) {
-      alert("코스명을 입력해주세요.");
+      toast.error("코스명을 입력해주세요.");
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      toast.error("코스 설명을 입력해주세요.");
       return;
     }
 
@@ -228,6 +274,11 @@ export function GPXUploadForm({
   };
 
   const handlePhotoUpload = (url: string) => {
+    // 최대 사진 개수 검증
+    if (uploadedPhotos.length >= MAX_PHOTOS) {
+      toast.error(`최대 ${MAX_PHOTOS}장까지만 업로드 가능합니다.`);
+      return;
+    }
     setUploadedPhotos((prev) => [...prev, url]);
   };
 
@@ -454,13 +505,23 @@ export function GPXUploadForm({
         </div>
 
         <div>
-          <Label>코스 사진 (선택)</Label>
+          <Label>
+            코스 사진 (선택) - {uploadedPhotos.length}/{MAX_PHOTOS}
+          </Label>
           <div className="space-y-3">
-            <ImageUploader
-              onUpload={handlePhotoUpload}
-              currentUrl=""
-              bucket="course-photos"
-            />
+            {uploadedPhotos.length < MAX_PHOTOS && (
+              <ImageUploader
+                onUpload={handlePhotoUpload}
+                currentUrl=""
+                bucket="course-photos"
+              />
+            )}
+            {uploadedPhotos.length >= MAX_PHOTOS && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+                최대 {MAX_PHOTOS}장까지 업로드 가능합니다. 사진을 삭제한 후
+                추가할 수 있습니다.
+              </div>
+            )}
             {uploadedPhotos.length > 0 && (
               <div className="grid grid-cols-2 gap-2">
                 {uploadedPhotos.map((url, index) => (
@@ -482,7 +543,7 @@ export function GPXUploadForm({
               </div>
             )}
             <p className="text-xs text-gray-500">
-              여러 장의 사진을 업로드할 수 있습니다
+              최대 {MAX_PHOTOS}장까지 업로드 가능합니다
             </p>
           </div>
         </div>

@@ -24,6 +24,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
+import { logCourseDelete } from "@/shared/lib/audit-log";
+import { useSession } from "next-auth/react";
 
 interface Course {
   id: string;
@@ -42,6 +44,7 @@ interface AdminStats {
 
 export default function AdminDashboard() {
   const { adminLogout } = useAdmin();
+  const { data: session } = useSession();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<AdminStats>({
@@ -112,6 +115,15 @@ export default function AdminDashboard() {
 
       if (error) throw error;
 
+      // 감사 로그 기록
+      if (session?.user?.id && session?.user?.name) {
+        await logCourseDelete(session.user.id, session.user.name, course.id, {
+          title: course.title,
+          distance_km: course.distance_km,
+          difficulty: course.difficulty,
+        });
+      }
+
       toast.success("코스가 삭제되었습니다");
 
       // 대시보드 데이터 다시 로드
@@ -167,14 +179,7 @@ export default function AdminDashboard() {
           <MenuCard href="/admin/courses" label="코스 관리" />
           <MenuCard href="/admin/users" label="사용자 관리" />
           <MenuCard href="/admin/password" label="비밀번호 관리" />
-          <div className="bg-white rounded-lg border border-lola-200 p-4 flex items-center justify-between opacity-50 cursor-not-allowed">
-            <span className="text-base font-medium text-lola-950">
-              시스템 설정
-            </span>
-            <span className="text-xs text-lola-500 bg-lola-100 px-2 py-1 rounded">
-              준비중
-            </span>
-          </div>
+          <MenuCard href="/admin/settings" label="시스템 설정" />
           <div className="bg-white rounded-lg border border-lola-200 p-4 flex items-center justify-between">
             <span className="text-base font-medium text-lola-950">
               버전정보
@@ -219,17 +224,11 @@ export default function AdminDashboard() {
                 icon={<Lock className="w-4 h-4 mr-2" />}
                 label="앱 비밀번호 변경"
               />
-              <Button
-                className="w-full justify-start opacity-50 cursor-not-allowed"
-                variant="outline"
-                disabled
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                시스템 설정
-                <span className="ml-auto text-xs text-lola-500 bg-lola-100 px-2 py-1 rounded">
-                  준비중
-                </span>
-              </Button>
+              <ActionButton
+                href="/admin/settings"
+                icon={<Settings className="w-4 h-4 mr-2" />}
+                label="시스템 설정"
+              />
             </CardContent>
           </Card>
 

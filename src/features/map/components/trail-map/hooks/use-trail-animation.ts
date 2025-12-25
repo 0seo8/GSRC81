@@ -3,6 +3,7 @@ import { MapRef } from "react-map-gl/mapbox";
 import { TrailData, GpxCoordinate, KmMarker } from "../types";
 import { FLIGHT_CONFIG } from "../constants";
 import { calculateDistance, calculateBearing } from "../utils";
+import { useFlightSettings } from "@/shared/hooks/use-flight-settings";
 
 export const useTrailAnimation = (
   mapRef: React.RefObject<MapRef | null>,
@@ -11,6 +12,8 @@ export const useTrailAnimation = (
   onResetKmMarkers: () => void,
   setKmMarkers: (markers: KmMarker[]) => void,
 ) => {
+  // 관리자 설정에서 비행 속도 가져오기
+  const { settings: flightSettings } = useFlightSettings();
   const [isAnimating, setIsAnimating] = useState(false);
   const [isFullRouteView, setIsFullRouteView] = useState(true); // 초기에는 전체 보기로 시작
   const [animationProgress, setAnimationProgress] = useState(1); // 전체 경로 표시
@@ -99,14 +102,20 @@ export const useTrailAnimation = (
     const pointCount = points.length;
     const totalDistanceKm = trailData.stats.totalDistance;
 
-    // 거리 기반 duration 계산 (시속 2.5km)
-    const hoursNeeded = totalDistanceKm / FLIGHT_CONFIG.FLIGHT_SPEED_KMH;
+    // 거리 기반 duration 계산 (관리자 설정 또는 기본값 사용)
+    const speedKmh = flightSettings.speedKmh || FLIGHT_CONFIG.FLIGHT_SPEED_KMH;
+    const hoursNeeded = totalDistanceKm / speedKmh;
     const calculatedDuration = hoursNeeded * 3600 * 1000; // 밀리초로 변환
 
-    // 최소/최대 시간으로 제한
+    // 최소/최대 시간으로 제한 (관리자 설정 또는 기본값 사용)
+    const minDuration =
+      flightSettings.minDuration || FLIGHT_CONFIG.MIN_TOTAL_DURATION;
+    const maxDuration =
+      flightSettings.maxDuration || FLIGHT_CONFIG.MAX_TOTAL_DURATION;
+
     const totalDuration = Math.min(
-      Math.max(calculatedDuration, FLIGHT_CONFIG.MIN_TOTAL_DURATION),
-      FLIGHT_CONFIG.MAX_TOTAL_DURATION,
+      Math.max(calculatedDuration, minDuration),
+      maxDuration,
     );
 
     // 저장된 진행률부터 시작 (새로운 애니메이션은 항상 0부터 시작)

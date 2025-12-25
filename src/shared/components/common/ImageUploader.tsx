@@ -3,6 +3,17 @@ import { useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Upload, X } from "lucide-react";
 import Image from "next/image";
+import { toast } from "sonner";
+
+// 파일 크기 및 타입 상수
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB (4K 사진 커버)
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+];
 
 interface ImageUploaderProps {
   onUpload: (url: string) => void;
@@ -21,15 +32,19 @@ export default function ImageUploader({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 파일 타입 검증
-    if (!file.type.startsWith("image/")) {
-      alert("이미지 파일만 업로드 가능합니다.");
+    // 파일 타입 검증 (허용된 이미지 타입만)
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase())) {
+      toast.error(
+        `지원하지 않는 파일 형식입니다.\n허용: JPG, PNG, WebP, HEIC\n현재: ${file.type}`,
+      );
       return;
     }
 
-    // 파일 크기 검증 (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("파일 크기는 5MB 이하여야 합니다.");
+    // 파일 크기 검증 (10MB)
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast.error(
+        `파일 크기는 ${(MAX_IMAGE_SIZE / 1024 / 1024).toFixed(0)}MB를 초과할 수 없습니다.\n현재 파일: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
+      );
       return;
     }
 
@@ -67,11 +82,12 @@ export default function ImageUploader({
 
       setPreview(publicUrl);
       onUpload(publicUrl);
+      toast.success("이미지가 업로드되었습니다.");
     } catch (error) {
       console.error("Upload error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "알 수 없는 오류";
-      alert(`업로드 중 오류가 발생했습니다: ${errorMessage}`);
+      toast.error(`업로드 중 오류가 발생했습니다:\n${errorMessage}`);
     } finally {
       setUploading(false);
     }
@@ -100,7 +116,7 @@ export default function ImageUploader({
                   이미지를 선택하거나 드래그하세요
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  JPG, PNG, GIF (최대 5MB)
+                  JPG, PNG, WebP, HEIC (최대 10MB)
                 </p>
               </>
             )}

@@ -12,13 +12,15 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       // React 스플래시로 빠르게 전환하기 위해 네이티브 스플래시를 최소화
-      launchShowDuration: 100, // 네이티브 스플래시 최소 표시 시간
+      launchShowDuration: 200, // 네이티브 스플래시 최소 표시 시간 (200ms)
       launchAutoHide: false, // React에서 직접 제어
-      launchFadeOutDuration: 0, // 즉시 사라짐
-      backgroundColor: "#000000", // React 스플래시 배경과 동일
+      launchFadeOutDuration: 0, // 즉시 사라짐 (React가 페이드 처리)
+      backgroundColor: "#E8E4DF", // DESIGN_SYSTEM.md bg-base 색상
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
-      showSpinner: false,
+      iosSpinnerStyle: "small", // iOS 스피너 스타일
+      spinnerColor: "#000000", // 검은색 스피너
+      showSpinner: false, // React에서 애니메이션 처리
       splashFullScreen: true,
       splashImmersive: true,
     },

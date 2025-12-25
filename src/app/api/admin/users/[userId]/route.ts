@@ -112,17 +112,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       "unknown";
     const userAgent = request.headers.get("user-agent") || "unknown";
 
-    await supabaseAdmin.from("admin_action_logs").insert({
-      admin_id: currentAdmin.id,
-      action_type: action === "grant" ? "grant_admin" : "revoke_admin",
-      target_user_id: userId,
-      target_user_nickname: targetUser.kakao_nickname,
-      ip_address: ipAddress,
-      user_agent: userAgent,
+    await supabaseAdmin.from("admin_audit_logs").insert({
+      admin_user_id: currentAdmin.kakao_user_id,
+      admin_nickname: currentAdmin.kakao_nickname,
+      action: action === "grant" ? "GRANT_ADMIN" : "REVOKE_ADMIN",
+      target_type: "user",
+      target_id: userId,
       metadata: {
+        target_nickname: targetUser.kakao_nickname,
         previous_status: targetUser.is_admin,
         new_status: newAdminStatus,
       },
+      old_value: { is_admin: targetUser.is_admin },
+      new_value: { is_admin: newAdminStatus },
+      ip_address: ipAddress,
+      user_agent: userAgent,
     });
 
     return NextResponse.json({
