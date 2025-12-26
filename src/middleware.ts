@@ -42,24 +42,33 @@ export async function middleware(req: NextRequest) {
     // 로그인 안 됨 → /login 페이지 표시
   }
 
-  // ✅ 3. Protected paths check (게스트 모드 지원)
-  // /map과 /courses는 게스트도 조회 가능하도록 변경
-  // 코스 등록, 댓글 작성 등은 클라이언트 레벨에서 verified 체크
-  const strictProtectedPaths = ["/admin", "/settings"];
-  const isStrictProtectedPath = strictProtectedPaths.some((path) =>
-    pathname.startsWith(path),
-  );
+  // ✅ 3. Public paths (로그인 없이 접근 가능)
+  const publicPaths = ["/login", "/verify", "/terms", "/privacy"];
+  const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
 
-  if (isStrictProtectedPath) {
+  // Public path가 아니면 로그인 필수
+  if (!isPublicPath) {
     const token = await getToken({
       req,
       secret: process.env.NEXTAUTH_SECRET,
     });
 
     if (!token) {
+      // 로그인 안 됨 → /login으로 리다이렉트
       const loginUrl = new URL("/login", req.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
+    }
+
+    // 로그인은 했지만 인증 안 됨 → /verify로 리다이렉트
+    const extendedToken = token as ExtendedJWT;
+    const isVerified = extendedToken.isVerified === true;
+
+    if (!isVerified && pathname !== "/verify") {
+      const kakaoId = extendedToken.kakaoId;
+      return NextResponse.redirect(
+        new URL(`/verify?uid=${kakaoId}`, req.url),
+      );
     }
   }
 
