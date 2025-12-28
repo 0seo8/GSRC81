@@ -8,8 +8,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  // Optimize output for better performance
-  output: "standalone",
   // Enable experimental features for better performance
   experimental: {
     optimizePackageImports: ["@/components", "@/lib"],
