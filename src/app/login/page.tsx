@@ -65,6 +65,7 @@ export default function LoginPage() {
                 height={LOGIN_CONFIG.LOGO.HEIGHT}
                 className="mx-auto"
                 priority
+                unoptimized
               />
             </div>
           </div>

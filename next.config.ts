@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   },
   // Configure allowed image domains
   images: {
+    unoptimized: true, // Vercel 배포 시 이미지 최적화 비활성화
     remotePatterns: [
       {
         protocol: "https",

@@ -123,6 +123,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
                   height={187}
                   className="mx-auto"
                   priority
+                  unoptimized
                 />
               </div>
             </motion.div>
