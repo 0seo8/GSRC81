@@ -44,14 +44,20 @@ export function CategoryFullScreen({
     return [];
   }, [selectedCourses, selectedCourse]);
 
-  // 실제 선택된 코스의 카테고리를 결정 (클릭한 코스 기반)
+  // 실제 선택된 코스의 카테고리를 결정
   const actualCategory = useMemo(() => {
+    // 사용자가 "전체" 카테고리를 선택했다면, 항상 "all"로 유지
+    if (initialCategory === "all") {
+      return categories.find((cat) => cat.key === "all") || categories[0];
+    }
+
+    // 특정 카테고리 선택 시에만 선택된 코스의 카테고리 사용
     if (filteredCourses.length > 0) {
-      // 첫 번째 코스의 카테고리를 사용 (클러스터인 경우도 첫 번째 것 사용)
       const categoryKey =
         filteredCourses[0].course_categories?.key || "jingwan";
       return categories.find((cat) => cat.key === categoryKey) || categories[0];
     }
+
     // 선택된 코스가 없으면 initialCategory 사용 (fallback)
     return (
       categories.find((cat) => cat.key === initialCategory) || categories[0]
