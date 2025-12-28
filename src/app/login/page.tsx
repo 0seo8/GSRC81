@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { LOGIN_CONFIG } from "@/core/config/login";
 import { KakaoLoginButton } from "@/features/auth/components/kakao-login-button";
@@ -58,14 +57,12 @@ export default function LoginPage() {
           {/* Logo Section - 상단 영역, flex-1로 남은 공간 차지 */}
           <div className="flex-1 flex items-center justify-center min-h-0 pt-8">
             <div className="text-center">
-              <Image
+              <img
                 src={LOGIN_CONFIG.LOGO.SRC}
                 alt={LOGIN_CONFIG.LOGO.ALT}
                 width={LOGIN_CONFIG.LOGO.WIDTH}
                 height={LOGIN_CONFIG.LOGO.HEIGHT}
                 className="mx-auto"
-                priority
-                unoptimized
               />
             </div>
           </div>

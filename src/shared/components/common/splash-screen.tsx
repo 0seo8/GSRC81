@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import { SPLASH_TIMINGS, SPLASH_TEXT_LINES } from "@/shared/constants/splash";
 
 interface SplashScreenProps {
@@ -116,14 +115,12 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               }}
             >
               <div className="text-center">
-                <Image
+                <img
                   src="/logo.png"
                   alt="GSRC81 MAPS Logo"
                   width={296}
                   height={187}
                   className="mx-auto"
-                  priority
-                  unoptimized
                 />
               </div>
             </motion.div>
