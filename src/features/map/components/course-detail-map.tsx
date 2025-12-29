@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import Map, { Source, Layer, Marker, MapRef } from "react-map-gl/mapbox";
 import { motion, AnimatePresence } from "framer-motion";
 import { Flag, MessageSquare } from "lucide-react";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { convertToLegacyCourse } from "@/types/unified";
 import { getCourseByIdV2 } from "@/shared/lib/courses-data-v2";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -49,6 +50,13 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     new Set(),
   );
 
+  // 롱프레스 상태
+  const [longPressProgress, setLongPressProgress] = useState(0);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressStartRef = useRef<{ lng: number; lat: number } | null>(null);
+  const LONG_PRESS_DURATION = 3000; // 3초
+  const MAX_DISTANCE_FROM_ROUTE = 50; // 노선으로부터 최대 50미터
+
   const mapRef = useRef<MapRef>(null);
   // 이미 표시된 댓글 추적 (ref로 관리하여 무한 루프 방지)
   const shownCommentsRef = useRef<Set<string>>(new Set());
@@ -80,6 +88,101 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     resetKmMarkers,
     setKmMarkers,
   );
+
+  // 롱프레스 시작
+  const startLongPress = useCallback(
+    (lng: number, lat: number) => {
+      // 애니메이션 중이면 무시
+      if (isAnimating) return;
+
+      longPressStartRef.current = { lng, lat };
+      setLongPressProgress(0);
+
+      // 진동 시작 (가볍게)
+      Haptics.impact({ style: ImpactStyle.Light }).catch(() => {
+        // 웹 환경에서는 에러 무시
+      });
+
+      // 진행률 업데이트 타이머
+      const startTime = Date.now();
+      const updateProgress = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min((elapsed / LONG_PRESS_DURATION) * 100, 100);
+        setLongPressProgress(progress);
+
+        if (progress < 100) {
+          longPressTimerRef.current = setTimeout(updateProgress, 50);
+        }
+      };
+      updateProgress();
+    },
+    [isAnimating, LONG_PRESS_DURATION],
+  );
+
+  // 롱프레스 취소
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    longPressStartRef.current = null;
+    setLongPressProgress(0);
+  }, []);
+
+  // 롱프레스 완료
+  const completeLongPress = useCallback(() => {
+    if (!longPressStartRef.current || !trailData) {
+      cancelLongPress();
+      return;
+    }
+
+    const { lng, lat } = longPressStartRef.current;
+
+    // 가장 가까운 경로 지점 찾기
+    const nearestPoint = findNearestRoutePoint(lng, lat);
+
+    if (!nearestPoint) {
+      cancelLongPress();
+      return;
+    }
+
+    // 노선으로부터의 거리 계산 (Haversine)
+    const R = 6371000; // 지구 반지름 (미터)
+    const dLat = ((nearestPoint.lat - lat) * Math.PI) / 180;
+    const dLng = ((nearestPoint.lng - lng) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat * Math.PI) / 180) *
+        Math.cos((nearestPoint.lat * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+
+    // 노선으로부터 너무 멀면 무시
+    if (distance > MAX_DISTANCE_FROM_ROUTE) {
+      alert(
+        `노선으로부터 ${MAX_DISTANCE_FROM_ROUTE}m 이내에서만 댓글을 등록할 수 있습니다.`,
+      );
+      cancelLongPress();
+      return;
+    }
+
+    // 성공 진동 (강하게)
+    Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => {
+      // 웹 환경에서는 에러 무시
+    });
+
+    // 댓글 모달 열기
+    setClickedPoint({
+      lng: nearestPoint.lng,
+      lat: nearestPoint.lat,
+      distanceMarker: nearestPoint.distanceMarker,
+    });
+    setShowCommentModal(true);
+
+    cancelLongPress();
+  }, [trailData, cancelLongPress, MAX_DISTANCE_FROM_ROUTE]);
 
   // 가장 가까운 경로 지점 찾기 함수
   const findNearestRoutePoint = useCallback(
@@ -487,62 +590,85 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     });
   }, [isAnimating, currentActualDistanceKm, trailData, flightComments]);
 
-  // 지도 전체 클릭 이벤트 등록 (레이어에 의존하지 않음)
+  // 롱프레스 진행률 확인 및 완료 처리
+  useEffect(() => {
+    if (longPressProgress >= 100) {
+      completeLongPress();
+    }
+  }, [longPressProgress, completeLongPress]);
+
+  // 지도 롱프레스 이벤트 등록 (마우스/터치)
   useEffect(() => {
     if (!mapRef.current || !isMapLoaded || !trailData) {
       return;
     }
 
     const map = mapRef.current.getMap();
+    const mapCanvas = map.getCanvas();
 
-    // 지도 전체 클릭 핸들러 - 직접 로직 구현 (의존성 문제 방지)
-    const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
-      const { lng, lat } = e.lngLat;
-
-      // trailData가 없으면 무시
-      if (!trailData) return;
-
-      // 애니메이션 중이면 무시
+    // 마우스 다운 핸들러
+    const handleMouseDown = (e: MouseEvent | TouchEvent) => {
       if (isAnimating) return;
 
-      // 가장 가까운 경로 지점 찾기
-      const nearestPoint = findNearestRoutePoint(lng, lat);
+      // 기본 동작 방지
+      e.preventDefault();
+      e.stopPropagation();
 
-      if (nearestPoint) {
-        setClickedPoint({
-          lng: nearestPoint.lng,
-          lat: nearestPoint.lat,
-          distanceMarker: nearestPoint.distanceMarker,
-        });
-        setShowCommentModal(true);
+      // 캔버스 상대 좌표 계산
+      const rect = mapCanvas.getBoundingClientRect();
+      const x =
+        (e instanceof MouseEvent ? e.clientX : e.touches[0].clientX) -
+        rect.left;
+      const y =
+        (e instanceof MouseEvent ? e.clientY : e.touches[0].clientY) - rect.top;
+
+      // 화면 좌표를 지리 좌표로 변환
+      const { lng, lat } = map.unproject([x, y]);
+
+      startLongPress(lng, lat);
+    };
+
+    // 마우스/터치 업 핸들러
+    const handleEnd = () => {
+      cancelLongPress();
+    };
+
+    // 마우스/터치 이동 핸들러 (롱프레스 취소)
+    const handleMove = () => {
+      cancelLongPress();
+    };
+
+    // 지도 클릭 이벤트 완전히 비활성화
+    const preventMapClick = (e: mapboxgl.MapMouseEvent) => {
+      e.preventDefault();
+      if (e.originalEvent) {
+        e.originalEvent.stopPropagation();
       }
     };
 
-    // 지도가 로드되면 클릭 이벤트 등록
-    // onLoad 콜백 이후에 실행되므로 map은 이미 준비된 상태
-    const setupMapClick = () => {
-      if (map.loaded()) {
-        map.on("click", handleMapClick);
-      } else {
-        // onLoad가 실행되었지만 map.loaded()가 false인 경우 (타이밍 이슈)
-        // loaded() 상태와 관계없이 이벤트 등록 시도
-        try {
-          map.on("click", handleMapClick);
-        } catch {
-          // 실패 시 한번 더 시도
-          map.once("load", () => {
-            map.on("click", handleMapClick);
-          });
-        }
-      }
-    };
-
-    setupMapClick();
+    // 이벤트 등록
+    map.on("click", preventMapClick);
+    mapCanvas.addEventListener("mousedown", handleMouseDown, { capture: true });
+    mapCanvas.addEventListener("mouseup", handleEnd, { capture: true });
+    mapCanvas.addEventListener("mousemove", handleMove);
+    mapCanvas.addEventListener("touchstart", handleMouseDown, {
+      passive: false,
+      capture: true,
+    });
+    mapCanvas.addEventListener("touchend", handleEnd, { capture: true });
+    mapCanvas.addEventListener("touchmove", handleMove);
 
     return () => {
-      map.off("click", handleMapClick);
+      map.off("click", preventMapClick);
+      mapCanvas.removeEventListener("mousedown", handleMouseDown);
+      mapCanvas.removeEventListener("mouseup", handleEnd);
+      mapCanvas.removeEventListener("mousemove", handleMove);
+      mapCanvas.removeEventListener("touchstart", handleMouseDown);
+      mapCanvas.removeEventListener("touchend", handleEnd);
+      mapCanvas.removeEventListener("touchmove", handleMove);
+      cancelLongPress();
     };
-  }, [isMapLoaded, trailData, isAnimating, findNearestRoutePoint]);
+  }, [isMapLoaded, trailData, isAnimating, startLongPress, cancelLongPress]);
 
   // 트레일 라인 스타일
   const trailLineLayer = {
@@ -728,7 +854,41 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
           </Marker>
         )}
 
-        {/* 클릭된 지점 마커 */}
+        {/* 롱프레스 진행률 표시 */}
+        {longPressStartRef.current &&
+          longPressProgress > 0 &&
+          longPressProgress < 100 && (
+            <Marker
+              longitude={longPressStartRef.current.lng}
+              latitude={longPressStartRef.current.lat}
+              anchor="center"
+            >
+              <div className="relative w-16 h-16">
+                {/* 배경 원 */}
+                <div className="absolute inset-0 bg-white/50 rounded-full border-2 border-white" />
+                {/* 진행률 원 */}
+                <svg className="absolute inset-0 w-16 h-16 -rotate-90">
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    stroke="white"
+                    strokeWidth="4"
+                    fill="none"
+                    strokeDasharray={`${2 * Math.PI * 28}`}
+                    strokeDashoffset={`${2 * Math.PI * 28 * (1 - longPressProgress / 100)}`}
+                    className="transition-all duration-50"
+                  />
+                </svg>
+                {/* 중앙 아이콘 */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <MessageSquare className="w-6 h-6 text-white" />
+                </div>
+              </div>
+            </Marker>
+          )}
+
+        {/* 클릭된 지점 마커 (롱프레스 완료 후) */}
         {clickedPoint && (
           <Marker
             longitude={clickedPoint.lng}
@@ -796,7 +956,10 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
       {/* 댓글 입력 모달 */}
       <CommentModal
         isOpen={showCommentModal}
-        onClose={() => setShowCommentModal(false)}
+        onClose={() => {
+          setShowCommentModal(false);
+          setClickedPoint(null); // 모달 닫을 때 마커도 제거
+        }}
         courseId={courseId}
         position={clickedPoint}
         onCommentAdded={handleCommentAdded}

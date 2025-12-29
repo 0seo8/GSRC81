@@ -2,51 +2,103 @@
 @import "tw-animate-css";
 @import "mapbox-gl/dist/mapbox-gl.css";
 
+/* iOS Safe Area 지원을 위한 환경 변수 폴백 설정 */
+:root {
+  /* iOS Safe Area 값들을 CSS 변수로 저장 */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+
 /* Safe Area 유틸리티 클래스 */
 .safe-area-top {
-  padding-top: env(safe-area-inset-top, 0);
+  padding-top: var(--sat);
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-bottom: var(--sab);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .safe-area-left {
-  padding-left: env(safe-area-inset-left, 0);
+  padding-left: var(--sal);
+  padding-left: env(safe-area-inset-left, 0px);
 }
 
 .safe-area-right {
-  padding-right: env(safe-area-inset-right, 0);
+  padding-right: var(--sar);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 .safe-area-x {
-  padding-left: env(safe-area-inset-left, 0);
-  padding-right: env(safe-area-inset-right, 0);
+  padding-left: var(--sal);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: var(--sar);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 .safe-area-y {
-  padding-top: env(safe-area-inset-top, 0);
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-top: var(--sat);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: var(--sab);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .safe-area-all {
-  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
-    env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  padding-top: var(--sat);
+  padding-right: var(--sar);
+  padding-bottom: var(--sab);
+  padding-left: var(--sal);
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
 }
 
 /* iOS 전용 스타일 */
 .is-ios .ios-safe-bottom {
-  padding-bottom: max(env(safe-area-inset-bottom, 0), 1.25rem); /* 20px */
+  padding-bottom: max(var(--sab), 1.25rem); /* 20px */
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 1.25rem);
 }
 
 /* 하단 고정 요소용 */
 .fixed-bottom-safe {
-  bottom: env(safe-area-inset-bottom, 0);
+  bottom: var(--sab);
+  bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* 전체 화면 drawer용 */
 .drawer-safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-bottom: var(--sab);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* margin 버전 추가 (padding 대신 margin이 필요한 경우) */
+.safe-area-margin-top {
+  margin-top: var(--sat);
+  margin-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-margin-bottom {
+  margin-bottom: var(--sab);
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* height/min-height 버전 (컨테이너 전체 높이 계산용) */
+.h-screen-safe {
+  height: 100vh;
+  height: calc(100vh - var(--sat) - var(--sab));
+  height: calc(
+    100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+  );
+}
+
+.min-h-screen-safe {
+  min-height: 100vh;
+  min-height: calc(100vh - var(--sat) - var(--sab));
+  min-height: calc(
+    100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+  );
 }
 
 @custom-variant dark (&:is(.dark *));

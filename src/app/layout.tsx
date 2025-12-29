@@ -68,6 +68,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
+      <head>
+        {/* iOS Safe Area 지원을 위한 추가 meta 태그 */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+      </head>
       <body
         className={`${notoSans.variable} ${inter.variable} ${poppins.variable} antialiased safe-area-bottom`}
       >

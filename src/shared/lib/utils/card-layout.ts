@@ -113,21 +113,21 @@ export function calculateCardLayout(
 
   // Card 3: -2rem 감소
   const card3Bottom = card2Bottom + cardHeight - FIGMA_CARD_SPECS.cardGap - 1; // 추가 -1rem
+
+  // Card 4: -3rem 감소 (Card 3 기준으로 추가 -1rem)
+  const card4Bottom = card3Bottom + cardHeight - FIGMA_CARD_SPECS.cardGap - 1; // 추가 -1rem
+
   let cardBottom: number;
 
   if (courseIndex === 2) {
     cardBottom = card3Bottom;
   } else if (courseIndex === 3) {
-    // Card 4: Card 3과 동일하게 -3rem 적용
-    cardBottom = card3Bottom + cardHeight - FIGMA_CARD_SPECS.cardGap - 1; // 추가 -1rem
+    cardBottom = card4Bottom;
   } else {
-    // Card 5+: 일정한 간격 유지
-    const additionalCards = courseIndex - 3;
+    // Card 5+: Card 4 기준으로 일정한 60px 간격 유지
+    // (courseIndex - 3): Card 5일 때 1, Card 6일 때 2...
     cardBottom =
-      card3Bottom +
-      cardHeight -
-      FIGMA_CARD_SPECS.cardGap +
-      additionalCards * (cardHeight - FIGMA_CARD_SPECS.cardGap);
+      card4Bottom + (courseIndex - 3) * (cardHeight - FIGMA_CARD_SPECS.cardGap);
   }
 
   return {

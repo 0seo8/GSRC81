@@ -105,3 +105,62 @@ export async function getFlightModeComments(
 
   return comments || [];
 }
+
+/**
+ * 댓글을 수정합니다 (본인만 가능)
+ */
+export async function updateComment(
+  commentId: string,
+  message: string,
+  authorUserKey: string,
+): Promise<CourseComment> {
+  // 메시지 검증
+  if (!message || message.length > 200) {
+    throw new Error("메시지는 1~200자 사이여야 합니다.");
+  }
+
+  // 본인 확인 및 수정
+  const { data: comment, error } = await supabase
+    .from("course_comments")
+    .update({
+      message: message.trim(),
+      edited_at: new Date().toISOString(),
+    })
+    .eq("id", commentId)
+    .eq("author_user_key", authorUserKey) // 본인만 수정 가능
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating comment:", error);
+    throw new Error(
+      "댓글 수정에 실패했습니다. 본인의 댓글만 수정할 수 있습니다.",
+    );
+  }
+
+  return comment;
+}
+
+/**
+ * 댓글을 삭제합니다 (소프트 삭제)
+ */
+export async function deleteComment(
+  commentId: string,
+  authorUserKey: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("course_comments")
+    .update({
+      is_deleted: true,
+      message: "[삭제된 댓글입니다]",
+    })
+    .eq("id", commentId)
+    .eq("author_user_key", authorUserKey); // 본인만 삭제 가능
+
+  if (error) {
+    console.error("Error deleting comment:", error);
+    throw new Error(
+      "댓글 삭제에 실패했습니다. 본인의 댓글만 삭제할 수 있습니다.",
+    );
+  }
+}
