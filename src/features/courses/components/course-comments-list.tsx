@@ -157,41 +157,14 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                         <p className="text-xs text-gray-400 mt-1">(수정됨)</p>
                       )}
 
-                      {/* 본인 댓글: 수정/삭제 버튼 */}
+                      {/* 본인 댓글: 수정 버튼만 */}
                       {isOwner && (
-                        <div className="absolute -top-2 -right-2 flex gap-1 opacity-100 transition-opacity">
-                          <button
-                            onClick={() => handleEditClick(comment)}
-                            className="bg-blue-600 text-white rounded-full p-1 hover:bg-blue-700"
-                            title="댓글 수정"
-                          >
-                            <Edit className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              onDeleteComment?.(
-                                comment.id,
-                                comment.author_nickname,
-                              )
-                            }
-                            className="bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                            title="댓글 삭제"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-
-                      {/* 관리자: 삭제 버튼만 */}
-                      {!isOwner && isAdmin && onDeleteComment && (
                         <button
-                          onClick={() =>
-                            onDeleteComment(comment.id, comment.author_nickname)
-                          }
-                          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
-                          title="댓글 삭제"
+                          onClick={() => handleEditClick(comment)}
+                          className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full p-1 hover:bg-blue-700 shadow-lg"
+                          title="댓글 수정"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Edit className="w-3 h-3" />
                         </button>
                       )}
                     </div>
