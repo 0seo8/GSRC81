@@ -240,6 +240,7 @@ export function CategoryFullScreen({
                 isDragging={isDragging}
                 onCourseClick={onCourseClick}
                 isExpanded={snapManager.snapPoint === "full"}
+                currentCategoryKey={actualCategory.key}
               />
             </div>
           </motion.div>

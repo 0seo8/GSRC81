@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -56,7 +57,7 @@ export default function AdminUsersPage() {
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     user: User | null;
-    action: "grant" | "revoke" | null;
+    action: "grant" | "revoke" | "delete" | null;
   }>({
     isOpen: false,
     user: null,
@@ -155,7 +156,42 @@ export default function AdminUsersPage() {
     }
   };
 
-  const openConfirmDialog = (user: User, action: "grant" | "revoke") => {
+  const handleDeleteUser = async (user: User) => {
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}`, {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to delete user");
+      }
+
+      toast.success(result.message);
+
+      // 사용자 목록에서 해당 사용자 제거
+      setUsers((prevUsers) => prevUsers.filter((u) => u.id !== user.id));
+
+      setConfirmDialog({ isOpen: false, user: null, action: null });
+
+      // 페이지네이션 정보 업데이트
+      setPagination((prev) => ({
+        ...prev,
+        total: prev.total - 1,
+      }));
+    } catch (error: unknown) {
+      console.error("Failed to delete user:", error);
+      const message =
+        error instanceof Error ? error.message : "사용자 삭제에 실패했습니다";
+      toast.error(message);
+    }
+  };
+
+  const openConfirmDialog = (
+    user: User,
+    action: "grant" | "revoke" | "delete",
+  ) => {
     setConfirmDialog({ isOpen: true, user, action });
   };
 
@@ -264,7 +300,9 @@ export default function AdminUsersPage() {
                     <UserRow
                       key={user.id}
                       user={user}
+                      currentUserId={session?.user?.id}
                       onToggleAdmin={openConfirmDialog}
+                      onDeleteUser={openConfirmDialog}
                     />
                   ))}
                 </div>
@@ -326,23 +364,48 @@ export default function AdminUsersPage() {
             <h3 className="text-lg font-semibold mb-4">
               {confirmDialog.action === "grant"
                 ? "관리자 권한 부여"
-                : "관리자 권한 해제"}
+                : confirmDialog.action === "revoke"
+                  ? "관리자 권한 해제"
+                  : "사용자 삭제"}
             </h3>
             <p className="text-gray-600 mb-6">
-              <strong>{confirmDialog.user.kakao_nickname}</strong>님을{" "}
-              {confirmDialog.action === "grant"
-                ? "관리자로 지정"
-                : "일반 사용자로 변경"}
-              하시겠습니까?
+              {confirmDialog.action === "delete" ? (
+                <>
+                  <strong>{confirmDialog.user.kakao_nickname}</strong>님의
+                  계정을 삭제하시겠습니까?
+                  <br />
+                  <span className="text-red-600 text-sm font-medium">
+                    ⚠️ 이 작업은 되돌릴 수 없습니다.
+                  </span>
+                </>
+              ) : (
+                <>
+                  <strong>{confirmDialog.user.kakao_nickname}</strong>님을{" "}
+                  {confirmDialog.action === "grant"
+                    ? "관리자로 지정"
+                    : "일반 사용자로 변경"}
+                  하시겠습니까?
+                </>
+              )}
             </p>
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={closeConfirmDialog}>
                 취소
               </Button>
               <Button
-                onClick={() =>
-                  handleToggleAdmin(confirmDialog.user!, confirmDialog.action!)
+                variant={
+                  confirmDialog.action === "delete" ? "destructive" : "default"
                 }
+                onClick={() => {
+                  if (confirmDialog.action === "delete") {
+                    handleDeleteUser(confirmDialog.user!);
+                  } else {
+                    handleToggleAdmin(
+                      confirmDialog.user!,
+                      confirmDialog.action as "grant" | "revoke",
+                    );
+                  }
+                }}
               >
                 확인
               </Button>
@@ -357,11 +420,19 @@ export default function AdminUsersPage() {
 // User Row Component
 interface UserRowProps {
   user: User;
+  currentUserId?: string;
   onToggleAdmin: (user: User, action: "grant" | "revoke") => void;
+  onDeleteUser: (user: User, action: "delete") => void;
 }
 
-function UserRow({ user, onToggleAdmin }: UserRowProps) {
+function UserRow({
+  user,
+  currentUserId,
+  onToggleAdmin,
+  onDeleteUser,
+}: UserRowProps) {
   const [imageError, setImageError] = React.useState(false);
+  const isCurrentUser = currentUserId === user.kakao_user_id;
 
   return (
     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
@@ -412,8 +483,8 @@ function UserRow({ user, onToggleAdmin }: UserRowProps) {
         </div>
       </div>
 
-      {/* Action Button */}
-      <div className="ml-4">
+      {/* Action Buttons */}
+      <div className="ml-4 flex gap-2">
         {user.is_admin ? (
           <Button
             variant="outline"
@@ -434,6 +505,17 @@ function UserRow({ user, onToggleAdmin }: UserRowProps) {
             관리자 지정
           </Button>
         )}
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => onDeleteUser(user, "delete")}
+          disabled={isCurrentUser}
+          title={
+            isCurrentUser ? "자기 자신을 삭제할 수 없습니다" : "사용자 삭제"
+          }
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   );

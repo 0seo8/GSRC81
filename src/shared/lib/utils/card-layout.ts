@@ -183,22 +183,3 @@ export function getDifficultyText(difficulty: string): string {
       return "보통";
   }
 }
-
-// ========================================
-// 📊 점진적 간격 축소 규칙 검증 (개발 모드)
-// ========================================
-
-if (process.env.NODE_ENV === "development") {
-  console.group("🎨 카드 스택 높이 검증 (상하 여백 동일, 모든 카드 180px)");
-
-  console.log("1개 카드:", getStackHeight(1), "→ 198px (9 + 180 + 9)");
-  console.log("2개 카드:", getStackHeight(2), "→ 258px (9 + 180 + 60 + 9)");
-  console.log("3개 카드:", getStackHeight(3), "→ 318px (9 + 180 + 120 + 9)");
-  console.log("4개 카드:", getStackHeight(4), "→ 378px (9 + 180 + 180 + 9)");
-  console.log("5개 카드:", getStackHeight(5), "→ 438px (9 + 180 + 240 + 9)");
-  console.log("6개 카드:", getStackHeight(6), "→ 498px (9 + 180 + 300 + 9)");
-  console.log("7개 카드:", getStackHeight(7), "→ 558px (9 + 180 + 360 + 9)");
-  console.log("10개 카드:", getStackHeight(10), "→ 738px (9 + 180 + 540 + 9)");
-
-  console.groupEnd();
-}

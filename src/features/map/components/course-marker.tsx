@@ -132,7 +132,6 @@ const CourseMarkerComponent = function CourseMarker({
         const el = document.createElement("div");
         el.style.cssText = `
           cursor: pointer;
-          filter: drop-shadow(0 0.25rem 0.5rem rgba(0,0,0,0.3));
           z-index: ${isCluster ? 10 : 5};
         `;
 

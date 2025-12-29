@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/shared/lib/auth";
-import { supabase } from "@/shared/lib/supabase";
+import { supabase, supabaseAdmin } from "@/shared/lib/supabase";
 
 /**
  * 현재 로그인한 사용자의 세션 정보 가져오기
@@ -11,21 +11,24 @@ export async function getCurrentSession() {
 
 /**
  * 현재 로그인한 사용자 정보 가져오기 (access_links 테이블)
+ * 관리자 작업 시 supabaseAdmin을 사용하여 RLS 우회
  */
-export async function getCurrentUser() {
+export async function getCurrentUser(useAdmin: boolean = false) {
   const session = await getCurrentSession();
 
   if (!session?.user?.id) {
     return null;
   }
 
-  const { data: user, error } = await supabase
+  const client = useAdmin ? supabaseAdmin : supabase;
+  const { data: user, error } = await client
     .from("access_links")
     .select("*")
     .eq("kakao_user_id", session.user.id)
     .single();
 
   if (error || !user) {
+    console.error("getCurrentUser error:", error);
     return null;
   }
 
