@@ -66,9 +66,7 @@ export async function middleware(req: NextRequest) {
 
     if (!isVerified && pathname !== "/verify") {
       const kakaoId = extendedToken.kakaoId;
-      return NextResponse.redirect(
-        new URL(`/verify?uid=${kakaoId}`, req.url),
-      );
+      return NextResponse.redirect(new URL(`/verify?uid=${kakaoId}`, req.url));
     }
   }
 

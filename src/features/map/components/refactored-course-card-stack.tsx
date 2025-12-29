@@ -27,7 +27,7 @@ export function RefactoredCourseCardStack({
   return (
     <div
       className="relative w-full font-sans mb-0"
-      style={{ height: stackHeight }}
+      style={courses.length === 1 ? {} : { height: stackHeight }}
     >
       {courses.map((course, index) => {
         const cardColor = cardColors[index % cardColors.length];

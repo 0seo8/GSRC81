@@ -101,7 +101,6 @@ export function CourseCard({
       className="absolute left-0 right-0 px-[2.5625rem] py-5 cursor-pointer"
       style={{
         backgroundColor: cardColor,
-        height: layout.height,
         borderRadius: layout.borderRadius,
         zIndex: layout.zIndex,
         boxShadow: shadow,

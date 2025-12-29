@@ -20,18 +20,13 @@ export interface CardLayout {
 // ========================================
 
 const FIGMA_CARD_SPECS = {
-  // 카드 높이
-  firstCard: 8.125, // 130px - 1번 카드 (모든 케이스 동일)
-  secondCard_2: 11.25, // 180px - 2개일 때 2번 카드
-  secondCard_3plus: 8.5, // 136px - 3개 이상일 때 2번 카드 ⭐
-  thirdCard_3plus: 10.25, // 180px - 3개 이상일 때 3번+ 카드
+  // 카드 높이 (box-sizing: border-box이므로 패딩 포함된 전체 높이)
+  // 모든 카드 180px로 완전 통일
+  cardHeight: 11.25, // 180px (모든 카드 동일)
 
-  // 간격 (점진적 축소 규칙)
-  overlap: 4.4375, // 87px - 카드 겹침 간격 (1-3개)
-  mediumOverlap: 3.75, // 60px - 카드 4-6개일 때 간격 ⭐ 새 규칙
-  minOverlap: 2.5, // 40px - 카드 7개 이상일 때 최소 간격 ⭐ 새 규칙
-  bottomMargin_1: 0.5625, // 9px - 1개일 때 바닥 여백
-  bottomMargin_2: 0.375, // 6px - 2개일 때 레이아웃 바닥 여백
+  // 간격 (모든 카드 동일한 간격)
+  cardGap: 3.75, // 60px - 모든 카드 간 노출 간격 (통일)
+  bottomMargin: 0.5625, // 9px - 모든 케이스 통일된 바닥 여백
 
   // 숨김
   hiddenOffset: -7, // -112px - 3개 이상일 때 1번 카드 숨김 ⭐
@@ -53,8 +48,8 @@ export function calculateCardLayout(
   // ========================================
   if (totalCourses === 1) {
     return {
-      height: `${FIGMA_CARD_SPECS.firstCard}rem`, // 130px
-      bottom: `${FIGMA_CARD_SPECS.bottomMargin_1}rem`, // 9px 여백
+      height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
+      bottom: `${FIGMA_CARD_SPECS.bottomMargin}rem`, // 9px 하단 여백 (상단도 9px로 동일)
       borderRadius: FIGMA_CARD_SPECS.fullRadius, // 전체 둥근
       zIndex: 1,
     };
@@ -67,16 +62,17 @@ export function calculateCardLayout(
     if (courseIndex === 0) {
       // 카드 1: 앞에 표시, 전체 둥근
       return {
-        height: `${FIGMA_CARD_SPECS.firstCard}rem`, // 130px
-        bottom: "0rem", // 바닥에 딱 붙음
+        height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
+        bottom: `${FIGMA_CARD_SPECS.bottomMargin}rem`, // 9px 여백
         borderRadius: FIGMA_CARD_SPECS.fullRadius,
         zIndex: 2, // 위에 표시
       };
     } else {
       // 카드 2: 뒤에 표시, 위쪽만 둥근
+      // Card 1 상단에서 60px만 노출 - 1rem 감소
       return {
-        height: `${FIGMA_CARD_SPECS.secondCard_2}rem`, // 180px
-        bottom: `${FIGMA_CARD_SPECS.overlap}rem`, // 87px 위에
+        height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
+        bottom: `${FIGMA_CARD_SPECS.cardHeight + FIGMA_CARD_SPECS.bottomMargin - FIGMA_CARD_SPECS.cardGap - 1}rem`, // 180 + 9 - 60 - 16 = 113px (4.625rem)
         borderRadius: FIGMA_CARD_SPECS.topRadius,
         zIndex: 1, // 아래 표시
       };
@@ -89,7 +85,7 @@ export function calculateCardLayout(
   if (courseIndex === 0) {
     // 카드 1: 완전 숨김, 전체 둥근, z-index 최고
     return {
-      height: `${FIGMA_CARD_SPECS.firstCard}rem`, // 130px
+      height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
       bottom: `${FIGMA_CARD_SPECS.hiddenOffset}rem`, // -112px
       borderRadius: FIGMA_CARD_SPECS.fullRadius,
       zIndex: totalCourses, // 가장 높은 z-index
@@ -97,61 +93,45 @@ export function calculateCardLayout(
   }
 
   if (courseIndex === 1) {
-    // 카드 2: 기준점(bottom: 0), 위쪽만 둥근
-    // ⭐ 중요: 3개 이상일 때는 136px!
+    // 카드 2: 기준점 - 1rem 감소
     return {
-      height: `${FIGMA_CARD_SPECS.secondCard_3plus}rem`, // 136px
-      bottom: "-1rem", // 기준점
+      height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
+      bottom: `${FIGMA_CARD_SPECS.bottomMargin - 1}rem`, // 9px - 16px = -7px
       borderRadius: FIGMA_CARD_SPECS.topRadius,
       zIndex: totalCourses - courseIndex,
     };
   }
 
   // ========================================
-  // 카드 3 이상: 점진적 간격 축소 규칙
+  // 카드 3 이상: 모든 카드 동일한 60px 간격 + 점진적 증가
   // ========================================
-  // 공식: 다음 카드 bottom = 이전 카드 bottom + 이전 카드 height - 노출 간격
-  // 이렇게 하면 "노출 간격"만큼만 보이고 나머지는 다음 카드에 가려짐
+  // 공식: 다음 카드 bottom = 이전 카드 bottom + cardHeight - cardGap + (카드번호 * 1px)
+  // 모든 카드가 60px만 노출되도록 배치하되 점진적으로 1px씩 위로 올림
 
-  const cardHeight = FIGMA_CARD_SPECS.thirdCard_3plus; // 180px (10.25rem)
+  const cardHeight = FIGMA_CARD_SPECS.cardHeight; // 180px (통일)
+  const card2Bottom = FIGMA_CARD_SPECS.bottomMargin - 1; // -7px (1rem 감소)
+
+  // Card 3: -2rem 감소
+  const card3Bottom = card2Bottom + cardHeight - FIGMA_CARD_SPECS.cardGap - 1; // 추가 -1rem
   let cardBottom: number;
 
   if (courseIndex === 2) {
-    // 카드 3: 기본 87px 간격 유지
-    cardBottom = FIGMA_CARD_SPECS.overlap;
-  } else if (courseIndex >= 3 && courseIndex <= 5) {
-    // 카드 4-6: 60px씩 노출
-    // 카드 3 기준점 = 87px
-    // 각 카드는 이전 카드 상단에서 60px만 보이도록 배치
-    const card3Top = FIGMA_CARD_SPECS.overlap + cardHeight; // 267px (87 + 180)
-    const mediumGapCount = courseIndex - 2; // 카드4부터 개수 (1, 2, 3)
-
-    // 반복 공식: bottomN = bottomN-1 + cardHeight - gap
-    // bottom4 = 87 + 180 - 60 = 207
-    // bottom5 = 207 + 180 - 60 = 327
-    // bottom6 = 327 + 180 - 60 = 447
-    cardBottom =
-      card3Top -
-      FIGMA_CARD_SPECS.mediumOverlap +
-      (mediumGapCount - 1) * (cardHeight - FIGMA_CARD_SPECS.mediumOverlap);
+    cardBottom = card3Bottom;
+  } else if (courseIndex === 3) {
+    // Card 4: Card 3과 동일하게 -3rem 적용
+    cardBottom = card3Bottom + cardHeight - FIGMA_CARD_SPECS.cardGap - 1; // 추가 -1rem
   } else {
-    // 카드 7+: 40px씩만 노출
-    const card3Top = FIGMA_CARD_SPECS.overlap + cardHeight; // 267px
-    const card6Bottom =
-      card3Top -
-      FIGMA_CARD_SPECS.mediumOverlap +
-      2 * (cardHeight - FIGMA_CARD_SPECS.mediumOverlap); // 447px
-    const card6Top = card6Bottom + cardHeight; // 627px
-
-    const minGapCount = courseIndex - 5; // 카드7부터 개수
+    // Card 5+: 일정한 간격 유지
+    const additionalCards = courseIndex - 3;
     cardBottom =
-      card6Top -
-      FIGMA_CARD_SPECS.minOverlap +
-      (minGapCount - 1) * (cardHeight - FIGMA_CARD_SPECS.minOverlap);
+      card3Bottom +
+      cardHeight -
+      FIGMA_CARD_SPECS.cardGap +
+      additionalCards * (cardHeight - FIGMA_CARD_SPECS.cardGap);
   }
 
   return {
-    height: `${FIGMA_CARD_SPECS.thirdCard_3plus}rem`, // 180px
+    height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px (통일)
     bottom: `${cardBottom}rem`,
     borderRadius: FIGMA_CARD_SPECS.topRadius,
     zIndex: totalCourses - courseIndex,
@@ -159,60 +139,26 @@ export function calculateCardLayout(
 }
 
 /**
- * 전체 스택 높이 계산 (점진적 간격 축소 규칙)
+ * 전체 스택 높이 계산 (모든 카드 동일한 높이와 간격)
+ * 주의: box-sizing: border-box이므로 패딩이 이미 포함된 값
+ * 상단 여백과 하단 여백을 동일하게 유지 (각 9px)
  */
 export function getStackHeight(total: number): string {
   if (total === 0) return "0rem";
 
-  // 1개: 130px + 9px 여백 = 139px (8.6875rem)
-  if (total === 1) {
-    return `${FIGMA_CARD_SPECS.firstCard + FIGMA_CARD_SPECS.bottomMargin_1}rem`;
-  }
+  // 모든 카드: 180px 높이, 60px 간격으로 완전 통일
+  // 공식: topMargin + Card 1 (180) + (N - 1) * cardGap + bottomMargin
+  // 1개: 9 + 180 + 0 + 9 = 198px
+  // 2개: 9 + 180 + 60 + 9 = 258px
+  // 3개: 9 + 180 + 120 + 9 = 318px
+  // 4개: 9 + 180 + 180 + 9 = 378px
+  const totalHeight =
+    FIGMA_CARD_SPECS.bottomMargin + // 상단 여백 (9px)
+    FIGMA_CARD_SPECS.cardHeight + // 첫 카드 높이 (180px)
+    (total - 1) * FIGMA_CARD_SPECS.cardGap + // 추가 카드들 (각 60px씩)
+    FIGMA_CARD_SPECS.bottomMargin; // 하단 여백 (9px)
 
-  // 2개: 130 + 180 - 87 + 6px 여백 = 229px (14.3125rem)
-  if (total === 2) {
-    const totalHeight =
-      FIGMA_CARD_SPECS.firstCard +
-      FIGMA_CARD_SPECS.secondCard_2 -
-      FIGMA_CARD_SPECS.overlap +
-      FIGMA_CARD_SPECS.bottomMargin_2;
-    return `${totalHeight}rem`;
-  }
-
-  // 3개: 136 + 180 - 87 = 229px (14.3125rem)
-  if (total === 3) {
-    const totalHeight =
-      FIGMA_CARD_SPECS.secondCard_3plus +
-      FIGMA_CARD_SPECS.thirdCard_3plus -
-      FIGMA_CARD_SPECS.overlap;
-    return `${totalHeight}rem`;
-  }
-
-  // 4-6개: 점진적 60px 간격
-  // 4개: 229 + 60 = 289px (18.0625rem)
-  // 5개: 289 + 60 = 349px (21.8125rem)
-  // 6개: 349 + 60 = 409px (25.5625rem)
-  if (total >= 4 && total <= 6) {
-    const baseHeight =
-      FIGMA_CARD_SPECS.secondCard_3plus +
-      FIGMA_CARD_SPECS.thirdCard_3plus -
-      FIGMA_CARD_SPECS.overlap;
-    const mediumGapCards = total - 3; // 4번 카드부터
-    return `${baseHeight + mediumGapCards * FIGMA_CARD_SPECS.mediumOverlap}rem`;
-  }
-
-  // 7개 이상: 최대 높이 제한 + 최소 40px 간격
-  // 7개: 409 + 40 = 449px (28.0625rem) ← 최대 높이
-  // 8개 이상: 내부 스크롤
-  const baseHeight =
-    FIGMA_CARD_SPECS.secondCard_3plus +
-    FIGMA_CARD_SPECS.thirdCard_3plus -
-    FIGMA_CARD_SPECS.overlap;
-  const mediumGapHeight = 3 * FIGMA_CARD_SPECS.mediumOverlap; // 카드 4-6 (180px)
-  const minGapCards = total - 6; // 카드 7부터
-  const minGapHeight = minGapCards * FIGMA_CARD_SPECS.minOverlap;
-
-  return `${baseHeight + mediumGapHeight + minGapHeight}rem`;
+  return `${totalHeight}rem`;
 }
 
 /**
@@ -243,20 +189,16 @@ export function getDifficultyText(difficulty: string): string {
 // ========================================
 
 if (process.env.NODE_ENV === "development") {
-  console.group("🎨 카드 스택 높이 검증 (점진적 간격 축소)");
+  console.group("🎨 카드 스택 높이 검증 (상하 여백 동일, 모든 카드 180px)");
 
-  console.log("1개 카드:", getStackHeight(1), "→ 139px (기존 유지)");
-  console.log("2개 카드:", getStackHeight(2), "→ 229px (기존 유지)");
-  console.log("3개 카드:", getStackHeight(3), "→ 229px (기존 유지)");
-  console.log("4개 카드:", getStackHeight(4), "→ 289px (229 + 60) ⭐ 새 규칙");
-  console.log("5개 카드:", getStackHeight(5), "→ 349px (289 + 60) ⭐ 새 규칙");
-  console.log("6개 카드:", getStackHeight(6), "→ 409px (349 + 60) ⭐ 새 규칙");
-  console.log(
-    "7개 카드:",
-    getStackHeight(7),
-    "→ 449px (409 + 40) ⭐ 최대 높이",
-  );
-  console.log("10개 카드:", getStackHeight(10), "→ 569px (449 + 40×3)");
+  console.log("1개 카드:", getStackHeight(1), "→ 198px (9 + 180 + 9)");
+  console.log("2개 카드:", getStackHeight(2), "→ 258px (9 + 180 + 60 + 9)");
+  console.log("3개 카드:", getStackHeight(3), "→ 318px (9 + 180 + 120 + 9)");
+  console.log("4개 카드:", getStackHeight(4), "→ 378px (9 + 180 + 180 + 9)");
+  console.log("5개 카드:", getStackHeight(5), "→ 438px (9 + 180 + 240 + 9)");
+  console.log("6개 카드:", getStackHeight(6), "→ 498px (9 + 180 + 300 + 9)");
+  console.log("7개 카드:", getStackHeight(7), "→ 558px (9 + 180 + 360 + 9)");
+  console.log("10개 카드:", getStackHeight(10), "→ 738px (9 + 180 + 540 + 9)");
 
   console.groupEnd();
 }
