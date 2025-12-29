@@ -159,7 +159,7 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
 
                       {/* 본인 댓글: 수정/삭제 버튼 */}
                       {isOwner && (
-                        <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute -top-2 -right-2 flex gap-1 opacity-100 transition-opacity">
                           <button
                             onClick={() => handleEditClick(comment)}
                             className="bg-blue-600 text-white rounded-full p-1 hover:bg-blue-700"
