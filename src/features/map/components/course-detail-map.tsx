@@ -7,6 +7,7 @@ import { Flag, MessageSquare } from "lucide-react";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { convertToLegacyCourse } from "@/types/unified";
 import { getCourseByIdV2 } from "@/shared/lib/courses-data-v2";
+import { MAP_STYLES } from "@/core/config/constants";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import {
@@ -736,7 +737,7 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
         onMove={(evt) => setViewState(evt.viewState)}
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="mapbox://styles/mapbox/streets-v12"
+        mapStyle={MAP_STYLES.GSRC81_BRAND}
         onLoad={onMapLoad}
         doubleClickZoom={false}
         attributionControl={false}
@@ -924,12 +925,12 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
                       duration: 0.7,
                       ease: [0.4, 0, 0.2, 1], // Custom cubic-bezier for smooth fade
                     }}
-                    className="relative max-w-xs"
+                    className="relative max-w-xs flex justify-center"
                   >
                     {/* 말풍선 */}
                     <div className="bg-black text-white rounded-lg shadow-lg p-3 relative max-w-50">
-                      {/* 말풍선 꼬리 */}
-                      <div className="absolute bottom-0 left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-black transform translate-y-full"></div>
+                      {/* 말풍선 꼬리 - 중앙 정렬 */}
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-black transform translate-y-full"></div>
 
                       {/* 댓글 내용만 표시 */}
                       <p className="text-white leading-relaxed font-inter text-[0.625rem]">

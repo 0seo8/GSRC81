@@ -1,5 +1,6 @@
 import { MapPin } from "lucide-react";
 import { MapboxMap } from "./mapbox-map";
+import { MAP_STYLES } from "@/core/config/constants";
 
 interface MapEmptyStateProps {
   mapboxToken: string;
@@ -16,7 +17,7 @@ export function MapEmptyState({ mapboxToken, onMapLoad }: MapEmptyStateProps) {
           zoom={10.5} // 줌 범위 10-12.85 내에서 시작
           onMapLoad={onMapLoad}
           className="w-full h-full"
-          style="mapbox://styles/mapbox/light-v11"
+          style={MAP_STYLES.GSRC81_BRAND}
         />
 
         <div className="absolute inset-0 flex items-center justify-center">

@@ -29,7 +29,7 @@ export const GEOLOCATION_OPTIONS: PositionOptions = {
   maximumAge: 300000, // 5분
 };
 
-// Mapbox 스타일
+// Mapbox 스타일 (map 페이지용)
 export const MAPBOX_STYLE = "mapbox://styles/mapbox/light-v11";
 
 // 환경변수

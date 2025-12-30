@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, memo } from "react";
 import mapboxgl from "mapbox-gl";
+import { MAP_STYLES } from "@/core/config/constants";
 
 interface MapboxMapProps {
   accessToken: string;
@@ -16,7 +17,7 @@ const MapboxMapComponent = function MapboxMap({
   accessToken,
   center = [126.9784, 37.5665], // 서울 중심
   zoom = 10, // 서울 전체가 보이도록 줌 레벨 조정
-  style = "mapbox://styles/mapbox/light-v11", // 라이트 지도를 기본으로
+  style = MAP_STYLES.GSRC81_BRAND, // GSRC81 브랜드 지도를 기본으로
   className = "w-full h-full",
   onMapLoad,
 }: MapboxMapProps) {

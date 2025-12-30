@@ -164,7 +164,7 @@ const CourseMarkerComponent = function CourseMarker({
             duration: 800,
             essential: true,
             padding: {
-              bottom: window.innerHeight * 0.3,
+              bottom: window.innerHeight * 0.6,
             },
           });
 

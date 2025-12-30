@@ -13,6 +13,7 @@ import { useMapState } from "@/features/map/hooks/use-map-state";
 import { useMapBounds } from "@/features/map/hooks/use-map-bounds";
 import { type CourseCategory, getCourses } from "@/shared/lib/courses-data";
 import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
+import { MAP_STYLES } from "@/core/config/constants";
 
 interface MapClientProps {
   courses: CourseWithCategory[];
@@ -158,7 +159,7 @@ export function MapClient({ courses, categories }: MapClientProps) {
           zoom={11.5} // 줌 범위 10-12.85 내에서 시작
           onMapLoad={handleMapLoad}
           className="w-full h-full"
-          style="mapbox://styles/mapbox/light-v11"
+          style={MAP_STYLES.GSRC81_BRAND}
         />
 
         {/* 코스 마커 */}

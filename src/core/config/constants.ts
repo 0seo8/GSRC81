@@ -15,6 +15,11 @@ export const MAP_STYLES = {
   SATELLITE: "mapbox://styles/mapbox/satellite-v9",
   STREETS: "mapbox://styles/mapbox/streets-v12",
   LIGHT: "mapbox://styles/mapbox/light-v11",
+  // GSRC81 커스텀 브랜드 지도 (Mapbox Studio에서 생성)
+  // location.png 스타일: 오렌지 배경 + 검은 경계선 + 영어 지역명
+  GSRC81_BRAND:
+    process.env.NEXT_PUBLIC_MAPBOX_BRAND_STYLE ||
+    "mapbox://styles/mapbox/light-v11", // fallback
 } as const;
 
 // Course Difficulty Colors
