@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { KakaoLoginButton } from "@/features/auth/components/kakao-login-button";
+import { BrandLogo } from "@/shared/components/common/brand-logo";
 import {
   Card,
   CardContent,
@@ -42,23 +43,31 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-lola-950">
-            관리자 로그인
-          </CardTitle>
-          <CardDescription className="text-lola-600">
-            관리자 권한이 있는 카카오 계정으로 로그인하세요
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <KakaoLoginButton />
-          <p className="text-sm text-lola-500 text-center">
-            관리자 권한이 없는 경우 접근이 제한됩니다
-          </p>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen grid place-items-center bg-base px-4">
+      <div className="w-full max-w-md space-y-8">
+        {/* 브랜드 로고 - 일관성 있는 크기와 위치 */}
+        <div className="flex justify-center">
+          <BrandLogo />
+        </div>
+
+        {/* 관리자 로그인 카드 */}
+        <Card className="w-full">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-lola-950">
+              관리자 로그인
+            </CardTitle>
+            <CardDescription className="text-lola-600">
+              관리자 권한이 있는 카카오 계정으로 로그인하세요
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <KakaoLoginButton />
+            <p className="text-sm text-lola-500 text-center">
+              관리자 권한이 없는 경우 접근이 제한됩니다
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
