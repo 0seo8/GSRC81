@@ -597,78 +597,30 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     }
   }, [longPressProgress, completeLongPress]);
 
-  // 지도 롱프레스 이벤트 등록 (마우스/터치)
+  // 지도 클릭 방지 (롱프레스는 오버레이에서 처리)
   useEffect(() => {
-    if (!mapRef.current || !isMapLoaded || !trailData) {
+    if (!mapRef.current || !isMapLoaded) {
       return;
     }
 
     const map = mapRef.current.getMap();
-    const mapCanvas = map.getCanvas();
 
-    // 마우스 다운 핸들러
-    const handleMouseDown = (e: MouseEvent | TouchEvent) => {
-      if (isAnimating) return;
-
-      // 기본 동작 방지
-      e.preventDefault();
-      e.stopPropagation();
-
-      // 캔버스 상대 좌표 계산
-      const rect = mapCanvas.getBoundingClientRect();
-      const x =
-        (e instanceof MouseEvent ? e.clientX : e.touches[0].clientX) -
-        rect.left;
-      const y =
-        (e instanceof MouseEvent ? e.clientY : e.touches[0].clientY) - rect.top;
-
-      // 화면 좌표를 지리 좌표로 변환
-      const { lng, lat } = map.unproject([x, y]);
-
-      startLongPress(lng, lat);
-    };
-
-    // 마우스/터치 업 핸들러
-    const handleEnd = () => {
-      cancelLongPress();
-    };
-
-    // 마우스/터치 이동 핸들러 (롱프레스 취소)
-    const handleMove = () => {
-      cancelLongPress();
-    };
-
-    // 지도 클릭 이벤트 완전히 비활성화
+    // 지도 클릭 이벤트 비활성화 (비행모드가 아닐 때)
     const preventMapClick = (e: mapboxgl.MapMouseEvent) => {
-      e.preventDefault();
-      if (e.originalEvent) {
-        e.originalEvent.stopPropagation();
+      if (!isAnimating) {
+        e.preventDefault();
+        if (e.originalEvent) {
+          e.originalEvent.stopPropagation();
+        }
       }
     };
 
-    // 이벤트 등록
     map.on("click", preventMapClick);
-    mapCanvas.addEventListener("mousedown", handleMouseDown, { capture: true });
-    mapCanvas.addEventListener("mouseup", handleEnd, { capture: true });
-    mapCanvas.addEventListener("mousemove", handleMove);
-    mapCanvas.addEventListener("touchstart", handleMouseDown, {
-      passive: false,
-      capture: true,
-    });
-    mapCanvas.addEventListener("touchend", handleEnd, { capture: true });
-    mapCanvas.addEventListener("touchmove", handleMove);
 
     return () => {
       map.off("click", preventMapClick);
-      mapCanvas.removeEventListener("mousedown", handleMouseDown);
-      mapCanvas.removeEventListener("mouseup", handleEnd);
-      mapCanvas.removeEventListener("mousemove", handleMove);
-      mapCanvas.removeEventListener("touchstart", handleMouseDown);
-      mapCanvas.removeEventListener("touchend", handleEnd);
-      mapCanvas.removeEventListener("touchmove", handleMove);
-      cancelLongPress();
     };
-  }, [isMapLoaded, trailData, isAnimating, startLongPress, cancelLongPress]);
+  }, [isMapLoaded, isAnimating]);
 
   // 트레일 라인 스타일
   const trailLineLayer = {
@@ -743,6 +695,41 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
 
   return (
     <div className={`h-full relative ${className}`}>
+      {/* 터치 이벤트 캡처용 투명 오버레이 (비행모드가 아닐 때만) */}
+      {!isAnimating && (
+        <div
+          className="absolute inset-0 z-10"
+          style={{
+            pointerEvents: "auto",
+            touchAction: "none",
+          }}
+          onMouseDown={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            if (mapRef.current) {
+              const { lng, lat } = mapRef.current.getMap().unproject([x, y]);
+              startLongPress(lng, lat);
+            }
+          }}
+          onMouseUp={cancelLongPress}
+          onMouseMove={cancelLongPress}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.touches[0].clientX - rect.left;
+            const y = e.touches[0].clientY - rect.top;
+            if (mapRef.current) {
+              const { lng, lat } = mapRef.current.getMap().unproject([x, y]);
+              startLongPress(lng, lat);
+            }
+          }}
+          onTouchEnd={cancelLongPress}
+          onTouchMove={cancelLongPress}
+          onContextMenu={(e) => e.preventDefault()}
+        />
+      )}
+
       <Map
         ref={mapRef}
         {...viewState}
@@ -755,6 +742,8 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
         attributionControl={false}
         maxZoom={12.85}
         minZoom={10}
+        touchZoomRotate={isAnimating}
+        dragPan={isAnimating}
       >
         <MapControls
           isAnimating={isAnimating}
