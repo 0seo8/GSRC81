@@ -13,6 +13,7 @@ GSRC81 Maps는 러닝 크루의 코스를 공유하고 커뮤니티를 형성하
 ---
 
 ## 🎨 Color Palette
+tnwjd
 
 ### Primary Background
 
