@@ -10,8 +10,6 @@ import { toast } from "sonner";
 import { GPXUploadForm } from "@/features/admin/components/GPX-upload-form";
 import { DuplicateCourseModal } from "@/features/admin/components/duplicate-course-modal";
 import { supabase } from "@/shared/lib/supabase";
-import { GPXDataSchema } from "@/core/validation/gpx";
-import { UnifiedGPXData } from "@/types/unified";
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "@/core/config/messages";
 import { logCourseCreate } from "@/shared/lib/audit-log";
 import { useSession } from "next-auth/react";
@@ -20,6 +18,11 @@ import {
   type CourseForDuplicateCheck,
   type DuplicateCheckResult,
 } from "@/shared/lib/utils/gpx-duplicate-checker";
+import {
+  adminCreateCourseAction,
+  type CreateCourseInput,
+} from "@/app/actions/admin-courses";
+import type { GPXData } from "@/core/validation/gpx";
 
 const notoSans = Noto_Sans({
   subsets: ["latin"],
@@ -46,15 +49,13 @@ export default function NewCoursePage() {
     try {
       setSubmitting(true);
 
-      // Zod로 GPX 데이터 검증
-      const validatedGPX = GPXDataSchema.parse(gpxData);
-
-      const { startPoint, coordinates, distance, duration, elevationGain } =
-        validatedGPX;
+      // GPX 데이터 타입 캐스팅 (이미 useGPXParser에서 검증됨)
+      const validatedGPX = gpxData as GPXData;
+      const { startPoint, coordinates, distance, duration } = validatedGPX;
 
       // 중복 검사 (skipDuplicateCheck가 false일 때만)
       if (!skipDuplicateCheck) {
-        // 기존 코스 조회
+        // 기존 코스 조회 (SELECT는 RLS에서 허용됨)
         const { data: existingCourses, error: queryError } = await supabase
           .from("courses")
           .select(
@@ -103,99 +104,48 @@ export default function NewCoursePage() {
         }
       }
 
-      // 통계 계산
-      const bounds = {
-        minLat: Math.min(...coordinates.map((c) => c.lat)),
-        maxLat: Math.max(...coordinates.map((c) => c.lat)),
-        minLng: Math.min(...coordinates.map((c) => c.lng)),
-        maxLng: Math.max(...coordinates.map((c) => c.lng)),
-      };
+      // 사진 파싱
+      const photosJson = formData.get("photos") as string;
+      const photos = photosJson ? (JSON.parse(photosJson) as string[]) : [];
 
-      // vFinal 표준화된 GPX 데이터 구조
-      const normalizedGpxData: UnifiedGPXData = {
-        version: "1.1" as const,
-        points: coordinates,
-        bounds,
-        stats: {
-          totalDistance: distance,
-          elevationGain: elevationGain || 0,
-          estimatedDuration: duration,
-        },
-        metadata: {
-          startPoint: {
-            lat: startPoint.lat,
-            lng: startPoint.lng,
-          },
-          endPoint: {
-            lat: coordinates[coordinates.length - 1].lat,
-            lng: coordinates[coordinates.length - 1].lng,
-          },
-        },
-      };
-
-      const courseData = {
+      // Server Action으로 코스 생성 (RLS 우회)
+      const input: CreateCourseInput = {
         title: formData.get("title") as string,
         description: formData.get("description") as string,
-        start_latitude: startPoint.lat,
-        start_longitude: startPoint.lng,
         distance_km:
           parseFloat(formData.get("distance_km") as string) || distance,
         avg_time_min:
           parseInt(formData.get("avg_time_min") as string) || duration,
-        difficulty: formData.get("difficulty") as string,
+        difficulty: formData.get("difficulty") as "easy" | "medium" | "hard",
         category_id: (formData.get("category_id") as string) || null,
-        elevation_gain: elevationGain || 0,
-        sort_order: 0,
-        gpx_data: normalizedGpxData,
-        is_active: true,
+        gpxData: gpxData,
+        photos: photos.length > 0 ? photos : undefined,
       };
 
-      const { data, error: courseError } = await supabase
-        .from("courses")
-        .insert([courseData])
-        .select()
-        .single();
+      const result = await adminCreateCourseAction(input);
 
-      if (courseError) {
-        console.error("❌ Supabase insert error:", courseError);
-        throw courseError;
-      }
-
-      // 사진이 있으면 course_photos에 저장
-      const photosJson = formData.get("photos") as string;
-      if (photosJson) {
-        const photos = JSON.parse(photosJson) as string[];
-        if (photos.length > 0) {
-          const photoInserts = photos.map((url) => ({
-            course_id: data.id,
-            file_url: url,
-            caption: "",
-          }));
-
-          const { error: photoError } = await supabase
-            .from("course_photos")
-            .insert(photoInserts);
-
-          if (photoError) {
-            console.error("Failed to save photos:", photoError);
-            // 사진 저장 실패는 에러로 처리하지 않음 (코스는 생성됨)
-          }
-        }
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "코스 등록에 실패했습니다");
       }
 
       // 감사 로그 기록
       if (session?.user?.id && session?.user?.name) {
-        await logCourseCreate(session.user.id, session.user.name, data.id, {
-          title: courseData.title,
-          distance_km: courseData.distance_km,
-          difficulty: courseData.difficulty,
-        });
+        await logCourseCreate(
+          session.user.id,
+          session.user.name,
+          result.data.id,
+          {
+            title: input.title,
+            distance_km: input.distance_km,
+            difficulty: input.difficulty,
+          },
+        );
       }
 
       toast.success(SUCCESS_MESSAGES.COURSE_CREATED);
 
       // 생성된 코스의 관리 페이지로 이동
-      router.push(`/admin/courses/${data.id}/manage`);
+      router.push(`/admin/courses/${result.data.id}/manage`);
     } catch (error) {
       console.error("Failed to save course from GPX:", error);
 

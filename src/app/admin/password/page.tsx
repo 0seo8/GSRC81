@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { ProtectedAdminRoute } from "@/shared/components/common/protected-admin-route";
-import { supabase } from "@/shared/lib/supabase";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import {
@@ -10,62 +9,74 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/shared/components/ui/card";
 import {
-  Lock,
-  Eye,
-  EyeOff,
-  Save,
   Key,
+  Plus,
+  Edit2,
+  Trash2,
+  Copy,
+  Check,
+  X,
+  RefreshCw,
   AlertCircle,
   CheckCircle,
-  Copy,
-  RefreshCw,
 } from "lucide-react";
+import {
+  adminGetAccessCodesAction,
+  adminUpdateAccessCodeAction,
+  adminCreateAccessCodeAction,
+  adminDeleteAccessCodeAction,
+  adminToggleAccessCodeAction,
+} from "@/app/actions/admin-access";
 
-interface AccessLink {
+interface AccessCode {
   id: string;
-  access_code: string;
-  password_hash: string;
+  code: string;
+  description: string | null;
+  is_active: boolean;
+  expires_at: string | null;
   created_at: string;
   updated_at: string;
-  kakao_user_id?: string;
-  kakao_nickname?: string;
-  kakao_profile_url?: string;
 }
 
-export default function PasswordManagePage() {
+export default function AccessCodeManagePage() {
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [accessLinks, setAccessLinks] = useState<AccessLink[]>([]);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [accessCodes, setAccessCodes] = useState<AccessCode[]>([]);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | null>(
     null,
   );
 
+  // 새 코드 생성 상태
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newCode, setNewCode] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  // 편집 상태
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingCode, setEditingCode] = useState("");
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
-    loadAccessLinks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadAccessCodes();
   }, []);
 
-  const loadAccessLinks = async () => {
+  const loadAccessCodes = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("access_links")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const result = await adminGetAccessCodesAction();
 
-      if (error) throw error;
-      setAccessLinks(data || []);
+      if (!result.success) {
+        throw new Error(result.error || "접근 코드 정보를 불러오는데 실패했습니다");
+      }
+
+      setAccessCodes(result.data || []);
     } catch (error) {
-      console.error("Failed to load access links:", error);
-      showMessage("접근 링크 정보를 불러오는 중 오류가 발생했습니다.", "error");
+      console.error("Failed to load access codes:", error);
+      showMessage("접근 코드 정보를 불러오는 중 오류가 발생했습니다.", "error");
     } finally {
       setLoading(false);
     }
@@ -80,100 +91,130 @@ export default function PasswordManagePage() {
     }, 5000);
   };
 
-  const generateRandomPassword = () => {
-    const chars =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const generateRandomCode = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let result = "";
     for (let i = 0; i < 8; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    setNewPassword(result);
-    setConfirmPassword(result);
+    return result;
   };
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
+  const handleCreateCode = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 폼 검증
-    if (!currentPassword) {
-      showMessage("현재 비밀번호를 입력해주세요.", "error");
+    if (!newCode.trim()) {
+      showMessage("접근 코드를 입력해주세요.", "error");
       return;
     }
 
-    if (newPassword.length < 4) {
-      showMessage("새 비밀번호는 최소 4자 이상이어야 합니다.", "error");
-      return;
-    }
+    try {
+      setCreating(true);
+      const result = await adminCreateAccessCodeAction(
+        newCode.trim(),
+        newDescription.trim() || undefined,
+      );
 
-    if (newPassword !== confirmPassword) {
-      showMessage("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.", "error");
+      if (!result.success) {
+        showMessage(result.error || "접근 코드 생성에 실패했습니다.", "error");
+        return;
+      }
+
+      showMessage("새 접근 코드가 생성되었습니다.", "success");
+      setNewCode("");
+      setNewDescription("");
+      setShowCreateForm(false);
+      await loadAccessCodes();
+    } catch (error) {
+      console.error("Failed to create access code:", error);
+      showMessage("접근 코드 생성 중 오류가 발생했습니다.", "error");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleUpdateCode = async (codeId: string) => {
+    if (!editingCode.trim()) {
+      showMessage("접근 코드를 입력해주세요.", "error");
       return;
     }
 
     try {
       setSaving(true);
+      const result = await adminUpdateAccessCodeAction(codeId, editingCode.trim());
 
-      // 실시간으로 데이터베이스에서 현재 비밀번호 확인
-      const { data: currentAccessLinks, error: fetchError } = await supabase
-        .from("access_links")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
-
-      if (fetchError) throw fetchError;
-
-      if (!currentAccessLinks || currentAccessLinks.length === 0) {
-        showMessage("접근 링크 정보가 없습니다.", "error");
+      if (!result.success) {
+        showMessage(result.error || "접근 코드 변경에 실패했습니다.", "error");
         return;
       }
 
-      if (currentPassword !== currentAccessLinks[0].password_hash) {
-        showMessage("현재 비밀번호가 올바르지 않습니다.", "error");
-        return;
-      }
-
-      // 새 비밀번호를 평문으로 저장 (현재 구조에 맞춤)
-      const { error: updateError } = await supabase
-        .from("access_links")
-        .update({
-          password_hash: newPassword,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("is_active", true); // 활성화된 레코드만 업데이트
-
-      if (updateError) throw updateError;
-
-      showMessage(
-        "비밀번호가 성공적으로 변경되었습니다. 모든 사용자가 새 비밀번호로 다시 로그인해야 합니다.",
-        "success",
-      );
-
-      // 폼 초기화
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-
-      // 데이터 새로고침
-      await loadAccessLinks();
-    } catch (error: unknown) {
-      console.error("Password change error:", error);
-      showMessage(
-        (error as Error).message || "비밀번호 변경 중 오류가 발생했습니다.",
-        "error",
-      );
+      showMessage("접근 코드가 변경되었습니다.", "success");
+      setEditingId(null);
+      setEditingCode("");
+      await loadAccessCodes();
+    } catch (error) {
+      console.error("Failed to update access code:", error);
+      showMessage("접근 코드 변경 중 오류가 발생했습니다.", "error");
     } finally {
       setSaving(false);
     }
   };
 
-  const copyToClipboard = (accessCode: string) => {
-    // 완전한 앱 링크 생성
-    const baseUrl = window.location.origin;
-    const fullLink = `${baseUrl}?access=${accessCode}`;
+  const handleDeleteCode = async (codeId: string, code: string) => {
+    if (!confirm(`"${code}" 코드를 삭제하시겠습니까?\n\n이 코드로 가입한 사용자는 영향받지 않습니다.`)) {
+      return;
+    }
 
-    navigator.clipboard.writeText(fullLink).then(() => {
-      showMessage("앱 링크가 클립보드에 복사되었습니다.", "success");
+    try {
+      const result = await adminDeleteAccessCodeAction(codeId);
+
+      if (!result.success) {
+        showMessage(result.error || "접근 코드 삭제에 실패했습니다.", "error");
+        return;
+      }
+
+      showMessage("접근 코드가 삭제되었습니다.", "success");
+      await loadAccessCodes();
+    } catch (error) {
+      console.error("Failed to delete access code:", error);
+      showMessage("접근 코드 삭제 중 오류가 발생했습니다.", "error");
+    }
+  };
+
+  const handleToggleActive = async (codeId: string, currentStatus: boolean) => {
+    try {
+      const result = await adminToggleAccessCodeAction(codeId, !currentStatus);
+
+      if (!result.success) {
+        showMessage(result.error || "상태 변경에 실패했습니다.", "error");
+        return;
+      }
+
+      showMessage(
+        currentStatus ? "접근 코드가 비활성화되었습니다." : "접근 코드가 활성화되었습니다.",
+        "success",
+      );
+      await loadAccessCodes();
+    } catch (error) {
+      console.error("Failed to toggle access code:", error);
+      showMessage("상태 변경 중 오류가 발생했습니다.", "error");
+    }
+  };
+
+  const copyToClipboard = (code: string) => {
+    navigator.clipboard.writeText(code).then(() => {
+      showMessage("접근 코드가 클립보드에 복사되었습니다.", "success");
     });
+  };
+
+  const startEditing = (code: AccessCode) => {
+    setEditingId(code.id);
+    setEditingCode(code.code);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditingCode("");
   };
 
   if (loading) {
@@ -182,7 +223,7 @@ export default function PasswordManagePage() {
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">비밀번호 정보를 불러오는 중...</p>
+            <p className="text-gray-600">접근 코드 정보를 불러오는 중...</p>
           </div>
         </div>
       </ProtectedAdminRoute>
@@ -192,210 +233,245 @@ export default function PasswordManagePage() {
   return (
     <ProtectedAdminRoute>
       <div className="min-h-screen bg-gray-50">
-        {/* 메인 콘텐츠 */}
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* 비밀번호 변경 */}
+          {/* 헤더 */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">접근 코드 관리</h1>
+            <p className="text-gray-600">
+              크루원들이 앱에 가입할 때 사용하는 접근 코드를 관리합니다.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {/* 새 코드 생성 */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Lock className="w-5 h-5 mr-2 text-gray-600" />
-                  비밀번호 변경
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handlePasswordChange} className="space-y-4">
-                  {/* 현재 비밀번호 */}
+                <div className="flex items-center justify-between">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      현재 비밀번호 *
-                    </label>
-                    <div className="relative">
-                      <Input
-                        type={showCurrentPassword ? "text" : "password"}
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        placeholder="현재 비밀번호를 입력하세요"
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-auto p-1"
-                        onClick={() =>
-                          setShowCurrentPassword(!showCurrentPassword)
-                        }
-                      >
-                        {showCurrentPassword ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </div>
+                    <CardTitle className="flex items-center">
+                      <Plus className="w-5 h-5 mr-2 text-gray-600" />
+                      새 접근 코드 생성
+                    </CardTitle>
+                    <CardDescription>
+                      새로운 크루원을 위한 접근 코드를 생성합니다.
+                    </CardDescription>
                   </div>
-
-                  {/* 새 비밀번호 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      새 비밀번호 *
-                    </label>
-                    <div className="relative">
-                      <Input
-                        type={showNewPassword ? "text" : "password"}
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="새 비밀번호를 입력하세요"
-                        required
-                        minLength={4}
-                      />
-                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
+                  {!showCreateForm && (
+                    <Button onClick={() => setShowCreateForm(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      새 코드 생성
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              {showCreateForm && (
+                <CardContent>
+                  <form onSubmit={handleCreateCode} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        접근 코드 *
+                      </label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={newCode}
+                          onChange={(e) => setNewCode(e.target.value.toUpperCase())}
+                          placeholder="예: CREW2024"
+                          maxLength={20}
+                          className="font-mono"
+                        />
                         <Button
                           type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-auto p-1"
-                          onClick={generateRandomPassword}
-                          title="랜덤 비밀번호 생성"
+                          variant="outline"
+                          onClick={() => setNewCode(generateRandomCode())}
+                          title="랜덤 코드 생성"
                         >
                           <RefreshCw className="w-4 h-4" />
                         </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-auto p-1"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                        >
-                          {showNewPassword ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </Button>
                       </div>
                     </div>
-                  </div>
-
-                  {/* 비밀번호 확인 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      새 비밀번호 확인 *
-                    </label>
-                    <Input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="새 비밀번호를 다시 입력하세요"
-                      required
-                    />
-                  </div>
-
-                  {/* 안내 메시지 */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
-                    <div className="flex">
-                      <AlertCircle className="w-5 h-5 text-gray-600 mr-2 flex-shrink-0" />
-                      <div className="text-sm text-gray-700">
-                        <p className="font-medium mb-1">
-                          비밀번호 변경 시 주의사항:
-                        </p>
-                        <ul className="list-disc list-inside space-y-1">
-                          <li>비밀번호는 최소 4자 이상이어야 합니다</li>
-                          <li>
-                            변경 후 모든 크루원이 새 비밀번호로 다시 로그인해야
-                            합니다
-                          </li>
-                          <li>
-                            변경된 비밀번호는 크루원들에게 별도로 전달해주세요
-                          </li>
-                        </ul>
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        설명 (선택)
+                      </label>
+                      <Input
+                        value={newDescription}
+                        onChange={(e) => setNewDescription(e.target.value)}
+                        placeholder="예: 2024년 신규 크루원용"
+                      />
                     </div>
-                  </div>
-
-                  {/* 저장 버튼 */}
-                  <Button
-                    type="submit"
-                    disabled={saving}
-                    className="w-full bg-gray-700 hover:bg-gray-800"
-                  >
-                    {saving ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        변경 중...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        비밀번호 변경
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
+                    <div className="flex gap-2">
+                      <Button type="submit" disabled={creating}>
+                        {creating ? "생성 중..." : "생성"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowCreateForm(false);
+                          setNewCode("");
+                          setNewDescription("");
+                        }}
+                      >
+                        취소
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              )}
             </Card>
 
-            {/* 현재 접근 정보 */}
+            {/* 기존 코드 목록 */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Key className="w-5 h-5 mr-2 text-gray-600" />
-                  현재 접근 정보
+                  등록된 접근 코드
                 </CardTitle>
+                <CardDescription>
+                  현재 등록된 모든 접근 코드 목록입니다.
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      활성화된 접근 링크
-                    </label>
-                    {accessLinks.length > 0 ? (
-                      <div className="space-y-2">
-                        {accessLinks.map((link) => (
-                          <div
-                            key={link.id}
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                          >
-                            <div>
-                              <p className="font-mono text-sm">
-                                {link.access_code}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                마지막 업데이트:{" "}
-                                {new Date(link.updated_at).toLocaleString()}
-                              </p>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => copyToClipboard(link.access_code)}
-                            >
-                              <Copy className="w-4 h-4" />
-                            </Button>
+                {accessCodes.length > 0 ? (
+                  <div className="space-y-3">
+                    {accessCodes.map((code) => (
+                      <div
+                        key={code.id}
+                        className={`p-4 rounded-lg border ${
+                          code.is_active
+                            ? "bg-white border-gray-200"
+                            : "bg-gray-50 border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            {editingId === code.id ? (
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={editingCode}
+                                  onChange={(e) =>
+                                    setEditingCode(e.target.value.toUpperCase())
+                                  }
+                                  className="font-mono max-w-xs"
+                                  maxLength={20}
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleUpdateCode(code.id)}
+                                  disabled={saving}
+                                >
+                                  <Check className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={cancelEditing}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono text-lg font-semibold">
+                                    {code.code}
+                                  </span>
+                                  <span
+                                    className={`px-2 py-0.5 text-xs rounded-full ${
+                                      code.is_active
+                                        ? "bg-green-100 text-green-700"
+                                        : "bg-gray-200 text-gray-600"
+                                    }`}
+                                  >
+                                    {code.is_active ? "활성" : "비활성"}
+                                  </span>
+                                </div>
+                                {code.description && (
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    {code.description}
+                                  </p>
+                                )}
+                                <p className="text-xs text-gray-400 mt-1">
+                                  생성일: {new Date(code.created_at).toLocaleDateString()}
+                                  {code.expires_at && (
+                                    <> · 만료일: {new Date(code.expires_at).toLocaleDateString()}</>
+                                  )}
+                                </p>
+                              </div>
+                            )}
                           </div>
-                        ))}
+                          {editingId !== code.id && (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => copyToClipboard(code.code)}
+                                title="코드 복사"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => startEditing(code)}
+                                title="코드 수정"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() =>
+                                  handleToggleActive(code.id, code.is_active)
+                                }
+                                title={code.is_active ? "비활성화" : "활성화"}
+                              >
+                                {code.is_active ? (
+                                  <X className="w-4 h-4 text-orange-500" />
+                                ) : (
+                                  <Check className="w-4 h-4 text-green-500" />
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteCode(code.id, code.code)}
+                                title="삭제"
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        <Key className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                        <p>등록된 접근 링크가 없습니다</p>
-                      </div>
-                    )}
+                    ))}
                   </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Key className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">등록된 접근 코드가 없습니다.</p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      새 접근 코드를 생성해주세요.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-                  <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
-                    <div className="flex">
-                      <AlertCircle className="w-5 h-5 text-gray-600 mr-2 flex-shrink-0" />
-                      <div className="text-sm text-gray-700">
-                        <p className="font-medium mb-1">크루원 접근 방법:</p>
-                        <ol className="list-decimal list-inside space-y-1">
-                          <li>위의 접근 코드를 크루원들에게 공유</li>
-                          <li>크루원이 앱 실행 시 접근 코드 입력</li>
-                          <li>설정된 비밀번호로 로그인</li>
-                        </ol>
-                      </div>
-                    </div>
+            {/* 안내 */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex">
+                  <AlertCircle className="w-5 h-5 text-gray-600 mr-3 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-gray-700">
+                    <p className="font-medium mb-2">접근 코드 사용 안내</p>
+                    <ul className="list-disc list-inside space-y-1 text-gray-600">
+                      <li>크루원은 최초 1회 접근 코드를 입력하여 가입합니다.</li>
+                      <li>코드를 변경해도 이미 가입한 사용자는 영향받지 않습니다.</li>
+                      <li>코드를 비활성화하면 신규 가입이 차단됩니다.</li>
+                      <li>여러 코드를 만들어 그룹별로 관리할 수 있습니다.</li>
+                    </ul>
                   </div>
                 </div>
               </CardContent>
@@ -407,8 +483,8 @@ export default function PasswordManagePage() {
             <div
               className={`fixed bottom-4 right-4 max-w-md p-4 rounded-lg shadow-lg ${
                 messageType === "success"
-                  ? "bg-gray-100 text-gray-800 border border-gray-300"
-                  : "bg-gray-200 text-gray-800 border border-gray-400"
+                  ? "bg-green-50 text-green-800 border border-green-200"
+                  : "bg-red-50 text-red-800 border border-red-200"
               }`}
             >
               <div className="flex items-center">

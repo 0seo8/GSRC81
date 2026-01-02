@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAdmin } from "@/features/admin/context/AdminContext";
-import { supabase, supabaseAdmin } from "@/shared/lib/supabase";
+import { supabase } from "@/shared/lib/supabase";
 import { Button } from "@/shared/components/ui/button";
 import {
   Card,
@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import { logCourseDelete } from "@/shared/lib/audit-log";
 import { useSession } from "next-auth/react";
+import { adminDeleteCourseAction } from "@/app/actions/admin-courses";
 
 interface Course {
   id: string;
@@ -108,12 +109,12 @@ export default function AdminDashboard() {
     try {
       setDeletingCourse(course.id);
 
-      const { error } = await supabase
-        .from("courses")
-        .delete()
-        .eq("id", course.id);
+      // Server Action을 사용하여 코스 삭제 (RLS 우회)
+      const result = await adminDeleteCourseAction(course.id);
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error || "코스 삭제에 실패했습니다");
+      }
 
       // 감사 로그 기록
       if (session?.user?.id && session?.user?.name) {
@@ -130,7 +131,9 @@ export default function AdminDashboard() {
       await loadDashboardData();
     } catch (error) {
       console.error("Failed to delete course:", error);
-      toast.error("코스 삭제에 실패했습니다");
+      toast.error(
+        error instanceof Error ? error.message : "코스 삭제에 실패했습니다",
+      );
     } finally {
       setDeletingCourse(null);
     }

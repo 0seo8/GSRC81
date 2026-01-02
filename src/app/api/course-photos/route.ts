@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/server";
 
-// ANON 키 사용 (RLS가 비활성화되면 작동)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+/**
+ * Course Photos API
+ * Admin 클라이언트를 사용하여 RLS 정책 우회
+ */
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createAdminClient();
     const body = await request.json();
     const { course_id, file_url, caption } = body;
 
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from("course_photos")
       .insert({
         course_id,
@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = createAdminClient();
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get("course_id");
 
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from("course_photos")
       .select("*")
       .eq("course_id", courseId)
@@ -78,6 +79,7 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const supabase = createAdminClient();
     const { searchParams } = new URL(request.url);
     const photoId = searchParams.get("photo_id");
 
@@ -88,7 +90,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const { error } = await supabaseClient
+    const { error } = await supabase
       .from("course_photos")
       .delete()
       .eq("id", photoId);

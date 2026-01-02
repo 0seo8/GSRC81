@@ -25,6 +25,7 @@ import {
   CONFIRM_MESSAGES,
   LOADING_MESSAGES,
 } from "@/core/config/messages";
+import { adminDeleteCourseAction } from "@/app/actions/admin-courses";
 
 export default function CoursesManagePage() {
   const [courses, setCourses] = useState<CourseV2[]>([]);
@@ -64,12 +65,12 @@ export default function CoursesManagePage() {
     if (!confirmed) return;
 
     try {
-      const { error } = await supabase
-        .from("courses")
-        .delete()
-        .eq("id", course.id);
+      // Server Action을 사용하여 코스 삭제 (RLS 우회)
+      const result = await adminDeleteCourseAction(course.id);
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error || "코스 삭제에 실패했습니다");
+      }
 
       toast.success("코스가 삭제되었습니다");
       loadCourses();

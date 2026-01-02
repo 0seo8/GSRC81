@@ -1,8 +1,11 @@
 "use client";
 
 import React, { createContext, useContext, useState } from "react";
-import { supabase } from "@/shared/lib/supabase";
-import bcrypt from "bcryptjs";
+import {
+  loginAdmin,
+  logoutAdmin,
+  getAdminSession,
+} from "@/app/actions/admin-auth";
 
 interface AdminContextType {
   isAdminAuthenticated: boolean;
@@ -19,7 +22,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const adminLogin = async (
+  const handleAdminLogin = async (
     username: string,
     password: string,
   ): Promise<boolean> => {
@@ -27,49 +30,14 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       setIsLoading(true);
 
-      // admin 테이블에서 사용자 확인
-      const { data, error } = await supabase
-        .from("admin")
-        .select("*")
-        .eq("username", username)
-        .limit(1);
+      // Server Action을 사용하여 로그인 (RLS 우회)
+      const result = await loginAdmin(username, password);
 
-      if (error) {
-        throw new Error(`관리자 조회 실패: ${error.message}`);
-      }
-
-      if (!data || data.length === 0) {
-        setError("존재하지 않는 관리자입니다.");
+      if (!result.success) {
+        setError(result.error || "로그인에 실패했습니다.");
         return false;
       }
 
-      const admin = data[0];
-
-      // bcrypt 해시 비교
-      const isValidPassword = await bcrypt.compare(
-        password,
-        admin.password_hash,
-      );
-
-      if (!isValidPassword) {
-        setError("비밀번호가 올바르지 않습니다.");
-        return false;
-      }
-
-      // last_login_at 업데이트
-      await supabase
-        .from("admin")
-        .update({ last_login_at: new Date().toISOString() })
-        .eq("id", admin.id);
-
-      // 관리자 인증 성공
-      const adminAuth = {
-        authenticated: true,
-        username: admin.username,
-        timestamp: Date.now(),
-      };
-
-      localStorage.setItem("gsrc81-admin-auth", JSON.stringify(adminAuth));
       setIsAdminAuthenticated(true);
       return true;
     } catch (err) {
@@ -83,30 +51,26 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const adminLogout = () => {
-    localStorage.removeItem("gsrc81-admin-auth");
+  const handleAdminLogout = async () => {
+    await logoutAdmin();
     setIsAdminAuthenticated(false);
     setError(null);
   };
 
-  // 페이지 로드 시 관리자 인증 상태 확인
+  // 페이지 로드 시 관리자 인증 상태 확인 (Server Action 사용)
   React.useEffect(() => {
-    try {
-      const savedAuth = localStorage.getItem("gsrc81-admin-auth");
-      if (savedAuth) {
-        const authData = JSON.parse(savedAuth);
-        // 세션이 24시간 이내인지 확인
-        const isValid = Date.now() - authData.timestamp < 24 * 60 * 60 * 1000;
-        if (isValid) {
+    const checkSession = async () => {
+      try {
+        const session = await getAdminSession();
+        if (session) {
           setIsAdminAuthenticated(true);
-        } else {
-          localStorage.removeItem("gsrc81-admin-auth");
         }
+      } catch (err) {
+        console.error("Admin auth check error:", err);
       }
-    } catch (err) {
-      console.error("Admin auth check error:", err);
-      localStorage.removeItem("gsrc81-admin-auth");
-    }
+    };
+
+    checkSession();
   }, []);
 
   return (
@@ -114,8 +78,8 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       value={{
         isAdminAuthenticated,
         isLoading,
-        adminLogin,
-        adminLogout,
+        adminLogin: handleAdminLogin,
+        adminLogout: handleAdminLogout,
         error,
       }}
     >

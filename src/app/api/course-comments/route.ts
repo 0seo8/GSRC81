@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/shared/lib/supabase";
+import { createAdminClient } from "@/lib/supabase/server";
+
+/**
+ * Course Comments API
+ * Admin 클라이언트를 사용하여 서버에서 안전하게 처리
+ */
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createAdminClient();
     const body = await request.json();
 
     const { course_id, message, author_nickname = "익명" } = body;
@@ -37,16 +43,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 댓글 삽입 (현재 스키마에 맞춰 기본 필드만 사용)
+    // 댓글 삽입
     const { data: comment, error: insertError } = await supabase
       .from("course_comments")
       .insert({
         course_id,
         author_nickname,
         message: message.trim(),
-        // 향후 위치 정보 지원 시 사용할 필드들 (현재는 주석 처리)
-        // latitude,
-        // longitude,
       })
       .select()
       .single();
@@ -78,6 +81,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = createAdminClient();
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get("course_id");
 

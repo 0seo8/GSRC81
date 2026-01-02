@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/server";
 
-// ANON 키 사용
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+/**
+ * Course Photos Temp API
+ * Admin 클라이언트를 사용하여 RLS 정책 우회
+ */
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createAdminClient();
     const body = await request.json();
     const { course_id, file_url, caption } = body;
 
     // 임시로 course_comment_photos 테이블에 저장 (comment_id는 course_id로 사용)
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from("course_comment_photos")
       .insert({
         comment_id: course_id, // course_id를 comment_id로 저장
@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = createAdminClient();
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get("course_id");
 
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from("course_comment_photos")
       .select("*")
       .eq("comment_id", courseId) // course_id를 comment_id로 검색
@@ -97,6 +98,7 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const supabase = createAdminClient();
     const { searchParams } = new URL(request.url);
     const photoId = searchParams.get("photo_id");
 
@@ -107,7 +109,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const { error } = await supabaseClient
+    const { error } = await supabase
       .from("course_comment_photos")
       .delete()
       .eq("id", photoId);
