@@ -52,6 +52,16 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
   // 이미 표시된 댓글 추적 (ref로 관리하여 무한 루프 방지)
   const shownCommentsRef = useRef<Set<string>>(new Set());
 
+  // 롱프레스 관련 ref
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressStartPosRef = useRef<{ lng: number; lat: number } | null>(
+    null,
+  );
+  const isLongPressTriggeredRef = useRef(false);
+  const isAnimatingRef = useRef(false); // 애니메이션 상태를 ref로 추적
+  const LONG_PRESS_DURATION = 3000; // 3초
+  const MOVE_THRESHOLD = 0.001; // 약 110m 정도의 이동 허용 (위도/경도 단위) - 더 관대하게
+
   // Custom hooks
   const {
     kmMarkers,
@@ -79,6 +89,11 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     resetKmMarkers,
     setKmMarkers,
   );
+
+  // isAnimating 상태가 변경될 때 ref 업데이트
+  useEffect(() => {
+    isAnimatingRef.current = isAnimating;
+  }, [isAnimating]);
 
   // 가장 가까운 경로 지점 찾기 함수
   const findNearestRoutePoint = useCallback(
@@ -438,62 +453,212 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
     });
   }, [isAnimating, currentActualDistanceKm, trailData, flightComments]);
 
-  // 지도 전체 클릭 이벤트 등록 (레이어에 의존하지 않음)
+  // 롱프레스 타이머 클리어 함수
+  const clearLongPressTimer = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    longPressStartPosRef.current = null;
+  }, []);
+
+  // 롱프레스 이벤트 등록 (3초 이상 누르면 댓글 모달 열기)
   useEffect(() => {
+    console.log("🔄 [LongPress] useEffect 실행:", {
+      mapRef: !!mapRef.current,
+      isMapLoaded,
+      trailData: !!trailData,
+    });
+
     if (!mapRef.current || !isMapLoaded || !trailData) {
+      console.log("⏸️ [LongPress] 조건 미충족으로 리턴");
       return;
     }
 
     const map = mapRef.current.getMap();
 
-    // 지도 전체 클릭 핸들러 - 직접 로직 구현 (의존성 문제 방지)
-    const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
+    // 롱프레스 시작 핸들러 (마우스용)
+    const handleMouseDown = (e: mapboxgl.MapMouseEvent) => {
+      // 애니메이션 중이면 무시 (ref 사용으로 최신 상태 참조)
+      if (isAnimatingRef.current) return;
+
       const { lng, lat } = e.lngLat;
+      console.log("🖱️ [LongPress] mousedown 시작:", { lng, lat });
 
-      // trailData가 없으면 무시
-      if (!trailData) return;
+      // 시작 위치 저장
+      longPressStartPosRef.current = { lng, lat };
+      isLongPressTriggeredRef.current = false;
 
-      // 애니메이션 중이면 무시
-      if (isAnimating) return;
+      // 기존 타이머 클리어
+      clearLongPressTimer();
 
-      // 가장 가까운 경로 지점 찾기
-      const nearestPoint = findNearestRoutePoint(lng, lat);
+      // 3초 타이머 시작
+      longPressTimerRef.current = setTimeout(() => {
+        console.log("⏰ [LongPress] 3초 타이머 완료!");
+        // 롱프레스 트리거됨 표시
+        isLongPressTriggeredRef.current = true;
 
-      if (nearestPoint) {
-        setClickedPoint({
-          lng: nearestPoint.lng,
-          lat: nearestPoint.lat,
-          distanceMarker: nearestPoint.distanceMarker,
-        });
-        setShowCommentModal(true);
-      }
-    };
+        // 가장 가까운 경로 지점 찾기
+        const nearestPoint = findNearestRoutePoint(lng, lat);
+        console.log("📍 [LongPress] nearestPoint:", nearestPoint);
 
-    // 지도가 로드되면 클릭 이벤트 등록
-    // onLoad 콜백 이후에 실행되므로 map은 이미 준비된 상태
-    const setupMapClick = () => {
-      if (map.loaded()) {
-        map.on("click", handleMapClick);
-      } else {
-        // onLoad가 실행되었지만 map.loaded()가 false인 경우 (타이밍 이슈)
-        // loaded() 상태와 관계없이 이벤트 등록 시도
-        try {
-          map.on("click", handleMapClick);
-        } catch {
-          // 실패 시 한번 더 시도
-          map.once("load", () => {
-            map.on("click", handleMapClick);
+        if (nearestPoint) {
+          // 햅틱 피드백 (지원하는 디바이스에서만)
+          if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+            navigator.vibrate(100);
+          }
+
+          setClickedPoint({
+            lng: nearestPoint.lng,
+            lat: nearestPoint.lat,
+            distanceMarker: nearestPoint.distanceMarker,
           });
+          setShowCommentModal(true);
+        } else {
+          console.log("❌ [LongPress] nearestPoint가 null - 경로 근처가 아님");
         }
+
+        // 타이머 정리
+        longPressTimerRef.current = null;
+      }, LONG_PRESS_DURATION);
+    };
+
+    // 롱프레스 시작 핸들러 (터치용)
+    const handleTouchStart = (e: mapboxgl.MapTouchEvent) => {
+      // 애니메이션 중이면 무시 (ref 사용으로 최신 상태 참조)
+      if (isAnimatingRef.current) return;
+
+      const { lng, lat } = e.lngLat;
+      console.log("👆 [LongPress] touchstart 시작:", { lng, lat });
+
+      // 시작 위치 저장
+      longPressStartPosRef.current = { lng, lat };
+      isLongPressTriggeredRef.current = false;
+
+      // 기존 타이머 클리어
+      clearLongPressTimer();
+
+      // 3초 타이머 시작
+      longPressTimerRef.current = setTimeout(() => {
+        console.log("⏰ [LongPress] 3초 타이머 완료! (터치)");
+        // 롱프레스 트리거됨 표시
+        isLongPressTriggeredRef.current = true;
+
+        // 가장 가까운 경로 지점 찾기
+        const nearestPoint = findNearestRoutePoint(lng, lat);
+        console.log("📍 [LongPress] nearestPoint:", nearestPoint);
+
+        if (nearestPoint) {
+          // 햅틱 피드백 (지원하는 디바이스에서만)
+          if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+            navigator.vibrate(100);
+          }
+
+          setClickedPoint({
+            lng: nearestPoint.lng,
+            lat: nearestPoint.lat,
+            distanceMarker: nearestPoint.distanceMarker,
+          });
+          setShowCommentModal(true);
+        } else {
+          console.log("❌ [LongPress] nearestPoint가 null - 경로 근처가 아님");
+        }
+
+        // 타이머 정리
+        longPressTimerRef.current = null;
+      }, LONG_PRESS_DURATION);
+    };
+
+    // 롱프레스 종료 핸들러
+    const handlePressEnd = () => {
+      if (longPressTimerRef.current) {
+        console.log("🛑 [LongPress] 타이머 취소됨 (pressEnd)");
+      }
+      clearLongPressTimer();
+    };
+
+    // 마우스 이동 시 롱프레스 취소
+    const handleMouseMove = (e: mapboxgl.MapMouseEvent) => {
+      if (!longPressStartPosRef.current || !longPressTimerRef.current) return;
+
+      const { lng, lat } = e.lngLat;
+      const startPos = longPressStartPosRef.current;
+
+      // 시작 위치에서 일정 거리 이상 이동하면 롱프레스 취소
+      const deltaLng = Math.abs(lng - startPos.lng);
+      const deltaLat = Math.abs(lat - startPos.lat);
+
+      if (deltaLng > MOVE_THRESHOLD || deltaLat > MOVE_THRESHOLD) {
+        console.log("🚶 [LongPress] 이동으로 취소 (mouse):", {
+          deltaLng,
+          deltaLat,
+          threshold: MOVE_THRESHOLD,
+        });
+        clearLongPressTimer();
       }
     };
 
-    setupMapClick();
+    // 터치 이동 시 롱프레스 취소
+    const handleTouchMove = (e: mapboxgl.MapTouchEvent) => {
+      if (!longPressStartPosRef.current || !longPressTimerRef.current) return;
+
+      const { lng, lat } = e.lngLat;
+      const startPos = longPressStartPosRef.current;
+
+      // 시작 위치에서 일정 거리 이상 이동하면 롱프레스 취소
+      const deltaLng = Math.abs(lng - startPos.lng);
+      const deltaLat = Math.abs(lat - startPos.lat);
+
+      if (deltaLng > MOVE_THRESHOLD || deltaLat > MOVE_THRESHOLD) {
+        console.log("🚶 [LongPress] 이동으로 취소 (touch):", {
+          deltaLng,
+          deltaLat,
+          threshold: MOVE_THRESHOLD,
+        });
+        clearLongPressTimer();
+      }
+    };
+
+    // 드래그 시작 시 롱프레스 취소
+    const handleDragStart = () => {
+      if (longPressTimerRef.current) {
+        console.log("🔄 [LongPress] 드래그 시작으로 취소");
+      }
+      clearLongPressTimer();
+    };
+
+    // 이벤트 등록
+    const setupLongPress = () => {
+      console.log("✅ [LongPress] 이벤트 등록 완료");
+      // 마우스 이벤트
+      map.on("mousedown", handleMouseDown);
+      map.on("mouseup", handlePressEnd);
+      map.on("mousemove", handleMouseMove);
+
+      // 터치 이벤트
+      map.on("touchstart", handleTouchStart);
+      map.on("touchend", handlePressEnd);
+      map.on("touchmove", handleTouchMove);
+
+      // 드래그 시작 시 롱프레스 취소
+      map.on("dragstart", handleDragStart);
+    };
+
+    // 항상 즉시 등록 시도 (isMapLoaded가 true면 이미 로드된 상태)
+    // map.loaded()와 isMapLoaded 상태가 다를 수 있으므로 즉시 등록
+    setupLongPress();
 
     return () => {
-      map.off("click", handleMapClick);
+      clearLongPressTimer();
+      map.off("mousedown", handleMouseDown);
+      map.off("mouseup", handlePressEnd);
+      map.off("mousemove", handleMouseMove);
+      map.off("touchstart", handleTouchStart);
+      map.off("touchend", handlePressEnd);
+      map.off("touchmove", handleTouchMove);
+      map.off("dragstart", handleDragStart);
     };
-  }, [isMapLoaded, trailData, isAnimating, findNearestRoutePoint]);
+  }, [isMapLoaded, trailData, findNearestRoutePoint, clearLongPressTimer]);
 
   // 트레일 라인 스타일
   const trailLineLayer = {
@@ -726,18 +891,17 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
                       duration: 0.7,
                       ease: [0.4, 0, 0.2, 1], // Custom cubic-bezier for smooth fade
                     }}
-                    className="relative max-w-xs"
+                    className="flex flex-col items-center"
                   >
                     {/* 말풍선 */}
-                    <div className="bg-black text-white rounded-lg shadow-lg p-3 relative max-w-50">
-                      {/* 말풍선 꼬리 */}
-                      <div className="absolute bottom-0 left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-black transform translate-y-full"></div>
-
+                    <div className="bg-black text-white rounded-lg shadow-lg p-3 max-w-[200px]">
                       {/* 댓글 내용만 표시 */}
                       <p className="text-white leading-relaxed font-inter text-[0.625rem]">
                         {comment.message}
                       </p>
                     </div>
+                    {/* 말풍선 꼬리 - 중앙 정렬 */}
+                    <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-black"></div>
                   </motion.div>
                 </Marker>
               ))}
@@ -747,7 +911,10 @@ const CourseDetailMap: React.FC<CourseDetailMapProps> = ({
       {/* 댓글 입력 모달 */}
       <CommentModal
         isOpen={showCommentModal}
-        onClose={() => setShowCommentModal(false)}
+        onClose={() => {
+          setShowCommentModal(false);
+          setClickedPoint(null); // 마커도 함께 제거
+        }}
         courseId={courseId}
         position={clickedPoint}
         onCommentAdded={handleCommentAdded}

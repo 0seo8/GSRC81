@@ -4,7 +4,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Edit, MapPin } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
-import { updateComment, CourseComment } from "@/shared/lib/comments";
+import { updateCommentAction } from "@/app/actions/comments";
+import type { CourseComment } from "@/shared/lib/comments";
 
 interface EditCommentModalProps {
   isOpen: boolean;
@@ -31,7 +32,16 @@ export function EditCommentModal({
 
     setIsSubmitting(true);
     try {
-      await updateComment(comment.id, message.trim(), authorUserKey);
+      // Server Action 사용 (RLS 우회)
+      const result = await updateCommentAction(
+        comment.id,
+        message.trim(),
+        authorUserKey,
+      );
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
 
       // 성공적으로 수정된 후 처리
       onCommentUpdated?.();
@@ -43,7 +53,11 @@ export function EditCommentModal({
       }
     } catch (error) {
       console.error("댓글 수정 실패:", error);
-      alert("댓글 수정에 실패했습니다. 다시 시도해주세요.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "댓글 수정에 실패했습니다. 다시 시도해주세요.",
+      );
     } finally {
       setIsSubmitting(false);
     }

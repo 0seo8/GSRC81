@@ -89,38 +89,61 @@ export async function createCommentAction(formData: FormData) {
 
 /**
  * 댓글 수정
+ * Admin 클라이언트를 사용하여 RLS 정책 우회 (본인 댓글만 수정 가능)
  */
 export async function updateCommentAction(
   commentId: string,
-  formData: FormData,
+  message: string,
+  authorUserKey: string,
 ) {
   try {
-    const message = formData.get("message") as string;
-
-    if (!message) {
-      return { error: "메시지는 필수입니다" };
+    if (!message || !message.trim()) {
+      return { error: "메시지는 필수입니다", data: null };
     }
 
-    const supabase = await createClient();
-    const repo = commentRepository(supabase);
-
-    // 권한 확인: 작성자만 수정 가능 (추후 구현)
-    const existingComment = await repo.getCommentById(commentId);
-    const userKey = formData.get("userKey") as string;
-
-    if (existingComment.author_user_key !== userKey) {
-      return { error: "권한이 없습니다" };
+    if (message.length > 200) {
+      return { error: "메시지는 200자 이하여야 합니다", data: null };
     }
 
-    const updates: CommentUpdate = {
-      message,
-    };
+    // Admin 클라이언트 사용 (RLS 우회)
+    const { createAdminClient } = await import("@/lib/supabase/server");
+    const supabase = createAdminClient();
 
-    const comment = await repo.updateComment(commentId, updates);
+    // 먼저 댓글 조회하여 본인 확인
+    const { data: existingComment, error: fetchError } = await supabase
+      .from("course_comments")
+      .select("*")
+      .eq("id", commentId)
+      .single();
+
+    if (fetchError || !existingComment) {
+      return { error: "댓글을 찾을 수 없습니다", data: null };
+    }
+
+    // 본인 확인
+    if (existingComment.author_user_key !== authorUserKey) {
+      return { error: "본인의 댓글만 수정할 수 있습니다", data: null };
+    }
+
+    // 댓글 수정
+    const { data: updatedComment, error: updateError } = await supabase
+      .from("course_comments")
+      .update({
+        message: message.trim(),
+        edited_at: new Date().toISOString(),
+      })
+      .eq("id", commentId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Error updating comment:", updateError);
+      throw updateError;
+    }
 
     revalidatePath(`/courses/${existingComment.course_id}`);
 
-    return { data: comment, error: null };
+    return { data: updatedComment, error: null };
   } catch (error) {
     console.error("Error updating comment:", error);
     return {

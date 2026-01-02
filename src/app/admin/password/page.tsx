@@ -70,7 +70,9 @@ export default function AccessCodeManagePage() {
       const result = await adminGetAccessCodesAction();
 
       if (!result.success) {
-        throw new Error(result.error || "접근 코드 정보를 불러오는데 실패했습니다");
+        throw new Error(
+          result.error || "접근 코드 정보를 불러오는데 실패했습니다",
+        );
       }
 
       setAccessCodes(result.data || []);
@@ -141,7 +143,10 @@ export default function AccessCodeManagePage() {
 
     try {
       setSaving(true);
-      const result = await adminUpdateAccessCodeAction(codeId, editingCode.trim());
+      const result = await adminUpdateAccessCodeAction(
+        codeId,
+        editingCode.trim(),
+      );
 
       if (!result.success) {
         showMessage(result.error || "접근 코드 변경에 실패했습니다.", "error");
@@ -161,7 +166,11 @@ export default function AccessCodeManagePage() {
   };
 
   const handleDeleteCode = async (codeId: string, code: string) => {
-    if (!confirm(`"${code}" 코드를 삭제하시겠습니까?\n\n이 코드로 가입한 사용자는 영향받지 않습니다.`)) {
+    if (
+      !confirm(
+        `"${code}" 코드를 삭제하시겠습니까?\n\n이 코드로 가입한 사용자는 영향받지 않습니다.`,
+      )
+    ) {
       return;
     }
 
@@ -191,7 +200,9 @@ export default function AccessCodeManagePage() {
       }
 
       showMessage(
-        currentStatus ? "접근 코드가 비활성화되었습니다." : "접근 코드가 활성화되었습니다.",
+        currentStatus
+          ? "접근 코드가 비활성화되었습니다."
+          : "접근 코드가 활성화되었습니다.",
         "success",
       );
       await loadAccessCodes();
@@ -236,7 +247,9 @@ export default function AccessCodeManagePage() {
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* 헤더 */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">접근 코드 관리</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              접근 코드 관리
+            </h1>
             <p className="text-gray-600">
               크루원들이 앱에 가입할 때 사용하는 접근 코드를 관리합니다.
             </p>
@@ -249,8 +262,8 @@ export default function AccessCodeManagePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="flex items-center">
-                      <Plus className="w-5 h-5 mr-2 text-gray-600" />
-                      새 접근 코드 생성
+                      <Plus className="w-5 h-5 mr-2 text-gray-600" />새 접근
+                      코드 생성
                     </CardTitle>
                     <CardDescription>
                       새로운 크루원을 위한 접근 코드를 생성합니다.
@@ -258,8 +271,7 @@ export default function AccessCodeManagePage() {
                   </div>
                   {!showCreateForm && (
                     <Button onClick={() => setShowCreateForm(true)}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      새 코드 생성
+                      <Plus className="w-4 h-4 mr-2" />새 코드 생성
                     </Button>
                   )}
                 </div>
@@ -274,7 +286,9 @@ export default function AccessCodeManagePage() {
                       <div className="flex gap-2">
                         <Input
                           value={newCode}
-                          onChange={(e) => setNewCode(e.target.value.toUpperCase())}
+                          onChange={(e) =>
+                            setNewCode(e.target.value.toUpperCase())
+                          }
                           placeholder="예: CREW2024"
                           maxLength={20}
                           className="font-mono"
@@ -392,9 +406,18 @@ export default function AccessCodeManagePage() {
                                   </p>
                                 )}
                                 <p className="text-xs text-gray-400 mt-1">
-                                  생성일: {new Date(code.created_at).toLocaleDateString()}
+                                  생성일:{" "}
+                                  {new Date(
+                                    code.created_at,
+                                  ).toLocaleDateString()}
                                   {code.expires_at && (
-                                    <> · 만료일: {new Date(code.expires_at).toLocaleDateString()}</>
+                                    <>
+                                      {" "}
+                                      · 만료일:{" "}
+                                      {new Date(
+                                        code.expires_at,
+                                      ).toLocaleDateString()}
+                                    </>
                                   )}
                                 </p>
                               </div>
@@ -435,7 +458,9 @@ export default function AccessCodeManagePage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleDeleteCode(code.id, code.code)}
+                                onClick={() =>
+                                  handleDeleteCode(code.id, code.code)
+                                }
                                 title="삭제"
                                 className="text-red-500 hover:text-red-600 hover:bg-red-50"
                               >
@@ -450,7 +475,9 @@ export default function AccessCodeManagePage() {
                 ) : (
                   <div className="text-center py-12">
                     <Key className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">등록된 접근 코드가 없습니다.</p>
+                    <p className="text-gray-500">
+                      등록된 접근 코드가 없습니다.
+                    </p>
                     <p className="text-sm text-gray-400 mt-1">
                       새 접근 코드를 생성해주세요.
                     </p>
@@ -467,8 +494,12 @@ export default function AccessCodeManagePage() {
                   <div className="text-sm text-gray-700">
                     <p className="font-medium mb-2">접근 코드 사용 안내</p>
                     <ul className="list-disc list-inside space-y-1 text-gray-600">
-                      <li>크루원은 최초 1회 접근 코드를 입력하여 가입합니다.</li>
-                      <li>코드를 변경해도 이미 가입한 사용자는 영향받지 않습니다.</li>
+                      <li>
+                        크루원은 최초 1회 접근 코드를 입력하여 가입합니다.
+                      </li>
+                      <li>
+                        코드를 변경해도 이미 가입한 사용자는 영향받지 않습니다.
+                      </li>
                       <li>코드를 비활성화하면 신규 가입이 차단됩니다.</li>
                       <li>여러 코드를 만들어 그룹별로 관리할 수 있습니다.</li>
                     </ul>

@@ -20,6 +20,11 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
   isAdmin = false,
   onDeleteComment,
 }) => {
+  const handleDelete = (comment: CourseComment) => {
+    if (onDeleteComment) {
+      onDeleteComment(comment.id, comment.author_nickname);
+    }
+  };
   const { data: session } = useSession();
   const [editingComment, setEditingComment] = useState<CourseComment | null>(
     null,
@@ -157,7 +162,7 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                         <p className="text-xs text-gray-400 mt-1">(수정됨)</p>
                       )}
 
-                      {/* 본인 댓글: 수정 버튼만 */}
+                      {/* 본인 댓글: 수정 버튼 */}
                       {isOwner && (
                         <button
                           onClick={() => handleEditClick(comment)}
@@ -165,6 +170,17 @@ export const CourseCommentsList: React.FC<CourseCommentsListProps> = ({
                           title="댓글 수정"
                         >
                           <Edit className="w-3 h-3" />
+                        </button>
+                      )}
+
+                      {/* 관리자: 삭제 버튼 */}
+                      {isAdmin && onDeleteComment && (
+                        <button
+                          onClick={() => handleDelete(comment)}
+                          className={`absolute -top-2 ${isOwner ? "-right-8" : "-right-2"} bg-red-600 text-white rounded-full p-1 hover:bg-red-700 shadow-lg`}
+                          title="댓글 삭제"
+                        >
+                          <Trash2 className="w-3 h-3" />
                         </button>
                       )}
                     </div>
