@@ -57,22 +57,23 @@ export function calculateCardLayout(
 
   // ========================================
   // 2개 카드
+  // 바텀시트가 화면 하단에서 6px 떨어짐, 바텀시트 내부에서는 간격 없음
   // ========================================
   if (totalCourses === 2) {
     if (courseIndex === 0) {
-      // 카드 1: 앞에 표시, 전체 둥근
+      // 카드 1: 앞에 표시, 전체 둥근, 바텀시트 내부 하단에 붙음
       return {
         height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
-        bottom: `${FIGMA_CARD_SPECS.bottomMargin}rem`, // 9px 여백
+        bottom: "0rem", // 바텀시트 내부 기준 0px (바텀시트 자체가 6px 떨어짐)
         borderRadius: FIGMA_CARD_SPECS.fullRadius,
         zIndex: 2, // 위에 표시
       };
     } else {
       // 카드 2: 뒤에 표시, 위쪽만 둥근
-      // Card 1 상단에서 60px만 노출 - 1rem 감소
+      // 바텀시트 하단에서 80px 떨어진 위치에서 시작
       return {
         height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
-        bottom: `${FIGMA_CARD_SPECS.cardHeight + FIGMA_CARD_SPECS.bottomMargin - FIGMA_CARD_SPECS.cardGap - 1}rem`, // 180 + 9 - 60 - 16 = 113px (4.625rem)
+        bottom: "5rem", // 80px (바텀시트 내부 기준)
         borderRadius: FIGMA_CARD_SPECS.topRadius,
         zIndex: 1, // 아래 표시
       };
@@ -81,57 +82,44 @@ export function calculateCardLayout(
 
   // ========================================
   // 3개 이상
+  // 바텀시트가 화면 하단에 붙어있음, 바텀시트 내부에서도 간격 없음
   // ========================================
   if (courseIndex === 0) {
-    // 카드 1: 완전 숨김, 전체 둥근, z-index 최고
+    // 카드 1: 12px만 노출, 나머지는 화면 아래로 숨김
+    // 136px(index=1 높이) - 12px(노출) = 124px 아래로
     return {
       height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
-      bottom: `${FIGMA_CARD_SPECS.hiddenOffset}rem`, // -112px
+      bottom: "-7.75rem", // -124px (12px만 노출되도록)
       borderRadius: FIGMA_CARD_SPECS.fullRadius,
       zIndex: totalCourses, // 가장 높은 z-index
     };
   }
 
   if (courseIndex === 1) {
-    // 카드 2: 기준점 - 1rem 감소
+    // 카드 2: bottom 0 기준점, 136px 높이
     return {
-      height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
-      bottom: `${FIGMA_CARD_SPECS.bottomMargin - 1}rem`, // 9px - 16px = -7px
+      height: "8.5rem", // 136px
+      bottom: "0rem", // 바텀시트 내부 기준 0px
       borderRadius: FIGMA_CARD_SPECS.topRadius,
       zIndex: totalCourses - courseIndex,
     };
   }
 
   // ========================================
-  // 카드 3 이상: 모든 카드 동일한 60px 간격 + 점진적 증가
+  // 카드 3 이상 (index=2+): 180px 높이, 50px 겹침, 130px 노출
+  // 카드마다 bottom 위치는 80px씩 추가
   // ========================================
-  // 공식: 다음 카드 bottom = 이전 카드 bottom + cardHeight - cardGap + (카드번호 * 1px)
-  // 모든 카드가 60px만 노출되도록 배치하되 점진적으로 1px씩 위로 올림
+  // index=1: bottom 0px, height 136px → top 136px
+  // index=2: bottom 136px - 50px(겹침) = 86px? 아니, 80px씩 추가니까...
+  // index=2: bottom = 136px - 50px = 86px (index=1 top - 겹침)
+  // 또는: 카드마다 80px씩 추가 → index=2: 80px, index=3: 160px, ...
 
-  const cardHeight = FIGMA_CARD_SPECS.cardHeight; // 180px (통일)
-  const card2Bottom = FIGMA_CARD_SPECS.bottomMargin - 1; // -7px (1rem 감소)
-
-  // Card 3: -2rem 감소
-  const card3Bottom = card2Bottom + cardHeight - FIGMA_CARD_SPECS.cardGap - 1; // 추가 -1rem
-
-  // Card 4: -3rem 감소 (Card 3 기준으로 추가 -1rem)
-  const card4Bottom = card3Bottom + cardHeight - FIGMA_CARD_SPECS.cardGap - 1; // 추가 -1rem
-
-  let cardBottom: number;
-
-  if (courseIndex === 2) {
-    cardBottom = card3Bottom;
-  } else if (courseIndex === 3) {
-    cardBottom = card4Bottom;
-  } else {
-    // Card 5+: Card 4 기준으로 일정한 60px 간격 유지
-    // (courseIndex - 3): Card 5일 때 1, Card 6일 때 2...
-    cardBottom =
-      card4Bottom + (courseIndex - 3) * (cardHeight - FIGMA_CARD_SPECS.cardGap);
-  }
+  // 사용자 스펙: "카드가 하나씩 늘어날수록 bottom 위치는 80px만큼 추가"
+  // index=2: 80px, index=3: 160px, index=4: 240px, ...
+  const cardBottom = (courseIndex - 1) * 5; // 80px = 5rem, (index-1)은 index=2일 때 1, index=3일 때 2...
 
   return {
-    height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px (통일)
+    height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
     bottom: `${cardBottom}rem`,
     borderRadius: FIGMA_CARD_SPECS.topRadius,
     zIndex: totalCourses - courseIndex,

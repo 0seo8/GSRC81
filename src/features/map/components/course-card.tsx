@@ -28,19 +28,77 @@ export function CourseCard({
   const layout = calculateCardLayout(index, totalCourses);
   const shadow = calculateCardShadow();
 
-  // 확장 시 모든 카드를 5rem 위로 이동
+  // 카드 타입 판별
+  const isFrontCard =
+    (totalCourses === 1 && index === 0) ||
+    (totalCourses === 2 && index === 0) ||
+    (totalCourses >= 3 && index === 1);
+  const isHiddenCard = totalCourses >= 3 && index === 0;
+  const isBackCardIn2 = totalCourses === 2 && index === 1;
+  const isBackCardIn3Plus = totalCourses >= 3 && index >= 2;
+
+  // 카드 컨테이너 스타일 계산
+  // 높이 + 겹침(pb) 지정, 내부 콘텐츠는 justify-between으로 상하 배치
+  const getCardContainerClass = () => {
+    // 스크롤 펼침 시: 모든 카드 동일한 스타일 (180px, 50px 겹침)
+    // 첫 번째 카드만 130px
+    if (isExpanded && totalCourses >= 3) {
+      if (index === 0) {
+        // 스크롤 펼침 시 첫 번째 카드: 130px, 겹침 없음
+        return "h-[8.125rem] py-5";
+      }
+      // 스크롤 펼침 시 나머지 카드: 180px, 50px 겹침 → 노출 130px
+      return "h-[11.25rem] pt-5 pb-[4.375rem]"; // pb = 50px(겹침) + 20px(패딩) = 70px
+    }
+
+    // 기본 상태 (스크롤 전)
+    if (isFrontCard) {
+      // 1개/2개 맨 앞: 130px, 3개+ index=1: 136px
+      // 상하 패딩 30px 통일
+      const height = totalCourses >= 3 ? "h-[8.5rem]" : "h-[8.125rem]";
+      return `${height} py-[1.875rem]`; // 30px 상하 패딩
+    }
+    if (isHiddenCard) {
+      // 3개+ index=0: 12px만 보임 (기본 스타일)
+      return "h-[8.125rem] py-5";
+    }
+    if (isBackCardIn2) {
+      // 2개 index=1: 180px, 겹침 50px → 노출 130px
+      // 3개+ 카드와 완전 동일: 상단 30px, 콘텐츠 70px, 하단 30px
+      return "h-[11.25rem] pt-[1.875rem] pb-[5rem]"; // pt=30px, pb=80px(50px겹침+30px패딩)
+    }
+    if (isBackCardIn3Plus) {
+      // 3개+ index=2+: 180px, 겹침 50px → 노출 130px
+      // 상하 패딩 30px, 콘텐츠 70px
+      return "h-[11.25rem] pt-[1.875rem] pb-[5rem]"; // pt=30px, pb=80px(50px겹침+30px패딩)
+    }
+    return "py-5"; // 기본값
+  };
+
+  // 확장 시 카드 위치 재계산
   const getBottomPosition = () => {
     if (!isExpanded || totalCourses < 3) {
       return layout.bottom;
     }
-    // bottom 값에서 숫자 추출
-    const currentBottom = parseFloat(layout.bottom);
-    // NaN 체크
-    if (isNaN(currentBottom)) {
-      return layout.bottom;
+
+    // 스크롤 펼침 시: 모든 카드가 리스트 형태로 배치
+    // index=0: bottom 0px, height 130px → top 130px
+    // index=1+: bottom = 130 + (index-1) * 130px (각 카드 노출 130px)
+    // 겹침 50px이므로 노출 = 180 - 50 = 130px
+
+    if (index === 0) {
+      return "0rem"; // 첫 번째 카드: bottom 0
     }
-    // 5rem을 더함
-    return `${currentBottom + 5}rem`;
+
+    // index=1: bottom = 130px - 50px = 80px (첫 카드 위에 50px 겹침)
+    // index=2+: 각각 130px씩 위로 (180px - 50px 겹침)
+    // 공식: 첫 카드 top(130px) - 겹침(50px) + (index-1) * 노출(130px)
+    const firstCardTop = 8.125; // 130px
+    const overlap = 3.125; // 50px
+    const exposedHeight = 8.125; // 130px (180px - 50px)
+
+    const bottomValue = firstCardTop - overlap + (index - 1) * exposedHeight;
+    return `${bottomValue}rem`;
   };
 
   return (
@@ -98,7 +156,7 @@ export function CourseCard({
           ease: [0.25, 0.1, 0.25, 1],
         },
       }}
-      className="absolute left-0 right-0 px-[2.5625rem] py-5 cursor-pointer"
+      className={`absolute left-0 right-0 px-[2.5625rem] cursor-pointer ${getCardContainerClass()}`}
       style={{
         backgroundColor: cardColor,
         borderRadius: layout.borderRadius,
@@ -122,16 +180,22 @@ export function CourseCard({
         e.stopPropagation();
       }}
     >
-      <div className="flex justify-between items-start">
-        <div className="flex-1">
-          <h3 className="font-bold text-black mb-3 text-lg">{course.title}</h3>
-          <p className="font-medium text-black text-xs">
-            {course.course_categories?.name + "러닝 코스"}
-          </p>
-          <p className="font-medium text-black text-xs">
-            {getDifficultyText(course.difficulty || "medium")}
-          </p>
+      <div className="flex justify-between items-start w-full h-full">
+        {/* 좌측: Title(상단) + 카테고리/난이도(하단) */}
+        <div className="flex-1 flex flex-col justify-between h-full">
+          <h3 className="font-bold text-black text-lg leading-tight">
+            {course.title}
+          </h3>
+          <div>
+            <p className="font-medium text-black text-xs">
+              {course.course_categories?.name + "러닝 코스"}
+            </p>
+            <p className="font-medium text-black text-xs">
+              {getDifficultyText(course.difficulty || "medium")}
+            </p>
+          </div>
         </div>
+        {/* 우측: km (수직 중앙) */}
         <div className="text-right flex flex-col items-end justify-center h-full">
           <div className="flex items-baseline">
             <span className="text-distance text-black">

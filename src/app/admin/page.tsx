@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useAdmin } from "@/features/admin/context/AdminContext";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/shared/lib/supabase";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { logCourseDelete } from "@/shared/lib/audit-log";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { adminDeleteCourseAction } from "@/app/actions/admin-courses";
 
 interface Course {
@@ -44,7 +44,7 @@ interface AdminStats {
 }
 
 export default function AdminDashboard() {
-  const { adminLogout } = useAdmin();
+  const router = useRouter();
   const { data: session } = useSession();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,8 +93,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    adminLogout();
+  const handleLogout = async () => {
+    // NextAuth 세션 로그아웃 (카카오 로그인 기반)
+    await signOut({ redirect: false });
+    router.push("/login");
   };
 
   const handleDeleteCourse = async (course: Course) => {
