@@ -96,10 +96,10 @@ export function calculateCardLayout(
   }
 
   if (courseIndex === 1) {
-    // 카드 2: bottom 0 기준점, 136px 높이
+    // 카드 2: 180px 높이, bottom -50px (index=0과 50px 겹침)
     return {
-      height: "8.5rem", // 136px
-      bottom: "0rem", // 바텀시트 내부 기준 0px
+      height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
+      bottom: "-3.125rem", // -50px (index=0과 겹침)
       borderRadius: FIGMA_CARD_SPECS.topRadius,
       zIndex: totalCourses - courseIndex,
     };

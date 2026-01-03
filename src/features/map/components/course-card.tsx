@@ -53,10 +53,12 @@ export function CourseCard({
 
     // 기본 상태 (스크롤 전)
     if (isFrontCard) {
-      // 1개/2개 맨 앞: 130px, 3개+ index=1: 136px
-      // 상하 패딩 30px 통일
-      const height = totalCourses >= 3 ? "h-[8.5rem]" : "h-[8.125rem]";
-      return `${height} py-[1.875rem]`; // 30px 상하 패딩
+      // 1개/2개 맨 앞: 130px
+      // 3개+ index=1: 180px, 50px 겹침
+      if (totalCourses >= 3) {
+        return "h-[11.25rem] pt-[1.875rem] pb-[5rem]"; // 180px, pt=30px, pb=80px(50px겹침+30px패딩)
+      }
+      return "h-[8.125rem] py-[1.875rem]"; // 130px, 상하 30px 패딩
     }
     if (isHiddenCard) {
       // 3개+ index=0: 12px만 보임 (기본 스타일)
@@ -75,30 +77,18 @@ export function CourseCard({
     return "py-5"; // 기본값
   };
 
-  // 확장 시 카드 위치 재계산
+  // 카드 위치 계산
   const getBottomPosition = () => {
-    if (!isExpanded || totalCourses < 3) {
-      return layout.bottom;
+    // Full 상태 (3개+ 카드): 모든 카드를 동일하게 위로 이동
+    // index=0이 bottom 0으로 올라오도록 +124px (7.75rem) 이동
+    if (isExpanded && totalCourses >= 3) {
+      const offset = 7.75; // 124px (index=0의 기존 bottom 절대값)
+      const currentBottom = parseFloat(layout.bottom);
+      return `${currentBottom + offset}rem`;
     }
 
-    // 스크롤 펼침 시: 모든 카드가 리스트 형태로 배치
-    // index=0: bottom 0px, height 130px → top 130px
-    // index=1+: bottom = 130 + (index-1) * 130px (각 카드 노출 130px)
-    // 겹침 50px이므로 노출 = 180 - 50 = 130px
-
-    if (index === 0) {
-      return "0rem"; // 첫 번째 카드: bottom 0
-    }
-
-    // index=1: bottom = 130px - 50px = 80px (첫 카드 위에 50px 겹침)
-    // index=2+: 각각 130px씩 위로 (180px - 50px 겹침)
-    // 공식: 첫 카드 top(130px) - 겹침(50px) + (index-1) * 노출(130px)
-    const firstCardTop = 8.125; // 130px
-    const overlap = 3.125; // 50px
-    const exposedHeight = 8.125; // 130px (180px - 50px)
-
-    const bottomValue = firstCardTop - overlap + (index - 1) * exposedHeight;
-    return `${bottomValue}rem`;
+    // Medium 상태: 기존 layout.bottom 사용
+    return layout.bottom;
   };
 
   return (
