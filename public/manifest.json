@@ -1,9 +1,9 @@
 {
-  "name": "GSRC81 MAPS - 러닝 코스 가이드",
-  "short_name": "GSRC81 MAPS",
+  "name": "GSRC81 MAPS",
+  "short_name": "GSRC81",
   "description": "GSRC81 러닝 크루의 코스 탐색 및 비행 모드 가이드 앱",
   "theme_color": "#000000",
-  "background_color": "#f8f9fa",
+  "background_color": "#ebe7e4",
   "display": "standalone",
   "orientation": "portrait-primary",
   "scope": "/",

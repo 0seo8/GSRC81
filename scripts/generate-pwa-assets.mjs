@@ -43,8 +43,8 @@ async function svgToPng(width, height) {
   }
 }
 
-// 브랜드 컬러 (manifest.json background_color와 동일)
-const BACKGROUND_COLOR = { r: 248, g: 249, b: 250 }; // #f8f9fa
+// 브랜드 컬러 (manifest.json background_color, CSS --color-bg-base와 동일)
+const BACKGROUND_COLOR = { r: 235, g: 231, b: 228 }; // #ebe7e4 (따뜻한 베이지)
 const BRAND_COLOR = { r: 0, g: 0, b: 0 }; // #000000 (theme_color)
 
 // PWA 아이콘 사이즈
