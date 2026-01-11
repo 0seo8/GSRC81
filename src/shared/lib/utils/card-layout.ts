@@ -107,16 +107,15 @@ export function calculateCardLayout(
 
   // ========================================
   // 카드 3 이상 (index=2+): 180px 높이, 50px 겹침, 130px 노출
-  // 카드마다 bottom 위치는 80px씩 추가
+  // 모든 카드 간격 130px로 통일 (50px 겹침 규칙)
   // ========================================
-  // index=1: bottom 0px, height 136px → top 136px
-  // index=2: bottom 136px - 50px(겹침) = 86px? 아니, 80px씩 추가니까...
-  // index=2: bottom = 136px - 50px = 86px (index=1 top - 겹침)
-  // 또는: 카드마다 80px씩 추가 → index=2: 80px, index=3: 160px, ...
-
-  // 사용자 스펙: "카드가 하나씩 늘어날수록 bottom 위치는 80px만큼 추가"
-  // index=2: 80px, index=3: 160px, index=4: 240px, ...
-  const cardBottom = (courseIndex - 1) * 5; // 80px = 5rem, (index-1)은 index=2일 때 1, index=3일 때 2...
+  // index=1: bottom -50px (기준점)
+  // index=2: -50px + 130px = 80px → 5rem
+  // index=3: -50px + 260px = 210px → 13.125rem
+  // index=4: -50px + 390px = 340px → 21.25rem
+  const visibleHeight = 8.125; // 130px = 8.125rem (노출 영역)
+  const baseBottom = -3.125; // -50px (index=1의 bottom)
+  const cardBottom = baseBottom + (courseIndex - 1) * visibleHeight;
 
   return {
     height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
