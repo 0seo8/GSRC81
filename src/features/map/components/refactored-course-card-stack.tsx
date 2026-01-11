@@ -30,7 +30,7 @@ export function RefactoredCourseCardStack({
   return (
     <div
       className="relative w-full font-sans mb-0"
-      style={courses.length === 1 ? {} : { height: stackHeight }}
+      style={{ minHeight: courses.length > 1 ? stackHeight : undefined }}
     >
       {courses.map((course, index) => {
         // 이전 카드의 카테고리 키 가져오기

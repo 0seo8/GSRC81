@@ -37,21 +37,9 @@ export function CourseCard({
   const isBackCardIn2 = totalCourses === 2 && index === 1;
   const isBackCardIn3Plus = totalCourses >= 3 && index >= 2;
 
-  // 카드 컨테이너 스타일 계산
+  // 카드 컨테이너 스타일 계산 - 60vh/90vh 모두 동일한 로직 사용
   // 높이 + 겹침(pb) 지정, 내부 콘텐츠는 justify-between으로 상하 배치
   const getCardContainerClass = () => {
-    // 스크롤 펼침 시: 모든 카드 동일한 스타일 (180px, 50px 겹침, 30px 패딩)
-    // 첫 번째 카드만 130px
-    if (isExpanded && totalCourses >= 3) {
-      if (index === 0) {
-        // 스크롤 펼침 시 첫 번째 카드: 130px, 상하 30px 패딩
-        return "h-[8.125rem] py-[1.875rem]";
-      }
-      // 스크롤 펼침 시 나머지 카드: 180px, 50px 겹침 → 노출 130px, 30px 패딩
-      return "h-[11.25rem] pt-[1.875rem] pb-[5rem]"; // pt=30px, pb=80px(50px겹침+30px패딩)
-    }
-
-    // 기본 상태 (스크롤 전)
     if (isFrontCard) {
       // 1개/2개 맨 앞: 130px
       // 3개+ index=1: 180px, 50px 겹침
@@ -77,26 +65,8 @@ export function CourseCard({
     return "py-5"; // 기본값
   };
 
-  // 카드 위치 계산
+  // 카드 위치 계산 - 60vh/90vh 모두 동일한 로직 사용
   const getBottomPosition = () => {
-    // Full 상태 (3개+ 카드): 50px 겹침 유지
-    // index=0: bottom 0, height 130px → top 130px
-    // index=1: bottom 80px (130 - 50 겹침), height 180px → top 260px
-    // index=2+: 130px씩 증가
-    if (isExpanded && totalCourses >= 3) {
-      if (index === 0) {
-        return "0rem";
-      }
-      // index=1: 80px (5rem)
-      // index=2: 210px (80 + 130) = 13.125rem
-      // index=3: 340px (210 + 130) = 21.25rem
-      const baseBottom = 5; // 80px = 5rem (index=1)
-      const increment = 8.125; // 130px = 8.125rem
-      const bottomValue = baseBottom + (index - 1) * increment;
-      return `${bottomValue}rem`;
-    }
-
-    // Medium 상태: 기존 layout.bottom 사용
     return layout.bottom;
   };
 
