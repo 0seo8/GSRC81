@@ -1,7 +1,45 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
+
+/**
+ * 디바운스된 함수 호출
+ * 빠른 카테고리 전환 시 마지막 변경에만 반응하도록 함
+ */
+function useDebouncedCallback<T extends (...args: Parameters<T>) => void>(
+  callback: T,
+  delay: number,
+): T {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const callbackRef = useRef(callback);
+
+  // 콜백 업데이트
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  // 클린업
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return useCallback(
+    ((...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        callbackRef.current(...args);
+      }, delay);
+    }) as T,
+    [delay],
+  );
+}
 
 export function useMapBounds(
   map: mapboxgl.Map | null,
@@ -65,13 +103,17 @@ export function useMapBounds(
     }
   }, [map, courses]);
 
+  // 디바운스된 fitBounds 호출 (150ms)
+  // 빠른 카테고리 전환 시 마지막 변경에만 반응
+  const debouncedFitMapToCourses = useDebouncedCallback(fitMapToCourses, 150);
+
   // 지도가 로드되고 코스 데이터가 변경될 때마다 범위 조정
   // 카테고리 변경 시 해당 카테고리의 코스들을 보여주도록 자동 이동
   useEffect(() => {
     if (map) {
-      fitMapToCourses();
+      debouncedFitMapToCourses();
     }
-  }, [map, courses, fitMapToCourses]);
+  }, [map, courses, debouncedFitMapToCourses]);
 
   return { fitMapToCourses };
 }

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, memo } from "react";
 import { createRoot } from "react-dom/client";
 import mapboxgl from "mapbox-gl";
+import { toast } from "sonner";
 import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
 import { getCategoryDesign } from "@/core/config/category-designs";
 import { NumberMarker } from "./number-marker";
@@ -10,10 +11,13 @@ import { MarkerSkeleton } from "./marker-skeleton";
 
 type Course = CourseWithCategory;
 
+type SnapPoint = "closed" | "medium" | "full";
+
 interface CourseMarkerProps {
   map: mapboxgl.Map;
   courses: Course[];
   currentCategory?: string;
+  snapPoint?: SnapPoint;
   onCourseClick?: (course: Course) => void;
   onClusterClick?: (courses: Course[]) => void;
 }
@@ -21,10 +25,30 @@ interface CourseMarkerProps {
 /**
  * Mapbox 네이티브 클러스터링을 사용한 코스 마커 컴포넌트
  */
+/**
+ * 바텀시트 스냅 포인트에 따른 마커 오프셋 계산
+ *
+ * 목표: 바텀시트가 열리면 마커가 화면 상단에서 20vh 지점에 위치
+ *
+ * Mapbox offset[1]: 양수 = 지도 중심이 아래로 → 마커가 화면 위쪽에 보임
+ */
+const getMarkerOffset = (snapPoint: SnapPoint): number => {
+  const vh = window.innerHeight;
+
+  if (snapPoint === "closed") {
+    return 0; // 바텀시트 닫힘 → 오프셋 없음
+  }
+
+  // 바텀시트 열림 → 마커를 화면 상단 25% 지점에 위치
+  // 음수 = 마커가 화면 위쪽으로 이동
+  return -(vh * 0.25);
+};
+
 const CourseMarkerComponent = function CourseMarker({
   map,
   courses,
   currentCategory = "jingwan",
+  snapPoint = "medium",
   onCourseClick,
   onClusterClick,
 }: CourseMarkerProps) {
@@ -35,6 +59,7 @@ const CourseMarkerComponent = function CourseMarker({
   const coursesRef = useRef(courses);
   const onCourseClickRef = useRef(onCourseClick);
   const onClusterClickRef = useRef(onClusterClick);
+  const snapPointRef = useRef(snapPoint);
   const geojsonDataRef = useRef<GeoJSON.FeatureCollection>({
     type: "FeatureCollection",
     features: [],
@@ -44,7 +69,8 @@ const CourseMarkerComponent = function CourseMarker({
     coursesRef.current = courses;
     onCourseClickRef.current = onCourseClick;
     onClusterClickRef.current = onClusterClick;
-  }, [courses, onCourseClick, onClusterClick]);
+    snapPointRef.current = snapPoint;
+  }, [courses, onCourseClick, onClusterClick, snapPoint]);
 
   useEffect(() => {
     currentCategoryRef.current = currentCategory;
@@ -159,13 +185,44 @@ const CourseMarkerComponent = function CourseMarker({
           e.preventDefault();
           e.stopPropagation();
 
-          map.flyTo({
+          // 마커 클릭 시 바텀시트가 열리므로 항상 "medium" 오프셋 사용
+          // (클릭 시점에는 아직 snapPoint가 closed일 수 있음)
+          const offsetY = getMarkerOffset("medium");
+
+          if (process.env.NODE_ENV === "development") {
+            console.log("Marker Clicked:", {
+              id: props.id,
+              title: props.title,
+              lng,
+              lat,
+              offsetY,
+              currentCenter: map.getCenter(),
+              windowHeight: window.innerHeight
+            });
+          }
+
+          // 현재 중심에서 타겟까지의 거리 계산 (대략적인 픽셀 거리)
+          const currentCenter = map.getCenter();
+          const zoom = map.getZoom();
+
+          // 경도/위도 차이를 픽셀로 환산 (대략적)
+          const lngDiff = Math.abs(lng - currentCenter.lng);
+          const latDiff = Math.abs(lat - currentCenter.lat);
+          const pixelDistance = Math.sqrt(
+            Math.pow(lngDiff * Math.pow(2, zoom) * 256 / 360, 2) +
+            Math.pow(latDiff * Math.pow(2, zoom) * 256 / 180, 2)
+          );
+
+          // 거리에 따른 duration 조절 (최소 200ms, 최대 800ms)
+          // 가까운 거리(< 100px)는 빠르게, 먼 거리는 천천히
+          const duration = Math.min(800, Math.max(200, pixelDistance * 2));
+
+          // easeTo 사용 (flyTo보다 부드럽고 줌 변경 없음)
+          map.easeTo({
             center: [lng, lat],
-            duration: 800,
-            essential: true,
-            padding: {
-              bottom: window.innerHeight * 0.6,
-            },
+            duration,
+            offset: [0, offsetY],
+            easing: (t) => 1 - Math.pow(1 - t, 3), // easeOutCubic
           });
 
           if (isCluster) {
@@ -195,16 +252,29 @@ const CourseMarkerComponent = function CourseMarker({
                 })
                 .filter((c): c is Course => c !== undefined);
 
-              if (onClusterClickRef.current && clusterCourses.length > 0) {
-                onClusterClickRef.current(clusterCourses);
+              if (clusterCourses.length > 0) {
+                onClusterClickRef.current?.(clusterCourses);
+              } else {
+                // 빈 클러스터 또는 코스를 찾을 수 없는 경우 피드백
+                toast.info("선택 가능한 코스가 없습니다", {
+                  duration: 2000,
+                });
               }
             } catch (error) {
               console.error("Error handling cluster click:", error);
+              toast.error("코스 정보를 불러오는데 실패했습니다", {
+                duration: 3000,
+              });
             }
           } else {
             const course = coursesRef.current.find((c) => c.id === props.id);
-            if (onCourseClickRef.current && course) {
-              onCourseClickRef.current(course);
+            if (course) {
+              onCourseClickRef.current?.(course);
+            } else {
+              // 코스를 찾을 수 없는 경우 피드백
+              toast.error("코스 정보를 찾을 수 없습니다", {
+                duration: 2000,
+              });
             }
           }
         });

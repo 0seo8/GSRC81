@@ -10,6 +10,8 @@ import { useCategoryNavigation } from "@/features/map/hooks/use-category-navigat
 import { BottomSheetHeader } from "@/features/map/components/bottom-sheet-header";
 import { RefactoredCourseCardStack } from "@/features/map/components/refactored-course-card-stack";
 
+type SnapPoint = "closed" | "medium" | "full";
+
 interface CategoryFullScreenProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,6 +20,7 @@ interface CategoryFullScreenProps {
   initialCategory?: string;
   onCourseClick: (courseId: string) => void;
   onCategoryChange?: (categoryKey: string) => void;
+  onSnapPointChange?: (snapPoint: SnapPoint) => void;
   selectedCourse?: CourseWithCategory | null;
   selectedCourses?: CourseWithCategory[];
 }
@@ -29,6 +32,7 @@ export function CategoryFullScreen({
   initialCategory = "jingwan",
   onCourseClick,
   onCategoryChange,
+  onSnapPointChange,
   selectedCourse,
   selectedCourses,
 }: CategoryFullScreenProps) {
@@ -90,6 +94,11 @@ export function CategoryFullScreen({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]); // isOpen이 변경될 때만 실행
+
+  // 스냅 포인트 변경 시 부모 컴포넌트에 알림 (마커 오프셋 계산용)
+  useEffect(() => {
+    onSnapPointChange?.(snapManager.snapPoint);
+  }, [snapManager.snapPoint, onSnapPointChange]);
 
   // 스크롤로 전체화면 전환 기능 (마우스 휠)
   useEffect(() => {
@@ -232,16 +241,19 @@ export function CategoryFullScreen({
             {/* 카드 스크롤 영역 */}
             <div
               ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto px-[0.4375rem] pb-0 flex flex-col justify-end"
+              className="flex-1 overflow-y-auto px-[0.4375rem] pb-0"
             >
-              <RefactoredCourseCardStack
-                courses={filteredCourses}
-                cardColors={currentDesign.cardColors}
-                isDragging={isDragging}
-                onCourseClick={onCourseClick}
-                isExpanded={snapManager.snapPoint === "full"}
-                currentCategoryKey={actualCategory.key}
-              />
+              {/* mt-auto로 카드를 하단 정렬하면서 스크롤 시 헤더에 가려지지 않음 */}
+              <div className="min-h-full flex flex-col justify-end">
+                <RefactoredCourseCardStack
+                  courses={filteredCourses}
+                  cardColors={currentDesign.cardColors}
+                  isDragging={isDragging}
+                  onCourseClick={onCourseClick}
+                  isExpanded={snapManager.snapPoint === "full"}
+                  currentCategoryKey={actualCategory.key}
+                />
+              </div>
             </div>
           </motion.div>
         </>

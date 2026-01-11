@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { Navigation } from "lucide-react";
 
 import { MapboxMap } from "./mapbox-map";
 import { CourseMarker } from "./course-marker";
@@ -49,6 +49,8 @@ export function OptimizedMapClient({
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   // 위치 버튼 토글 상태 (false: 초기위치, true: 현재위치)
   const [isAtCurrentLocation, setIsAtCurrentLocation] = useState(false);
+  // 바텀시트 스냅 포인트 상태 (마커 오프셋 계산용)
+  const [bottomSheetSnapPoint, setBottomSheetSnapPoint] = useState<"closed" | "medium" | "full">("closed");
 
   // 전체 카테고리 추가 (메모이제이션)
   const allCategories = useMemo(() => addAllCategory(categories), [categories]);
@@ -109,6 +111,15 @@ export function OptimizedMapClient({
     }
   }, [map, isAtCurrentLocation, getCurrentLocation]);
 
+  // 바텀시트 열릴 때 스냅 포인트 medium으로 설정
+  useEffect(() => {
+    if (isFullscreenOpen) {
+      setBottomSheetSnapPoint("medium");
+    } else {
+      setBottomSheetSnapPoint("closed");
+    }
+  }, [isFullscreenOpen]);
+
   // 마커 클릭: 선택된 코스만 바텀시트에 표시
   const handleCourseClick = useCallback(
     (course: CourseWithCategory) => {
@@ -126,6 +137,11 @@ export function OptimizedMapClient({
     },
     [mapHandleClusterClick],
   );
+
+  // 바텀시트 스냅 포인트 변경 핸들러
+  const handleSnapPointChange = useCallback((snapPoint: "closed" | "medium" | "full") => {
+    setBottomSheetSnapPoint(snapPoint);
+  }, []);
 
   // 코스 상세 페이지 이동
   const handleCourseDetailNavigation = useCallback(
@@ -197,24 +213,26 @@ export function OptimizedMapClient({
             map={map}
             courses={optimisticCourses}
             currentCategory={currentCategory}
+            snapPoint={bottomSheetSnapPoint}
             onCourseClick={handleCourseClick}
             onClusterClick={handleClusterClick}
           />
         )}
 
-        {/* 현재 위치 버튼 */}
+        {/* 현재 위치 버튼 - 30x30 */}
         <button
           onClick={handleLocationToggle}
-          className="absolute top-16 right-4 z-20 bg-white rounded-lg shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+          className="absolute top-16 right-4 z-20 w-[30px] h-[30px] flex items-center justify-center bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           aria-label={
             isAtCurrentLocation ? "초기 위치로 이동" : "현재 위치로 이동"
           }
         >
-          <Image
-            src="/flaticon_icon.png"
-            alt="현재 위치"
-            width={30}
-            height={30}
+          <Navigation
+            className={`w-4 h-4 transition-colors ${
+              isAtCurrentLocation
+                ? "text-blue-500 fill-blue-500"
+                : "text-gray-600 dark:text-gray-300"
+            }`}
           />
         </button>
 
@@ -226,6 +244,7 @@ export function OptimizedMapClient({
           categories={allCategories}
           initialCategory={currentCategory}
           onCourseClick={handleCourseDetailNavigation}
+          onSnapPointChange={handleSnapPointChange}
           selectedCourse={selectedCourse}
           selectedCourses={selectedCourses}
         />
