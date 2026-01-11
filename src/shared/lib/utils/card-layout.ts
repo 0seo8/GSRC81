@@ -21,14 +21,15 @@ export interface CardLayout {
 
 const FIGMA_CARD_SPECS = {
   // 카드 높이 (box-sizing: border-box이므로 패딩 포함된 전체 높이)
+  // 모든 카드 180px로 완전 통일
   cardHeight: 11.25, // 180px (모든 카드 동일)
 
-  // 겹침/노출 영역 (모든 카드 동일)
-  overlap: 3.125, // 50px - 카드 간 겹침 영역 (통일)
-  visibleHeight: 8.125, // 130px - 노출 영역 (180px - 50px)
+  // 간격 (모든 카드 동일한 간격)
+  cardGap: 3.75, // 60px - 모든 카드 간 노출 간격 (통일)
+  bottomMargin: 0.5625, // 9px - 모든 케이스 통일된 바닥 여백
 
-  // 여백
-  bottomMargin: 0.5625, // 9px - 바닥 여백
+  // 숨김
+  hiddenOffset: -7, // -112px - 3개 이상일 때 1번 카드 숨김 ⭐
 
   // 모서리
   fullRadius: "2.8125rem", // 45px - 전체 모서리
@@ -55,56 +56,67 @@ export function calculateCardLayout(
   }
 
   // ========================================
-  // 2개 카드: index=0이 앞, index=1이 뒤
+  // 2개 카드
+  // 바텀시트가 화면 하단에서 6px 떨어짐, 바텀시트 내부에서는 간격 없음
   // ========================================
   if (totalCourses === 2) {
     if (courseIndex === 0) {
-      // 카드 1: 앞에 표시, 전체 둥근
+      // 카드 1: 앞에 표시, 전체 둥근, 바텀시트 내부 하단에 붙음
       return {
         height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
-        bottom: "0rem",
+        bottom: "0rem", // 바텀시트 내부 기준 0px (바텀시트 자체가 6px 떨어짐)
         borderRadius: FIGMA_CARD_SPECS.fullRadius,
-        zIndex: 2,
+        zIndex: 2, // 위에 표시
       };
     } else {
-      // 카드 2: 뒤에 표시 (130px 위에 위치, 50px 겹침)
+      // 카드 2: 뒤에 표시, 위쪽만 둥근
+      // 바텀시트 하단에서 80px 떨어진 위치에서 시작
       return {
         height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
-        bottom: `${FIGMA_CARD_SPECS.visibleHeight}rem`, // 130px
+        bottom: "5rem", // 80px (바텀시트 내부 기준)
         borderRadius: FIGMA_CARD_SPECS.topRadius,
-        zIndex: 1,
+        zIndex: 1, // 아래 표시
       };
     }
   }
 
   // ========================================
-  // 3개 이상: index=0 숨김, index=1 앞, index=2+ 뒤
+  // 3개 이상
+  // 바텀시트가 화면 하단에 붙어있음, 바텀시트 내부에서도 간격 없음
   // ========================================
   if (courseIndex === 0) {
-    // 카드 0: 아래로 숨김 (상단 12px만 노출)
-    // index=1 카드 bottom이 0이고 높이 180px → top 180px
-    // 12px 노출하려면: bottom = -(180 - 12) = -168px
+    // 카드 1: 12px만 노출, 나머지는 화면 아래로 숨김
+    // 136px(index=1 높이) - 12px(노출) = 124px 아래로
     return {
       height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
-      bottom: "-10.5rem", // -168px (12px만 노출)
+      bottom: "-7.75rem", // -124px (12px만 노출되도록)
       borderRadius: FIGMA_CARD_SPECS.fullRadius,
-      zIndex: totalCourses,
+      zIndex: totalCourses, // 가장 높은 z-index
     };
   }
 
   if (courseIndex === 1) {
-    // 카드 1: 맨 앞 (전체 노출)
+    // 카드 2: 180px 높이, bottom -50px (index=0과 50px 겹침)
     return {
       height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
-      bottom: "0rem",
-      borderRadius: FIGMA_CARD_SPECS.fullRadius,
-      zIndex: totalCourses - 1,
+      bottom: "-3.125rem", // -50px (index=0과 겹침)
+      borderRadius: FIGMA_CARD_SPECS.topRadius,
+      zIndex: totalCourses - courseIndex,
     };
   }
 
-  // index=2 이상: 뒤쪽 카드들 (130px 간격으로 통일)
-  // index=2: 130px, index=3: 260px, index=4: 390px
-  const cardBottom = (courseIndex - 1) * FIGMA_CARD_SPECS.visibleHeight; // 130px = 8.125rem
+  // ========================================
+  // 카드 3 이상 (index=2+): 180px 높이, 50px 겹침, 130px 노출
+  // 카드마다 bottom 위치는 80px씩 추가
+  // ========================================
+  // index=1: bottom 0px, height 136px → top 136px
+  // index=2: bottom 136px - 50px(겹침) = 86px? 아니, 80px씩 추가니까...
+  // index=2: bottom = 136px - 50px = 86px (index=1 top - 겹침)
+  // 또는: 카드마다 80px씩 추가 → index=2: 80px, index=3: 160px, ...
+
+  // 사용자 스펙: "카드가 하나씩 늘어날수록 bottom 위치는 80px만큼 추가"
+  // index=2: 80px, index=3: 160px, index=4: 240px, ...
+  const cardBottom = (courseIndex - 1) * 5; // 80px = 5rem, (index-1)은 index=2일 때 1, index=3일 때 2...
 
   return {
     height: `${FIGMA_CARD_SPECS.cardHeight}rem`, // 180px
@@ -115,25 +127,24 @@ export function calculateCardLayout(
 }
 
 /**
- * 전체 스택 높이 계산
- *
- * 규칙:
- * - 1개: 카드 높이 180px
- * - 2개 이상: 첫 카드 180px + (N-1) * 노출 영역 130px
- * - 50px 겹침이므로 각 추가 카드는 130px씩 높이 추가
+ * 전체 스택 높이 계산 (모든 카드 동일한 높이와 간격)
+ * 주의: box-sizing: border-box이므로 패딩이 이미 포함된 값
+ * 상단 여백과 하단 여백을 동일하게 유지 (각 9px)
  */
 export function getStackHeight(total: number): string {
   if (total === 0) return "0rem";
-  if (total === 1) return `${FIGMA_CARD_SPECS.cardHeight}rem`; // 180px
 
-  // 2개 이상: 첫 카드 180px + (N-1) * 130px (노출 영역)
-  // 2개: 180 + 130 = 310px
-  // 3개: 180 + 260 = 440px
-  // 4개: 180 + 390 = 570px
-  // 5개: 180 + 520 = 700px
+  // 모든 카드: 180px 높이, 60px 간격으로 완전 통일
+  // 공식: topMargin + Card 1 (180) + (N - 1) * cardGap + bottomMargin
+  // 1개: 9 + 180 + 0 + 9 = 198px
+  // 2개: 9 + 180 + 60 + 9 = 258px
+  // 3개: 9 + 180 + 120 + 9 = 318px
+  // 4개: 9 + 180 + 180 + 9 = 378px
   const totalHeight =
+    FIGMA_CARD_SPECS.bottomMargin + // 상단 여백 (9px)
     FIGMA_CARD_SPECS.cardHeight + // 첫 카드 높이 (180px)
-    (total - 1) * FIGMA_CARD_SPECS.visibleHeight; // 추가 카드들 (각 130px씩 노출)
+    (total - 1) * FIGMA_CARD_SPECS.cardGap + // 추가 카드들 (각 60px씩)
+    FIGMA_CARD_SPECS.bottomMargin; // 하단 여백 (9px)
 
   return `${totalHeight}rem`;
 }
