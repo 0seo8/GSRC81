@@ -116,9 +116,18 @@ async function generateAppleIcon() {
 }
 
 async function generateSplashScreen({ width, height, name }) {
-  // 로고 사이즈 계산 (화면 너비의 60%)
-  const logoWidth = Math.floor(width * 0.6);
-  const logoHeight = Math.floor(logoWidth * 0.63); // 로고 비율 유지 (374/592 ≈ 0.63)
+  // 커스텀 스플래시와 동일한 로고 크기 계산
+  // 앱에서 로고: 296x187 CSS pixels
+  // 디바이스 픽셀 비율에 맞게 스케일링
+
+  // 디바이스별 픽셀 비율 추정 (width 기준)
+  const devicePixelRatio = width <= 828 ? 2 : 3;
+  const cssWidth = width / devicePixelRatio;
+
+  // 커스텀 스플래시의 로고 비율과 동일하게 (화면 대비 약 76% - 296/390 ≈ 0.76)
+  const logoRatio = 0.76;
+  const logoWidth = Math.floor(cssWidth * logoRatio * devicePixelRatio);
+  const logoHeight = Math.floor(logoWidth * (187 / 296)); // 원본 비율 유지 (187/296)
 
   // SVG에서 고해상도 PNG로 변환
   const resizedLogo = await svgToPng(logoWidth, logoHeight);
@@ -138,7 +147,7 @@ async function generateSplashScreen({ width, height, name }) {
     .png()
     .toFile(join(publicDir, `apple-splash-${width}x${height}.png`));
 
-  console.log(`✓ Generated apple-splash-${width}x${height}.png (${name})`);
+  console.log(`✓ Generated apple-splash-${width}x${height}.png (${name}) - logo: ${logoWidth}x${logoHeight}`);
 }
 
 async function main() {
