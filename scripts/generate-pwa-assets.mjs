@@ -1,6 +1,8 @@
 /**
  * PWA 아이콘 및 스플래시 이미지 생성 스크립트
  *
+ * SVG를 소스로 사용하여 고해상도 PNG 생성
+ *
  * 생성되는 파일:
  * - icon-192x192.png: PWA 아이콘 (manifest.json용)
  * - icon-512x512.png: PWA 아이콘 (manifest.json용, 스플래시용)
@@ -9,13 +11,37 @@
  */
 
 import sharp from 'sharp';
-import { mkdir } from 'fs/promises';
+import { readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const publicDir = join(__dirname, '..', 'public');
-const logoPath = join(publicDir, 'logo.png');
+const logoSvgPath = join(publicDir, 'logo.svg');
+const logoPngPath = join(publicDir, 'logo.png'); // fallback
+
+// SVG를 지정된 크기의 PNG 버퍼로 변환
+async function svgToPng(width, height) {
+  try {
+    const svgBuffer = await readFile(logoSvgPath);
+    return await sharp(svgBuffer, { density: 300 }) // 고해상도 렌더링
+      .resize(width, height, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .png()
+      .toBuffer();
+  } catch (error) {
+    console.log('⚠️  SVG not found, falling back to PNG...');
+    return await sharp(logoPngPath)
+      .resize(width, height, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .png()
+      .toBuffer();
+  }
+}
 
 // 브랜드 컬러 (manifest.json background_color와 동일)
 const BACKGROUND_COLOR = { r: 248, g: 249, b: 250 }; // #f8f9fa
@@ -39,22 +65,14 @@ const SPLASH_SIZES = [
 ];
 
 async function generateIcon(size) {
-  const logo = await sharp(logoPath);
-  const metadata = await logo.metadata();
-
   // 로고를 정사각형에 맞게 리사이즈 (패딩 포함)
   const logoSize = Math.floor(size * 0.65); // 로고가 아이콘의 65% 차지
 
-  // 로고 리사이즈 (비율 유지)
-  const resizedLogo = await sharp(logoPath)
-    .resize(logoSize, logoSize, {
-      fit: 'contain',
-      background: { r: 0, g: 0, b: 0, alpha: 0 }
-    })
-    .toBuffer();
+  // SVG에서 고해상도 PNG로 변환
+  const resizedLogo = await svgToPng(logoSize, logoSize);
 
   // 배경 이미지 생성 후 로고 합성
-  const icon = await sharp({
+  await sharp({
     create: {
       width: size,
       height: size,
@@ -69,19 +87,15 @@ async function generateIcon(size) {
     .png()
     .toFile(join(publicDir, `icon-${size}x${size}.png`));
 
-  console.log(`✓ Generated icon-${size}x${size}.png`);
+  console.log(`✓ Generated icon-${size}x${size}.png (from SVG)`);
 }
 
 async function generateAppleIcon() {
   const size = 180;
   const logoSize = Math.floor(size * 0.65);
 
-  const resizedLogo = await sharp(logoPath)
-    .resize(logoSize, logoSize, {
-      fit: 'contain',
-      background: { r: 0, g: 0, b: 0, alpha: 0 }
-    })
-    .toBuffer();
+  // SVG에서 고해상도 PNG로 변환
+  const resizedLogo = await svgToPng(logoSize, logoSize);
 
   await sharp({
     create: {
@@ -98,7 +112,7 @@ async function generateAppleIcon() {
     .png()
     .toFile(join(publicDir, 'apple-icon-180x180.png'));
 
-  console.log('✓ Generated apple-icon-180x180.png');
+  console.log('✓ Generated apple-icon-180x180.png (from SVG)');
 }
 
 async function generateSplashScreen({ width, height, name }) {
@@ -106,12 +120,8 @@ async function generateSplashScreen({ width, height, name }) {
   const logoWidth = Math.floor(width * 0.6);
   const logoHeight = Math.floor(logoWidth * 0.63); // 로고 비율 유지 (374/592 ≈ 0.63)
 
-  const resizedLogo = await sharp(logoPath)
-    .resize(logoWidth, logoHeight, {
-      fit: 'contain',
-      background: { r: 0, g: 0, b: 0, alpha: 0 }
-    })
-    .toBuffer();
+  // SVG에서 고해상도 PNG로 변환
+  const resizedLogo = await svgToPng(logoWidth, logoHeight);
 
   await sharp({
     create: {
