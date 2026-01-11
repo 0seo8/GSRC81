@@ -68,8 +68,8 @@ export function CategoryFullScreen({
     );
   }, [filteredCourses, categories, initialCategory]);
 
-  // 카테고리 네비게이션 훅 (스와이프 기능 제거로 인해 현재 카테고리 정보만 사용)
-  const { currentCategory, dongNames } = useCategoryNavigation({
+  // 카테고리 네비게이션 훅 (스와이프 기능 제거로 인해 동 이름 정보만 사용)
+  const { dongNames } = useCategoryNavigation({
     categories,
     initialCategory: actualCategory.key,
     onCategoryChange,

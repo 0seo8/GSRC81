@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
+import {
+  EUNPYEONG_CENTER,
+  DEFAULT_ZOOM,
+  FLY_TO_DURATION,
+  FIT_BOUNDS_CONFIG,
+} from "@/core/config/map";
 
 /**
  * 디바운스된 함수 호출
@@ -52,9 +58,9 @@ export function useMapBounds(
     // 코스가 없을 때는 기본 위치(은평구)로 이동
     if (courses.length === 0) {
       map.flyTo({
-        center: [126.9285, 37.6176], // 은평구 중심 좌표
-        zoom: 11.5,
-        duration: 1000,
+        center: EUNPYEONG_CENTER,
+        zoom: DEFAULT_ZOOM,
+        duration: FLY_TO_DURATION,
       });
       return;
     }
@@ -75,11 +81,17 @@ export function useMapBounds(
     const minLat = Math.min(...lats);
     const maxLat = Math.max(...lats);
 
-    // 코스 외각 기준으로 적절한 여백 추가 (전체 범위의 15%)
+    // 코스 외각 기준으로 적절한 여백 추가
     const lngRange = maxLng - minLng;
     const latRange = maxLat - minLat;
-    const lngPadding = Math.max(lngRange * 0.15, 0.01); // 최소 패딩 보장
-    const latPadding = Math.max(latRange * 0.15, 0.01);
+    const lngPadding = Math.max(
+      lngRange * FIT_BOUNDS_CONFIG.PADDING_RATIO,
+      FIT_BOUNDS_CONFIG.MIN_PADDING,
+    );
+    const latPadding = Math.max(
+      latRange * FIT_BOUNDS_CONFIG.PADDING_RATIO,
+      FIT_BOUNDS_CONFIG.MIN_PADDING,
+    );
 
     const bounds: [[number, number], [number, number]] = [
       [minLng - lngPadding, minLat - latPadding],
@@ -90,15 +102,16 @@ export function useMapBounds(
     if (coordinates.length === 1) {
       map.flyTo({
         center: coordinates[0],
-        zoom: 11.5, // 줌 범위 10-12.85 내에서 적절한 레벨
-        duration: 1000,
+        zoom: DEFAULT_ZOOM,
+        duration: FLY_TO_DURATION,
       });
     } else {
       // 여러 지점인 경우 - 줌 범위 제한 적용
+      const uiPadding = FIT_BOUNDS_CONFIG.UI_PADDING;
       map.fitBounds(bounds, {
-        padding: { top: 80, bottom: 80, left: 80, right: 80 },
-        maxZoom: 12.5, // 사용자 요구사항에 따른 최대 줌 제한
-        duration: 1000,
+        padding: { top: uiPadding, bottom: uiPadding, left: uiPadding, right: uiPadding },
+        maxZoom: FIT_BOUNDS_CONFIG.MAX_ZOOM,
+        duration: FLY_TO_DURATION,
       });
     }
   }, [map, courses]);

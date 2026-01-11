@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Navigation } from "lucide-react";
 
@@ -49,8 +49,8 @@ export function OptimizedMapClient({
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   // 위치 버튼 토글 상태 (false: 초기위치, true: 현재위치)
   const [isAtCurrentLocation, setIsAtCurrentLocation] = useState(false);
-  // 바텀시트 스냅 포인트 상태 (마커 오프셋 계산용)
-  const [bottomSheetSnapPoint, setBottomSheetSnapPoint] = useState<"closed" | "medium" | "full">("closed");
+  // 바텀시트 스냅 포인트 상태 (외부 트래킹용)
+  const [, setBottomSheetSnapPoint] = useState<"closed" | "medium" | "full">("closed");
 
   // 전체 카테고리 추가 (메모이제이션)
   const allCategories = useMemo(() => addAllCategory(categories), [categories]);
@@ -213,7 +213,6 @@ export function OptimizedMapClient({
             map={map}
             courses={optimisticCourses}
             currentCategory={currentCategory}
-            snapPoint={bottomSheetSnapPoint}
             onCourseClick={handleCourseClick}
             onClusterClick={handleClusterClick}
           />
