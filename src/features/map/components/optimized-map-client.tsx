@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Navigation } from "lucide-react";
+import { toast } from "sonner";
 
 import { MapboxMap } from "./mapbox-map";
 import { CourseMarker } from "./course-marker";
@@ -86,7 +87,24 @@ export function OptimizedMapClient({
     map,
     onError: (error) => {
       console.error("위치 정보를 가져올 수 없습니다:", error);
-      // TODO: 사용자에게 토스트/알림으로 에러 표시
+      // 에러 유형에 따른 사용자 피드백
+      if (error.code === error.PERMISSION_DENIED) {
+        toast.error("위치 권한이 거부되었습니다. 설정에서 권한을 허용해주세요.", {
+          duration: 4000,
+        });
+      } else if (error.code === error.POSITION_UNAVAILABLE) {
+        toast.error("위치 정보를 사용할 수 없습니다.", {
+          duration: 3000,
+        });
+      } else if (error.code === error.TIMEOUT) {
+        toast.error("위치 정보 요청 시간이 초과되었습니다.", {
+          duration: 3000,
+        });
+      } else {
+        toast.error("위치 정보를 가져올 수 없습니다.", {
+          duration: 3000,
+        });
+      }
     },
     onSuccess: () => {
       setIsAtCurrentLocation(true);
@@ -225,6 +243,7 @@ export function OptimizedMapClient({
           aria-label={
             isAtCurrentLocation ? "초기 위치로 이동" : "현재 위치로 이동"
           }
+          aria-pressed={isAtCurrentLocation}
         >
           <Navigation
             className={`w-4 h-4 transition-colors ${

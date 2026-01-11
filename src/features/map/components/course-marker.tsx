@@ -10,6 +10,7 @@ import {
   getMarkerOffset,
   MARKER_ANIMATION,
   CLUSTER_CONFIG,
+  MARKER_Z_INDEX,
 } from "@/core/config/map";
 import { NumberMarker } from "./number-marker";
 import { MarkerSkeleton } from "./marker-skeleton";
@@ -131,14 +132,25 @@ const CourseMarkerComponent = function CourseMarker({
           continue;
         }
 
+        // 마커 정보 계산
+        const markerNumber = isCluster ? props.point_count : 1;
+
         // 마커 엘리먼트 생성
         const el = document.createElement("div");
         el.style.cssText = `
           cursor: pointer;
-          z-index: ${isCluster ? 10 : 5};
+          z-index: ${isCluster ? MARKER_Z_INDEX.CLUSTER : MARKER_Z_INDEX.POINT};
         `;
 
-        const markerNumber = isCluster ? props.point_count : 1;
+        // 접근성 속성 추가
+        el.setAttribute("role", "button");
+        el.setAttribute("tabindex", "0");
+        el.setAttribute(
+          "aria-label",
+          isCluster
+            ? `${markerNumber}개 코스가 모인 클러스터`
+            : `${props.title || "코스"} 마커`,
+        );
         const categoryKey =
           currentCategoryRef.current === "all"
             ? "all"
