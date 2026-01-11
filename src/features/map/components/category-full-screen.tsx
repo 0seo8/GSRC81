@@ -243,8 +243,9 @@ export function CategoryFullScreen({
               ref={scrollContainerRef}
               className="flex-1 overflow-y-auto px-[0.4375rem] pb-0"
             >
-              {/* mt-auto로 카드를 하단 정렬하면서 스크롤 시 헤더에 가려지지 않음 */}
-              <div className="min-h-full flex flex-col justify-end">
+              {/* pt로 스크롤 시 마지막 카드가 헤더에 가려지지 않도록 여백 확보 */}
+              {/* 헤더 높이(약 100px) + 여유 공간 */}
+              <div className="min-h-full flex flex-col justify-end pt-[6.5rem]">
                 <RefactoredCourseCardStack
                   courses={filteredCourses}
                   cardColors={currentDesign.cardColors}
