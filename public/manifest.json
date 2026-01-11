@@ -12,10 +12,16 @@
   "categories": ["sports", "fitness", "navigation"],
   "icons": [
     {
-      "src": "/logo.png",
-      "sizes": "296x187",
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "screenshots": [
@@ -33,7 +39,7 @@
       "short_name": "지도",
       "description": "러닝 코스 지도 탐색",
       "url": "/map",
-      "icons": [{ "src": "/logo.png", "sizes": "296x187" }]
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
     }
   ],
   "related_applications": [],
