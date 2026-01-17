@@ -12,11 +12,11 @@ import { MapEmptyState } from "./map-empty-state";
 import { useMapState } from "@/features/map/hooks/use-map-state";
 import { useMapBounds } from "@/features/map/hooks/use-map-bounds";
 import { type CourseCategory, getCourses } from "@/shared/lib/courses-data";
-import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
+import { type CourseForMap } from "@/lib/supabase/repositories/courseRepository";
 import { MAP_STYLES } from "@/core/config/constants";
 
 interface MapClientProps {
-  courses: CourseWithCategory[];
+  courses: CourseForMap[];
   categories: CourseCategory[];
 }
 
@@ -26,7 +26,7 @@ export function MapClient({ courses, categories }: MapClientProps) {
   const [clickedCourseCategory, setClickedCourseCategory] = useState<
     string | null
   >(null);
-  const [allCourses, setAllCourses] = useState<CourseWithCategory[]>(courses);
+  const [allCourses, setAllCourses] = useState<CourseForMap[]>(courses);
   const [currentMapCategory, setCurrentMapCategory] =
     useState<string>("jingwan");
 
@@ -42,7 +42,7 @@ export function MapClient({ courses, categories }: MapClientProps) {
         try {
           const categoryCourses = await getCourses(categoryKey);
           setAllCourses(
-            (prev) => [...prev, ...categoryCourses] as CourseWithCategory[],
+            (prev) => [...prev, ...categoryCourses] as CourseForMap[],
           );
         } catch (error) {
           console.error(`Failed to load ${categoryKey} courses:`, error);
@@ -72,7 +72,7 @@ export function MapClient({ courses, categories }: MapClientProps) {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
 
   // 새로운 클릭 핸들러들
-  const handleCourseClick = async (course: CourseWithCategory) => {
+  const handleCourseClick = async (course: CourseForMap) => {
     const categoryKey = course.course_categories?.key || "jingwan";
     await loadCategoryIfNeeded(categoryKey);
     setClickedCourseCategory(categoryKey);
@@ -80,7 +80,7 @@ export function MapClient({ courses, categories }: MapClientProps) {
     originalHandleCourseClick(course);
   };
 
-  const handleClusterClick = async (coursesInCluster: CourseWithCategory[]) => {
+  const handleClusterClick = async (coursesInCluster: CourseForMap[]) => {
     const firstCourse = coursesInCluster[0];
     const categoryKey = firstCourse.course_categories?.key || "jingwan";
     await loadCategoryIfNeeded(categoryKey);
@@ -212,7 +212,6 @@ export function MapClient({ courses, categories }: MapClientProps) {
         <CategoryFullScreen
           isOpen={clickedCourseCategory !== null}
           onClose={handleCloseCategoryView}
-          courses={allCourses}
           categories={categories}
           initialCategory={clickedCourseCategory || "jingwan"}
           onCourseClick={handleCourseCardClick}

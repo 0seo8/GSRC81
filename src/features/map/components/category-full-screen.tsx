@@ -3,26 +3,25 @@
 import { useMemo, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { type CourseCategory } from "@/shared/lib/courses-data";
-import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
+import { type CourseForMap } from "@/lib/supabase/repositories/courseRepository";
 import { getCategoryDesign } from "@/core/config/category-designs";
 import { useBottomSheetDrag } from "@/features/map/hooks/use-bottom-sheet-drag";
 import { useCategoryNavigation } from "@/features/map/hooks/use-category-navigation";
 import { BottomSheetHeader } from "@/features/map/components/bottom-sheet-header";
 import { RefactoredCourseCardStack } from "@/features/map/components/refactored-course-card-stack";
 
-type SnapPoint = "closed" | "medium" | "full";
+type SnapPoint = "minimized" | "medium" | "full";
 
 interface CategoryFullScreenProps {
   isOpen: boolean;
   onClose: () => void;
-  courses: CourseWithCategory[];
   categories: CourseCategory[];
   initialCategory?: string;
   onCourseClick: (courseId: string) => void;
   onCategoryChange?: (categoryKey: string) => void;
   onSnapPointChange?: (snapPoint: SnapPoint) => void;
-  selectedCourse?: CourseWithCategory | null;
-  selectedCourses?: CourseWithCategory[];
+  selectedCourse?: CourseForMap | null;
+  selectedCourses?: CourseForMap[];
 }
 
 export function CategoryFullScreen({
@@ -76,8 +75,8 @@ export function CategoryFullScreen({
     filteredCourses,
   });
 
-  // 드래그 핸들링 훅 (스와이프 기능 제거, 상하 드래그만 지원)
-  const { isDragging, handleHeaderDrag, snapManager } = useBottomSheetDrag({
+  // 드래그 핸들링 훅 (상하 드래그로 snap points 변경)
+  const { isDragging, handleHeaderDrag, handleDragStart, handleDragEnd, snapManager } = useBottomSheetDrag({
     onClose,
   });
 
@@ -235,6 +234,8 @@ export function CategoryFullScreen({
                 dongNames={dongNames}
                 isAllCategory={actualCategory?.key === "all"}
                 onHeaderDrag={handleHeaderDrag}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
               />
             </div>
 
@@ -247,7 +248,6 @@ export function CategoryFullScreen({
               <div className="min-h-full flex flex-col justify-end pt-[8rem]">
                 <RefactoredCourseCardStack
                   courses={filteredCourses}
-                  cardColors={currentDesign.cardColors}
                   isDragging={isDragging}
                   onCourseClick={onCourseClick}
                   isExpanded={snapManager.snapPoint === "full"}

@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 
-export type SnapPoint = "closed" | "medium" | "full";
+export type SnapPoint = "minimized" | "medium" | "full";
 
 interface UseBottomSheetSnapProps {
   onClose: () => void;
@@ -12,7 +12,7 @@ export function useBottomSheetSnap({ onClose }: UseBottomSheetSnapProps) {
   // Snap point별 높이 반환
   const getSnapHeight = useCallback((point: SnapPoint): string => {
     switch (point) {
-      case "closed":
+      case "minimized":
         return "0vh";
       case "medium":
         return "60vh"; // 현재 디자인 유지
@@ -27,7 +27,7 @@ export function useBottomSheetSnap({ onClose }: UseBottomSheetSnapProps) {
   const snapToNext = useCallback(() => {
     setSnapPoint((current) => {
       switch (current) {
-        case "closed":
+        case "minimized":
           return "medium";
         case "medium":
           return "full";
@@ -46,10 +46,10 @@ export function useBottomSheetSnap({ onClose }: UseBottomSheetSnapProps) {
         case "full":
           return "medium";
         case "medium":
-          return "closed";
-        case "closed":
-          onClose(); // 닫힌 상태에서는 완전히 닫기
-          return "closed";
+          return "minimized";
+        case "minimized":
+          onClose(); // 최소화 상태에서는 완전히 닫기
+          return "minimized";
         default:
           return "medium";
       }

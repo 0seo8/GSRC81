@@ -26,6 +26,27 @@ export type CourseWithDetails = CourseWithCategory & {
 };
 
 /**
+ * 맵 렌더링에 필요한 최소 코스 데이터
+ */
+export type CourseForMap = {
+  id: string;
+  title: string;
+  description: string | null;
+  difficulty: string | null;
+  distance_km: number;
+  elevation_gain: number | null;
+  gpx_data: unknown;
+  start_latitude: number;
+  start_longitude: number;
+  cover_image_url: string | null;
+  category_id: string | null;
+  course_categories: {
+    key: string;
+    name: string;
+  } | null;
+};
+
+/**
  * Course Repository
  *
  * 코스 데이터 접근 로직을 중앙화합니다.
@@ -144,7 +165,7 @@ export function courseRepository(supabase: SupabaseClient<Database>) {
         .order("sort_order", { ascending: true });
 
       if (error) throw error;
-      return data;
+      return data as CourseForMap[];
     },
 
     /**

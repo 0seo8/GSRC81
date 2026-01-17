@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, memo } from "react";
 import { createRoot } from "react-dom/client";
 import mapboxgl from "mapbox-gl";
 import { toast } from "sonner";
-import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
+import { type CourseForMap } from "@/lib/supabase/repositories/courseRepository";
 import { getCategoryDesign } from "@/core/config/category-designs";
 import {
   getMarkerOffset,
@@ -15,7 +15,7 @@ import {
 import { NumberMarker } from "./number-marker";
 import { MarkerSkeleton } from "./marker-skeleton";
 
-type Course = CourseWithCategory;
+type Course = CourseForMap;
 
 interface CourseMarkerProps {
   map: mapboxgl.Map;
@@ -175,7 +175,7 @@ const CourseMarkerComponent = function CourseMarker({
           e.stopPropagation();
 
           // 마커 클릭 시 바텀시트가 열리므로 항상 "medium" 오프셋 사용
-          // (클릭 시점에는 아직 snapPoint가 closed일 수 있음)
+          // (클릭 시점에는 아직 snapPoint가 minimized일 수 있음)
           const offsetY = getMarkerOffset("medium");
 
           if (process.env.NODE_ENV === "development") {

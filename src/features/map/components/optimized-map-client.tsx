@@ -15,7 +15,7 @@ import { useMapState } from "@/features/map/hooks/use-map-state";
 import { useMapBounds } from "@/features/map/hooks/use-map-bounds";
 import { useGeolocation } from "@/shared/hooks/use-geolocation";
 import { type CourseCategory } from "@/shared/lib/courses-data";
-import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
+import { type CourseForMap } from "@/lib/supabase/repositories/courseRepository";
 import { addAllCategory } from "@/shared/lib/category-utils";
 import {
   MAPBOX_TOKEN,
@@ -25,7 +25,7 @@ import {
 } from "@/core/config/map";
 
 interface OptimizedMapClientProps {
-  courses: CourseWithCategory[];
+  courses: CourseForMap[];
   categories: CourseCategory[];
 }
 
@@ -51,7 +51,7 @@ export function OptimizedMapClient({
   // 위치 버튼 토글 상태 (false: 초기위치, true: 현재위치)
   const [isAtCurrentLocation, setIsAtCurrentLocation] = useState(false);
   // 바텀시트 스냅 포인트 상태 (외부 트래킹용)
-  const [, setBottomSheetSnapPoint] = useState<"closed" | "medium" | "full">("closed");
+  const [, setBottomSheetSnapPoint] = useState<"minimized" | "medium" | "full">("minimized");
 
   // 전체 카테고리 추가 (메모이제이션)
   const allCategories = useMemo(() => addAllCategory(categories), [categories]);
@@ -134,13 +134,13 @@ export function OptimizedMapClient({
     if (isFullscreenOpen) {
       setBottomSheetSnapPoint("medium");
     } else {
-      setBottomSheetSnapPoint("closed");
+      setBottomSheetSnapPoint("minimized");
     }
   }, [isFullscreenOpen]);
 
   // 마커 클릭: 선택된 코스만 바텀시트에 표시
   const handleCourseClick = useCallback(
-    (course: CourseWithCategory) => {
+    (course: CourseForMap) => {
       mapHandleCourseClick(course);
       setIsFullscreenOpen(true);
     },
@@ -149,7 +149,7 @@ export function OptimizedMapClient({
 
   // 클러스터 클릭: 클러스터 내 코스들만 바텀시트에 표시
   const handleClusterClick = useCallback(
-    (coursesInCluster: CourseWithCategory[]) => {
+    (coursesInCluster: CourseForMap[]) => {
       mapHandleClusterClick(coursesInCluster);
       setIsFullscreenOpen(true);
     },
@@ -157,7 +157,7 @@ export function OptimizedMapClient({
   );
 
   // 바텀시트 스냅 포인트 변경 핸들러
-  const handleSnapPointChange = useCallback((snapPoint: "closed" | "medium" | "full") => {
+  const handleSnapPointChange = useCallback((snapPoint: "minimized" | "medium" | "full") => {
     setBottomSheetSnapPoint(snapPoint);
   }, []);
 
@@ -258,7 +258,6 @@ export function OptimizedMapClient({
         <CategoryFullScreen
           isOpen={isFullscreenOpen}
           onClose={handleCloseFullscreen}
-          courses={courses}
           categories={allCategories}
           initialCategory={currentCategory}
           onCourseClick={handleCourseDetailNavigation}

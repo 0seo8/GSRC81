@@ -1,20 +1,20 @@
 "use client";
 
 import { useState, useCallback, useOptimistic } from "react";
-import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
+import { type CourseForMap } from "@/lib/supabase/repositories/courseRepository";
 
-export function useMapState(courses: CourseWithCategory[]) {
+export function useMapState(courses: CourseForMap[]) {
   const [map, setMap] = useState<mapboxgl.Map | null>(null);
   const [selectedCourse, setSelectedCourse] =
-    useState<CourseWithCategory | null>(null);
-  const [selectedCourses, setSelectedCourses] = useState<CourseWithCategory[]>(
+    useState<CourseForMap | null>(null);
+  const [selectedCourses, setSelectedCourses] = useState<CourseForMap[]>(
     [],
   );
 
   // React 19의 useOptimistic을 활용한 낙관적 업데이트
   const [optimisticCourses, addOptimisticCourse] = useOptimistic(
     courses,
-    (state, newCourse: CourseWithCategory) => [...state, newCourse],
+    (state, newCourse: CourseForMap) => [...state, newCourse],
   );
 
   const handleMapLoad = useCallback((mapInstance: mapboxgl.Map) => {
@@ -26,12 +26,12 @@ export function useMapState(courses: CourseWithCategory[]) {
     });
   }, []);
 
-  const handleCourseClick = useCallback((course: CourseWithCategory) => {
+  const handleCourseClick = useCallback((course: CourseForMap) => {
     setSelectedCourse(course);
     setSelectedCourses([]);
   }, []);
 
-  const handleClusterClick = useCallback((courses: CourseWithCategory[]) => {
+  const handleClusterClick = useCallback((courses: CourseForMap[]) => {
     setSelectedCourses(courses);
     setSelectedCourse(null);
   }, []);

@@ -30,10 +30,11 @@ async function MapData() {
   const courseRepo = courseRepository(supabase);
   const categoryRepo = categoryRepository(supabase);
 
-  // 카테고리와 전체 코스를 병렬로 로드
+  // 카테고리와 맵용 코스를 병렬로 로드
+  // getCoursesForMap(): 맵에 필요한 필드만 선택 + gpx_data가 있는 코스만 필터링
   const [categories, courses] = await Promise.all([
     categoryRepo.getActiveCategories(),
-    courseRepo.getActiveCourses(),
+    courseRepo.getCoursesForMap(),
   ]);
 
   return <OptimizedMapClient courses={courses} categories={categories} />;

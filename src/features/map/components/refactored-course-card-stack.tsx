@@ -1,20 +1,18 @@
-import { CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
+import { CourseForMap } from "@/lib/supabase/repositories/courseRepository";
 import { CourseCard } from "./course-card";
 import { getStackHeight } from "@/shared/lib/utils/card-layout";
 import { getCardColorForCourse } from "@/core/config/category-designs";
 
 interface RefactoredCourseCardStackProps {
-  courses: CourseWithCategory[];
-  cardColors: readonly string[];
+  courses: CourseForMap[];
   isDragging: boolean;
   onCourseClick: (courseId: string) => void;
   isExpanded?: boolean;
-  currentCategoryKey?: string; // 현재 선택된 카테고리 키 추가
+  currentCategoryKey?: string;
 }
 
 export function RefactoredCourseCardStack({
   courses,
-  cardColors,
   isDragging,
   onCourseClick,
   isExpanded = false,

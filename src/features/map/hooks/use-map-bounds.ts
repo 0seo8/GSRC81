@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { type CourseWithCategory } from "@/lib/supabase/repositories/courseRepository";
+import { type CourseForMap } from "@/lib/supabase/repositories/courseRepository";
 import {
   EUNPYEONG_CENTER,
   DEFAULT_ZOOM,
@@ -49,7 +49,7 @@ function useDebouncedCallback<T extends (...args: Parameters<T>) => void>(
 
 export function useMapBounds(
   map: mapboxgl.Map | null,
-  courses: CourseWithCategory[],
+  courses: CourseForMap[],
 ) {
   // 코스들의 좌표 범위에 맞춰 지도 범위 설정
   const fitMapToCourses = useCallback(() => {

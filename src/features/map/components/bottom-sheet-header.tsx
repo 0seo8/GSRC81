@@ -9,6 +9,8 @@ interface BottomSheetHeaderProps {
     event: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo,
   ) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
 }
 
 export function BottomSheetHeader({
@@ -16,6 +18,8 @@ export function BottomSheetHeader({
   dongNames,
   isAllCategory,
   onHeaderDrag,
+  onDragStart,
+  onDragEnd,
 }: BottomSheetHeaderProps) {
   const getTitle = () => {
     if (isAllCategory) {
@@ -35,6 +39,7 @@ export function BottomSheetHeader({
     setStartPos({ x: touch.clientX, y: touch.clientY });
     setStartTime(Date.now());
     isDragging.current = true;
+    onDragStart?.();
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
@@ -70,12 +75,14 @@ export function BottomSheetHeader({
 
     onHeaderDrag(e.nativeEvent, panInfo);
     isDragging.current = false;
+    onDragEnd?.();
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setStartPos({ x: e.clientX, y: e.clientY });
     setStartTime(Date.now());
     isDragging.current = true;
+    onDragStart?.();
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
@@ -110,6 +117,7 @@ export function BottomSheetHeader({
 
     onHeaderDrag(e.nativeEvent, panInfo);
     isDragging.current = false;
+    onDragEnd?.();
   };
 
   return (
