@@ -51,7 +51,9 @@ export function OptimizedMapClient({
   // 위치 버튼 토글 상태 (false: 초기위치, true: 현재위치)
   const [isAtCurrentLocation, setIsAtCurrentLocation] = useState(false);
   // 바텀시트 스냅 포인트 상태 (외부 트래킹용)
-  const [, setBottomSheetSnapPoint] = useState<"minimized" | "medium" | "full">("minimized");
+  const [, setBottomSheetSnapPoint] = useState<"minimized" | "medium" | "full">(
+    "minimized",
+  );
 
   // 전체 카테고리 추가 (메모이제이션)
   const allCategories = useMemo(() => addAllCategory(categories), [categories]);
@@ -89,9 +91,12 @@ export function OptimizedMapClient({
       console.error("위치 정보를 가져올 수 없습니다:", error);
       // 에러 유형에 따른 사용자 피드백
       if (error.code === error.PERMISSION_DENIED) {
-        toast.error("위치 권한이 거부되었습니다. 설정에서 권한을 허용해주세요.", {
-          duration: 4000,
-        });
+        toast.error(
+          "위치 권한이 거부되었습니다. 설정에서 권한을 허용해주세요.",
+          {
+            duration: 4000,
+          },
+        );
       } else if (error.code === error.POSITION_UNAVAILABLE) {
         toast.error("위치 정보를 사용할 수 없습니다.", {
           duration: 3000,
@@ -157,9 +162,12 @@ export function OptimizedMapClient({
   );
 
   // 바텀시트 스냅 포인트 변경 핸들러
-  const handleSnapPointChange = useCallback((snapPoint: "minimized" | "medium" | "full") => {
-    setBottomSheetSnapPoint(snapPoint);
-  }, []);
+  const handleSnapPointChange = useCallback(
+    (snapPoint: "minimized" | "medium" | "full") => {
+      setBottomSheetSnapPoint(snapPoint);
+    },
+    [],
+  );
 
   // 코스 상세 페이지 이동
   const handleCourseDetailNavigation = useCallback(

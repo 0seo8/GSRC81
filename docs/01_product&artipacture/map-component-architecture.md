@@ -1,8 +1,9 @@
 # GSRC81 Map Component Architecture
+
 > 지도 컴포넌트 아키텍처 문서
 
-**Version**: 1.0.0
-**Last Updated**: 2026-01-11
+**Version**: 1.1.0
+**Last Updated**: 2026-01-18
 
 ---
 
@@ -36,11 +37,13 @@
 ## 2. 주요 컴포넌트 상세
 
 ### 2.1 MapboxMap
+
 **파일**: `src/features/map/components/mapbox-map.tsx`
 
 **역할**: Mapbox GL JS 래퍼 컴포넌트
 
 **Props**:
+
 | Prop | Type | 설명 |
 |------|------|------|
 | accessToken | string | Mapbox API 토큰 |
@@ -50,6 +53,7 @@
 | onMapLoad | (map) => void | 로드 완료 콜백 |
 
 **특징**:
+
 - 한국어 라벨 자동 적용
 - `preserveDrawingBuffer: true` (스크린샷용)
 - React.memo로 불필요한 리렌더링 방지
@@ -57,11 +61,13 @@
 ---
 
 ### 2.2 CourseMarker
+
 **파일**: `src/features/map/components/course-marker.tsx`
 
 **역할**: 코스 마커 및 클러스터링 관리
 
 **Props**:
+
 | Prop | Type | 설명 |
 |------|------|------|
 | map | mapboxgl.Map | 맵 인스턴스 |
@@ -72,6 +78,7 @@
 | onClusterClick | (courses) => void | 클러스터 클릭 핸들러 |
 
 **클러스터링 설정**:
+
 ```typescript
 {
   cluster: true,
@@ -81,12 +88,13 @@
 ```
 
 **마커 오프셋 계산** (BUG-001 수정):
+
 ```typescript
 const getMarkerOffset = (snapPoint: SnapPoint): number => {
   const offsets: Record<SnapPoint, number> = {
-    closed: 0,      // 바텀시트 닫힘
-    medium: 0.3,    // 60vh
-    full: 0.475,    // 95vh
+    minimized: 0, // 바텀시트 최소화
+    medium: 0.3, // 60vh
+    full: 0.475, // 95vh
   };
   return -(window.innerHeight * offsets[snapPoint]);
 };
@@ -95,11 +103,13 @@ const getMarkerOffset = (snapPoint: SnapPoint): number => {
 ---
 
 ### 2.3 CategoryFullScreen (BottomSheet)
+
 **파일**: `src/features/map/components/category-full-screen.tsx`
 
 **역할**: 바텀시트 UI 및 코스 카드 표시
 
 **Props**:
+
 | Prop | Type | 설명 |
 |------|------|------|
 | isOpen | boolean | 열림 상태 |
@@ -114,11 +124,12 @@ const getMarkerOffset = (snapPoint: SnapPoint): number => {
 **스냅 포인트**:
 | 상태 | 높이 | 설명 |
 |------|------|------|
-| closed | 0vh | 완전히 닫힘 |
+| minimized | 0vh | 최소화 (시트가 보이지 않음) |
 | medium | 60vh | 기본 상태 |
 | full | 95vh | 전체 화면 |
 
 **하위 컴포넌트**:
+
 ```
 CategoryFullScreen
 ├── BottomSheetHeader (드래그 핸들)
@@ -131,11 +142,13 @@ CategoryFullScreen
 ## 3. 훅 (Hooks)
 
 ### 3.1 useMapState
+
 **파일**: `src/features/map/hooks/use-map-state.ts`
 
 **역할**: 맵 인스턴스 및 선택 상태 관리
 
 **반환값**:
+
 ```typescript
 {
   map: mapboxgl.Map | null;
@@ -152,11 +165,13 @@ CategoryFullScreen
 ---
 
 ### 3.2 useMapBounds
+
 **파일**: `src/features/map/hooks/use-map-bounds.ts`
 
 **역할**: 코스 좌표에 맞춰 지도 범위 조정
 
 **특징** (BUG-003 수정):
+
 - 150ms 디바운스 적용
 - 빠른 카테고리 전환 시 마지막 상태만 반영
 
@@ -167,11 +182,13 @@ const debouncedFitMapToCourses = useDebouncedCallback(fitMapToCourses, 150);
 ---
 
 ### 3.3 useBottomSheetSnap
+
 **파일**: `src/features/map/hooks/use-bottom-sheet-snap.ts`
 
 **역할**: 바텀시트 스냅 포인트 관리
 
 **반환값**:
+
 ```typescript
 {
   snapPoint: SnapPoint;
@@ -186,22 +203,26 @@ const debouncedFitMapToCourses = useDebouncedCallback(fitMapToCourses, 150);
 ---
 
 ### 3.4 useBottomSheetDrag
+
 **파일**: `src/features/map/hooks/use-bottom-sheet-drag.ts`
 
 **역할**: 드래그 제스처 처리
 
 **임계값**:
+
 - 드래그 거리: 100px
 - 드래그 속도: 500px/s
 
 ---
 
 ### 3.5 useGeolocation
+
 **파일**: `src/shared/hooks/use-geolocation.ts`
 
 **역할**: 현재 위치 추적
 
 **옵션**:
+
 ```typescript
 {
   enableHighAccuracy: true,
@@ -215,6 +236,7 @@ const debouncedFitMapToCourses = useDebouncedCallback(fitMapToCourses, 150);
 ## 4. 데이터 흐름
 
 ### 4.1 초기 로딩
+
 ```
 1. page.tsx (Server)
    ↓ courseRepository.getActiveCourses()
@@ -231,6 +253,7 @@ const debouncedFitMapToCourses = useDebouncedCallback(fitMapToCourses, 150);
 ```
 
 ### 4.2 마커 클릭
+
 ```
 1. CourseMarker.onClick
    ↓ getMarkerOffset(snapPointRef.current)
@@ -247,6 +270,7 @@ const debouncedFitMapToCourses = useDebouncedCallback(fitMapToCourses, 150);
 ```
 
 ### 4.3 카테고리 전환
+
 ```
 1. MenuButton.onCategorySelect
    ↓ handleCategoryChange(categoryKey)
@@ -266,16 +290,18 @@ const debouncedFitMapToCourses = useDebouncedCallback(fitMapToCourses, 150);
 ## 5. 성능 최적화
 
 ### 5.1 적용된 최적화
-| 기법 | 위치 | 설명 |
-|------|------|------|
-| React.memo | MapboxMap, CourseMarker | 불필요한 리렌더링 방지 |
-| useMemo | displayCourses | 필터링 결과 캐싱 |
-| useCallback | 모든 핸들러 | 함수 참조 안정화 |
-| useRef | 이벤트 핸들러 | 클로저 업데이트 |
-| 디바운스 | useMapBounds | 빠른 연속 호출 방지 |
-| ISR | page.tsx | 서버 캐싱 (3600s) |
+
+| 기법        | 위치                    | 설명                   |
+| ----------- | ----------------------- | ---------------------- |
+| React.memo  | MapboxMap, CourseMarker | 불필요한 리렌더링 방지 |
+| useMemo     | displayCourses          | 필터링 결과 캐싱       |
+| useCallback | 모든 핸들러             | 함수 참조 안정화       |
+| useRef      | 이벤트 핸들러           | 클로저 업데이트        |
+| 디바운스    | useMapBounds            | 빠른 연속 호출 방지    |
+| ISR         | page.tsx                | 서버 캐싱 (3600s)      |
 
 ### 5.2 마커 렌더링 최적화
+
 - Mapbox 네이티브 클러스터링 사용
 - React Portal 대신 createRoot 사용
 - 화면 밖 마커 자동 제거
@@ -317,11 +343,15 @@ src/features/map/
 ## 7. 타입 정의
 
 ### 7.1 SnapPoint
+
 ```typescript
-type SnapPoint = "closed" | "medium" | "full";
+type SnapPoint = "minimized" | "medium" | "full";
+// Note: "minimized" was previously called "closed" but renamed to better
+// reflect that the sheet is still present, just at 0vh height
 ```
 
 ### 7.2 CourseMarkerProps
+
 ```typescript
 interface CourseMarkerProps {
   map: mapboxgl.Map;
@@ -334,6 +364,7 @@ interface CourseMarkerProps {
 ```
 
 ### 7.3 CategoryFullScreenProps
+
 ```typescript
 interface CategoryFullScreenProps {
   isOpen: boolean;

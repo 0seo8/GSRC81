@@ -112,9 +112,9 @@ router.refresh();
 
 ## 7. 관련 문서
 
-- [02-login-page.md](./02-login-page.md) - 로그인 페이지 및 인증 흐름
-- [08-middleware.md](./08-middleware.md) - 미들웨어 인증 로직
-- [00-refactoring-summary.md](./00-refactoring-summary.md) - 전체 리팩토링 히스토리
+- [02-login-page.md](02-login-page.md) - 로그인 페이지 및 인증 흐름
+- [08-middleware.md](08-middleware.md) - 미들웨어 인증 로직
+- [00-refactoring-summary.md](00-refactoring-summary.md) - 전체 리팩토링 히스토리
 
 ---
 

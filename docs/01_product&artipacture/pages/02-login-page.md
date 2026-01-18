@@ -24,7 +24,7 @@ NextAuth 기반 세션 관리와 미들웨어 기반 리다이렉트가 결합�
 
 - **위치:** `GlobalSplash` 컴포넌트 (Providers 레벨)
 - **동작:** 모든 앱 진입 시 sessionStorage 기반으로 표시
-- **상세:** [09-global-splash-system.md](./09-global-splash-system.md) 참조
+- **상세:** [09-global-splash-system.md](09-global-splash-system.md) 참조
 
 ### 3-2. 카카오 로그인 연동
 
@@ -435,9 +435,9 @@ router.push(LOGIN_CONFIG.ROUTES.MAP);
 
 ## 16. 관련 문서
 
-- [08-middleware.md](./08-middleware.md) - 미들웨어 인증 로직
-- [09-global-splash-system.md](./09-global-splash-system.md) - 전역 스플래시 시스템
-- [00-refactoring-summary.md](./00-refactoring-summary.md) - 전체 리팩토링 히스토리
+- [08-middleware.md](08-middleware.md) - 미들웨어 인증 로직
+- [09-global-splash-system.md](09-global-splash-system.md) - 전역 스플래시 시스템
+- [00-refactoring-summary.md](00-refactoring-summary.md) - 전체 리팩토링 히스토리
 
 ---
 

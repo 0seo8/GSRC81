@@ -5,11 +5,15 @@ import { getToken } from "next-auth/jwt";
 // Extend JWT type to include custom fields
 interface ExtendedJWT {
   kakaoId?: string;
-  isVerified?: boolean;
+  isVerified?: boolean; // 코드 인증 완료 여부 (게스트는 false)
+  isGuestSession?: boolean; // 게스트 세션 (일회성)
 }
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // 게스트 세션 쿠키 확인
+  const isGuestSession = req.cookies.get("guest_session")?.value === "true";
 
   // ✅ 1. Root path immediate redirect
   if (pathname === "/") {
@@ -24,13 +28,13 @@ export async function middleware(req: NextRequest) {
     });
 
     if (token) {
-      // 이미 로그인됨 - 인증 여부 체크
+      // 이미 로그인됨 - 코드 인증 여부 체크
       const extendedToken = token as ExtendedJWT;
       const isVerified = extendedToken.isVerified === true;
       const kakaoId = extendedToken.kakaoId;
 
-      if (isVerified) {
-        // 인증 완료 → /map으로
+      if (isVerified || isGuestSession) {
+        // 코드 인증 완료 또는 게스트 세션 → /map으로
         return NextResponse.redirect(new URL("/map", req.url));
       } else {
         // 미인증 → /verify로
@@ -60,11 +64,11 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // 로그인은 했지만 인증 안 됨 → /verify로 리다이렉트
+    // 로그인은 했지만 코드 인증 안 됨 → /verify로 리다이렉트
     const extendedToken = token as ExtendedJWT;
     const isVerified = extendedToken.isVerified === true;
 
-    if (!isVerified && pathname !== "/verify") {
+    if (!isVerified && !isGuestSession && pathname !== "/verify") {
       const kakaoId = extendedToken.kakaoId;
       return NextResponse.redirect(new URL(`/verify?uid=${kakaoId}`, req.url));
     }

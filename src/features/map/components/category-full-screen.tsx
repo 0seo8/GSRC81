@@ -76,7 +76,13 @@ export function CategoryFullScreen({
   });
 
   // 드래그 핸들링 훅 (상하 드래그로 snap points 변경)
-  const { isDragging, handleHeaderDrag, handleDragStart, handleDragEnd, snapManager } = useBottomSheetDrag({
+  const {
+    isDragging,
+    handleHeaderDrag,
+    handleDragStart,
+    handleDragEnd,
+    snapManager,
+  } = useBottomSheetDrag({
     onClose,
   });
 
@@ -227,8 +233,11 @@ export function CategoryFullScreen({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 헤더 */}
-            <div className="shrink-0">
+            {/* 헤더 - 고정 높이, 스크롤 시 카드 위에 표시 */}
+            <div
+              className="shrink-0 h-[7.5rem] relative z-10 rounded-t-[2.8125rem]"
+              style={{ backgroundColor: currentDesign.backgroundColor }}
+            >
               <BottomSheetHeader
                 categoryName={actualCategory?.name}
                 dongNames={dongNames}
@@ -239,20 +248,22 @@ export function CategoryFullScreen({
               />
             </div>
 
-            {/* 카드 스크롤 영역 */}
+            {/* 카드 영역 - 헤더 제외한 나머지 공간, 스크롤 가능 */}
             <div
               ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto px-[0.4375rem] pb-0"
+              className="flex-1 overflow-y-auto overflow-x-hidden px-[0.4375rem]"
             >
-              {/* 스크롤 시 마지막 카드가 헤더에 가려지지 않도록 상단 여백 확보 (헤더 높이 + 여유) */}
-              <div className="min-h-full flex flex-col justify-end pt-[8rem]">
-                <RefactoredCourseCardStack
-                  courses={filteredCourses}
-                  isDragging={isDragging}
-                  onCourseClick={onCourseClick}
-                  isExpanded={snapManager.snapPoint === "full"}
-                  currentCategoryKey={actualCategory.key}
-                />
+              {/* 카드 스택을 감싸는 컨테이너 - 상단 여백으로 스크롤 시 카드 보호 */}
+              <div className="min-h-full flex flex-col justify-end">
+                <div className="pt-[2rem]">
+                  <RefactoredCourseCardStack
+                    courses={filteredCourses}
+                    isDragging={isDragging}
+                    onCourseClick={onCourseClick}
+                    isExpanded={snapManager.snapPoint === "full"}
+                    currentCategoryKey={actualCategory.key}
+                  />
+                </div>
               </div>
             </div>
           </motion.div>

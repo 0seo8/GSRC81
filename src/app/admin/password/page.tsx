@@ -286,10 +286,8 @@ export default function AccessCodeManagePage() {
                       <div className="flex gap-2">
                         <Input
                           value={newCode}
-                          onChange={(e) =>
-                            setNewCode(e.target.value.toUpperCase())
-                          }
-                          placeholder="예: CREW2024"
+                          onChange={(e) => setNewCode(e.target.value)}
+                          placeholder="예: GSRC81"
                           maxLength={20}
                           className="font-mono"
                         />
@@ -363,9 +361,7 @@ export default function AccessCodeManagePage() {
                               <div className="flex items-center gap-2">
                                 <Input
                                   value={editingCode}
-                                  onChange={(e) =>
-                                    setEditingCode(e.target.value.toUpperCase())
-                                  }
+                                  onChange={(e) => setEditingCode(e.target.value)}
                                   className="font-mono max-w-xs"
                                   maxLength={20}
                                 />

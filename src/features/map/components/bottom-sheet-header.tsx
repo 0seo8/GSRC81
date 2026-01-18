@@ -122,7 +122,7 @@ export function BottomSheetHeader({
 
   return (
     <div
-      className="px-6 py-4 pb-2 select-none"
+      className="px-6 pt-3 pb-2 select-none h-full flex flex-col"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
@@ -133,7 +133,7 @@ export function BottomSheetHeader({
       }}
     >
       {/* 드래그 핸들 - 애니메이션 추가 */}
-      <div className="flex justify-center mb-2">
+      <div className="flex justify-center mb-1.5 shrink-0">
         <div
           className="w-10 h-1 bg-white bg-opacity-50 rounded-full transition-all duration-300 hover:bg-opacity-80 hover:w-12"
           style={{
@@ -143,9 +143,9 @@ export function BottomSheetHeader({
       </div>
 
       {/* 카테고리 타이틀 - 왼쪽 정렬, 검정색 */}
-      <div className="text-left mb-4">
+      <div className="text-left flex-1 flex items-start">
         <h2
-          className="text-category text-black whitespace-pre-line"
+          className="text-category text-black whitespace-pre-line leading-tight"
           style={{
             textShadow: "0 0.0625rem 0.125rem rgba(0, 0, 0, 0.05)",
           }}

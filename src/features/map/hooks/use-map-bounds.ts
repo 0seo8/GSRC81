@@ -109,7 +109,12 @@ export function useMapBounds(
       // 여러 지점인 경우 - 줌 범위 제한 적용
       const uiPadding = FIT_BOUNDS_CONFIG.UI_PADDING;
       map.fitBounds(bounds, {
-        padding: { top: uiPadding, bottom: uiPadding, left: uiPadding, right: uiPadding },
+        padding: {
+          top: uiPadding,
+          bottom: uiPadding,
+          left: uiPadding,
+          right: uiPadding,
+        },
         maxZoom: FIT_BOUNDS_CONFIG.MAX_ZOOM,
         duration: FLY_TO_DURATION,
       });

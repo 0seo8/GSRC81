@@ -5,11 +5,10 @@ import { type CourseForMap } from "@/lib/supabase/repositories/courseRepository"
 
 export function useMapState(courses: CourseForMap[]) {
   const [map, setMap] = useState<mapboxgl.Map | null>(null);
-  const [selectedCourse, setSelectedCourse] =
-    useState<CourseForMap | null>(null);
-  const [selectedCourses, setSelectedCourses] = useState<CourseForMap[]>(
-    [],
+  const [selectedCourse, setSelectedCourse] = useState<CourseForMap | null>(
+    null,
   );
+  const [selectedCourses, setSelectedCourses] = useState<CourseForMap[]>([]);
 
   // React 19의 useOptimistic을 활용한 낙관적 업데이트
   const [optimisticCourses, addOptimisticCourse] = useOptimistic(

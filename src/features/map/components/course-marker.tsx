@@ -186,7 +186,7 @@ const CourseMarkerComponent = function CourseMarker({
               lat,
               offsetY,
               currentCenter: map.getCenter(),
-              windowHeight: window.innerHeight
+              windowHeight: window.innerHeight,
             });
           }
 
@@ -198,8 +198,8 @@ const CourseMarkerComponent = function CourseMarker({
           const lngDiff = Math.abs(lng - currentCenter.lng);
           const latDiff = Math.abs(lat - currentCenter.lat);
           const pixelDistance = Math.sqrt(
-            Math.pow(lngDiff * Math.pow(2, zoom) * 256 / 360, 2) +
-            Math.pow(latDiff * Math.pow(2, zoom) * 256 / 180, 2)
+            Math.pow((lngDiff * Math.pow(2, zoom) * 256) / 360, 2) +
+              Math.pow((latDiff * Math.pow(2, zoom) * 256) / 180, 2),
           );
 
           // 거리에 따른 duration 조절
@@ -208,8 +208,8 @@ const CourseMarkerComponent = function CourseMarker({
             MARKER_ANIMATION.MAX_DURATION,
             Math.max(
               MARKER_ANIMATION.MIN_DURATION,
-              pixelDistance * MARKER_ANIMATION.DURATION_PER_PIXEL
-            )
+              pixelDistance * MARKER_ANIMATION.DURATION_PER_PIXEL,
+            ),
           );
 
           // easeTo 사용 (flyTo보다 부드럽고 줌 변경 없음)

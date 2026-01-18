@@ -183,22 +183,35 @@ Button:
 
 ```html
 <CourseCard>
-  배경색: 카테고리 색상 (Yellow/Green/Brown/Gray) Border-radius: 24px Padding:
-  24px
+  배경색: 카테고리 색상 (Yellow/Green/Brown/Gray)
+  Border-radius: 45px (2.8125rem)
+  Padding: 상하 30px, 좌우 41px
 
   <title>구파발천 정기런</title>
   <Metadata> 로드 러닝 코스 쉬움 </Metadata>
   <Distance>5 km</Distance>
-  <!-- 우측 하단, 96px -->
+  <!-- 우측, 수직 중앙 -->
 </CourseCard>
 ```
 
-**카드 스택 애니메이션:**
+**카드 스택 레이아웃 (2025-01-18 기준):**
 
-- 최대 5개 카드가 오버랩되어 표시
-- Y축 오프셋: 각 카드당 +180px
-- Z-index: 역순 (상위 카드가 아래 깔림)
-- 스크롤 시 상단 카드가 올라가며 다음 카드 노출
+| 카드 개수 | 레이아웃 |
+|-----------|----------|
+| 1개 | 180px 높이, bottom 9px, 전체 둥근 |
+| 2개 | index=0: bottom 0px (앞), index=1: bottom 80px (뒤) |
+| 3개+ | index=0: 12px만 노출, index=1: 기준점, index=2+: 130px 간격 |
+
+**핵심 파일:**
+- 레이아웃 계산: `src/shared/lib/utils/card-layout.ts`
+- 카드 컴포넌트: `src/features/map/components/course-card.tsx`
+- 스택 컨테이너: `src/features/map/components/refactored-course-card-stack.tsx`
+
+**상세 스펙:**
+- 모든 카드 높이: 180px (11.25rem) 통일
+- 카드 간격: 60px (3.75rem)
+- 3개+ 카드: 130px 노출, 50px 겹침
+- 헤더 고정 높이: 120px (7.5rem), z-index: 10
 
 ### 5. Map View
 
@@ -214,7 +227,30 @@ Controls:
   - MENU 버튼 (우측 상단)
 ```
 
-### 6. Detail Sheet (Bottom Sheet)
+### 6. Category Bottom Sheet (카테고리 바텀시트)
+
+```
+배경: 카테고리 색상 (category-designs.ts)
+Top Handle: 회색 바 (중앙, 40x4px)
+Radius: 45px 45px 0 0 (2.8125rem)
+
+구조:
+┌─────────────────────────────┐
+│  헤더 (고정 120px, z-10)    │  ← 드래그 핸들 + 카테고리 타이틀
+├─────────────────────────────┤
+│  카드 영역 (flex-1)         │  ← 스크롤 가능
+│  └─ 카드 스택               │
+└─────────────────────────────┘
+
+높이 규칙:
+  - medium: 60vh (기본)
+  - full: 95vh (확장)
+  - minimized: 0vh (닫힘)
+
+파일: src/features/map/components/category-full-screen.tsx
+```
+
+### 6-1. Detail Sheet (코스 상세 바텀시트)
 
 ```
 배경: White
@@ -509,8 +545,12 @@ transition: all 0.2s ease-in-out
 
 ## 📝 Version History
 
+- **v1.1** (2025-01-18): 카드 스택 레이아웃 업데이트
+  - 모든 카드 180px 높이로 통일
+  - 바텀시트 구조 섹션 추가
+  - 헤더 z-index 처리 문서화
 - **v1.0** (2025-01-25): 초기 디자인 시스템 문서화
-- 기반: Figma PDF 분석
+  - 기반: Figma PDF 분석
 
 ---
 

@@ -1,3 +1,5 @@
+"use server";
+
 /**
  * User Verification Utilities
  *
@@ -5,9 +7,13 @@
  * - access_codes 테이블에 코드 정보 저장
  * - access_links.access_code_id FK로 연결
  * - 사용자는 최초 1회만 인증
+ *
+ * NOTE: "use server" 지시어로 서버에서만 실행됨
+ * - SUPABASE_SERVICE_ROLE_KEY 환경 변수 접근 가능
+ * - RLS를 우회하여 DB 작업 수행
  */
 
-import { supabase } from "@/shared/lib/supabase";
+import { supabaseAdmin } from "@/shared/lib/supabase";
 
 export interface VerificationResult {
   success: boolean;
@@ -29,7 +35,7 @@ export interface VerificationResult {
 export async function isUserVerified(kakaoUserId: string): Promise<boolean> {
   if (!kakaoUserId) return false;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("access_links")
     .select("id, is_active, verified")
     .eq("kakao_user_id", kakaoUserId)
@@ -66,8 +72,8 @@ export async function verifyAccessCode(
     };
   }
 
-  // 1. 이미 인증된 사용자인지 확인
-  const { data: existingUser } = await supabase
+  // 1. 이미 등록된 사용자인지 확인
+  const { data: existingUser } = await supabaseAdmin
     .from("access_links")
     .select("*")
     .eq("kakao_user_id", kakaoUserId)
@@ -81,23 +87,30 @@ export async function verifyAccessCode(
       };
     }
 
-    return {
-      success: true,
-      data: {
-        id: existingUser.id,
-        kakao_user_id: existingUser.kakao_user_id,
-        is_active: existingUser.is_active,
-        is_admin: existingUser.is_admin || false,
-        verified: existingUser.verified || false,
-      },
-    };
+    // 이미 코드 인증된 사용자는 바로 성공 반환
+    if (existingUser.verified === true) {
+      return {
+        success: true,
+        data: {
+          id: existingUser.id,
+          kakao_user_id: existingUser.kakao_user_id,
+          is_active: existingUser.is_active,
+          is_admin: existingUser.is_admin || false,
+          verified: true,
+        },
+      };
+    }
+
+    // 게스트 사용자 (verified = false/null)가 코드 인증을 시도하는 경우
+    // → 코드 검증 후 verified = true로 업데이트
   }
 
   // 2. 신규 사용자 - access_codes 테이블에서 코드 조회
-  const { data: accessCode, error: codeError } = await supabase
+  // 대소문자 구분 없이 검색 (ilike 사용)
+  const { data: accessCode, error: codeError } = await supabaseAdmin
     .from("access_codes")
     .select("*")
-    .eq("code", code)
+    .ilike("code", code)
     .maybeSingle();
 
   if (codeError || !accessCode) {
@@ -126,8 +139,46 @@ export async function verifyAccessCode(
     }
   }
 
-  // 3. access_links 레코드 생성 (코드 인증 사용자)
-  const { data: newUser, error: insertError } = await supabase
+  // 3. 기존 게스트 사용자인 경우 UPDATE, 신규 사용자인 경우 INSERT
+  if (existingUser) {
+    // 기존 게스트 사용자 → verified = true로 업데이트
+    const { data: updatedUser, error: updateError } = await supabaseAdmin
+      .from("access_links")
+      .update({
+        access_code_id: accessCode.id,
+        verified: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existingUser.id)
+      .select()
+      .single();
+
+    if (updateError || !updatedUser) {
+      console.error("User update error:", {
+        error: updateError,
+        errorMessage: updateError?.message,
+        kakaoUserId,
+      });
+      return {
+        success: false,
+        error: `사용자 인증 업데이트 중 오류가 발생했습니다. (${updateError?.message || "Unknown error"})`,
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        id: updatedUser.id,
+        kakao_user_id: updatedUser.kakao_user_id,
+        is_active: updatedUser.is_active,
+        is_admin: updatedUser.is_admin || false,
+        verified: true,
+      },
+    };
+  }
+
+  // 신규 사용자 → INSERT
+  const { data: newUser, error: insertError } = await supabaseAdmin
     .from("access_links")
     .insert({
       access_code_id: accessCode.id,
@@ -142,10 +193,17 @@ export async function verifyAccessCode(
     .single();
 
   if (insertError || !newUser) {
-    console.error("User creation error:", insertError);
+    console.error("User creation error:", {
+      error: insertError,
+      errorMessage: insertError?.message,
+      errorCode: insertError?.code,
+      errorDetails: insertError?.details,
+      kakaoUserId,
+      accessCodeId: accessCode.id,
+    });
     return {
       success: false,
-      error: "사용자 등록 중 오류가 발생했습니다.",
+      error: `사용자 등록 중 오류가 발생했습니다. (${insertError?.message || "Unknown error"})`,
     };
   }
 
@@ -182,7 +240,7 @@ export async function createGuestUser(
   }
 
   // 1. 이미 등록된 사용자인지 확인
-  const { data: existingUser } = await supabase
+  const { data: existingUser } = await supabaseAdmin
     .from("access_links")
     .select("*")
     .eq("kakao_user_id", kakaoUserId)
@@ -203,7 +261,8 @@ export async function createGuestUser(
   }
 
   // 2. 새로운 게스트 사용자 생성
-  const { data: newGuest, error: insertError } = await supabase
+  // supabaseAdmin 사용하여 RLS 우회 (서버 사이드 작업)
+  const { data: newGuest, error: insertError } = await supabaseAdmin
     .from("access_links")
     .insert({
       access_code_id: null, // 게스트는 코드 없음
@@ -218,10 +277,16 @@ export async function createGuestUser(
     .single();
 
   if (insertError || !newGuest) {
-    console.error("Guest user creation error:", insertError);
+    console.error("Guest user creation error:", {
+      error: insertError,
+      errorMessage: insertError?.message,
+      errorCode: insertError?.code,
+      errorDetails: insertError?.details,
+      kakaoUserId,
+    });
     return {
       success: false,
-      error: "게스트 사용자 등록 중 오류가 발생했습니다.",
+      error: `게스트 사용자 등록 중 오류가 발생했습니다. (${insertError?.message || "Unknown error"})`,
     };
   }
 

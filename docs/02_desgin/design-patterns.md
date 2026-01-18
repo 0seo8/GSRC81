@@ -1,8 +1,9 @@
 # GSRC81 Frontend Design Patterns
+
 > Next.js 15 + React 19 + Supabase 프론트엔드 디자인 패턴 가이드
 
-**Version**: 1.0.0
-**Last Updated**: 2026-01-11
+**Version**: 1.1.0
+**Last Updated**: 2026-01-18
 
 ---
 
@@ -23,15 +24,15 @@
 
 ### 1.1 기술 스택
 
-| 분류 | 기술 | 버전 |
-|------|------|------|
-| Framework | Next.js (App Router) | 15.x |
-| UI Library | React | 19.x |
-| Backend | Supabase | - |
-| Styling | Tailwind CSS | 4.x |
-| Animation | Framer Motion | - |
-| Map | Mapbox GL JS | 3.14 |
-| Auth | NextAuth.js | 5.x |
+| 분류       | 기술                 | 버전 |
+| ---------- | -------------------- | ---- |
+| Framework  | Next.js (App Router) | 15.x |
+| UI Library | React                | 19.x |
+| Backend    | Supabase             | -    |
+| Styling    | Tailwind CSS         | 4.x  |
+| Animation  | Framer Motion        | -    |
+| Map        | Mapbox GL JS         | 3.14 |
+| Auth       | NextAuth.js          | 5.x  |
 
 ### 1.2 폴더 구조
 
@@ -117,6 +118,7 @@ src/features/map/
 ```
 
 **사용 예시**:
+
 ```typescript
 // 단일 import로 기능 모듈 사용
 import { MapboxMap, CourseMarker, useMapState } from "@/features/map";
@@ -164,14 +166,13 @@ export { Card, CardHeader, CardContent, CardFooter, CardTitle };
 ```
 
 **사용 예시**:
+
 ```tsx
 <Card>
   <CardHeader>
     <CardTitle>제목</CardTitle>
   </CardHeader>
-  <CardContent>
-    내용
-  </CardContent>
+  <CardContent>내용</CardContent>
 </Card>
 ```
 
@@ -195,6 +196,7 @@ CSS 선택자와 컴포넌트 구조를 분리합니다.
 ```
 
 **장점**:
+
 - 리팩토링 시 스타일 영향 최소화
 - 시맨틱한 컴포넌트 구조
 - 테스트 셀렉터로 활용 가능
@@ -326,8 +328,11 @@ import { useState, useCallback, useOptimistic } from "react";
 
 export function useMapState(courses: CourseWithCategory[]) {
   const [map, setMap] = useState<mapboxgl.Map | null>(null);
-  const [selectedCourse, setSelectedCourse] = useState<CourseWithCategory | null>(null);
-  const [selectedCourses, setSelectedCourses] = useState<CourseWithCategory[]>([]);
+  const [selectedCourse, setSelectedCourse] =
+    useState<CourseWithCategory | null>(null);
+  const [selectedCourses, setSelectedCourses] = useState<CourseWithCategory[]>(
+    [],
+  );
 
   // React 19 useOptimistic
   const [optimisticCourses, addOptimisticCourse] = useOptimistic(
@@ -420,10 +425,12 @@ export function courseRepository(supabase: SupabaseClient<Database>) {
     async getActiveCourses(): Promise<CourseWithCategory[]> {
       const { data, error } = await supabase
         .from("courses")
-        .select(`
+        .select(
+          `
           *,
           course_categories (id, key, name, description, cover_image_url, sort_order)
-        `)
+        `,
+        )
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
 
@@ -434,12 +441,14 @@ export function courseRepository(supabase: SupabaseClient<Database>) {
     async getCourseById(courseId: string): Promise<CourseWithDetails> {
       const { data, error } = await supabase
         .from("courses")
-        .select(`
+        .select(
+          `
           *,
           course_categories (*),
           course_comments (*, course_comment_photos (*)),
           course_photos (*)
-        `)
+        `,
+        )
         .eq("id", courseId)
         .single();
 
@@ -462,6 +471,7 @@ export function courseRepository(supabase: SupabaseClient<Database>) {
 ```
 
 **사용 예시**:
+
 ```typescript
 // Server Component에서
 const supabase = await createClient();
@@ -561,7 +571,7 @@ export function useCoursesV2() {
             // INSERT, UPDATE, DELETE 처리
             // ...
           });
-        }
+        },
       )
       .subscribe();
 
@@ -670,19 +680,16 @@ export function cn(...inputs: ClassValue[]) {
 ```
 
 **사용 예시**:
+
 ```tsx
-<div className={cn(
-  "base-styles",
-  isActive && "active-styles",
-  className
-)} />
+<div className={cn("base-styles", isActive && "active-styles", className)} />
 ```
 
 ### 5.4 반응형 디자인
 
 ```css
 /* 컨테이너 쿼리 */
-@container/card-header (min-width: 300px) {
+@container /card-header (min-width: 300px) {
   [data-slot="card-header"] {
     grid-template-columns: 1fr auto;
   }
@@ -722,6 +729,7 @@ export * from "./categoryRepository";
 ```
 
 **사용**:
+
 ```typescript
 // Before
 import { CourseStats } from "@/features/courses/components/course-stats";
@@ -789,7 +797,7 @@ export function getCategoryDesign(key: string) {
 // useMemo - 계산 결과 캐싱
 const displayCourses = useMemo(() => {
   if (currentCategory === "all") return courses;
-  return courses.filter(c => c.category?.key === currentCategory);
+  return courses.filter((c) => c.category?.key === currentCategory);
 }, [courses, currentCategory]);
 
 // useCallback - 함수 참조 안정화
@@ -926,21 +934,21 @@ const handleTouchEnd = (e: React.TouchEvent) => {
 
 ## 부록: 패턴 요약표
 
-| 카테고리 | 패턴 | 적용 위치 |
-|---------|------|----------|
-| 컴포넌트 | Feature-Based | `src/features/` |
-| 컴포넌트 | Compound Components | `src/shared/components/ui/` |
-| 컴포넌트 | Server/Client 분리 | `app/`, `features/` |
-| 상태관리 | Context + Hooks | `providers/`, `features/*/context/` |
-| 상태관리 | useOptimistic | `features/*/hooks/` |
-| 데이터 | Repository 패턴 | `lib/supabase/repositories/` |
-| 데이터 | Server Actions | `app/actions/` |
-| 데이터 | ISR | `app/(main)/*/page.tsx` |
-| 스타일 | CVA Variants | `shared/components/ui/` |
-| 스타일 | Design Tokens | `app/globals.css` |
-| 코드구조 | Barrel Exports | `*/index.ts` |
-| 성능 | 메모이제이션 | 전역 |
-| 모바일 | Safe Area | `providers/safe-area-provider.tsx` |
+| 카테고리 | 패턴                | 적용 위치                           |
+| -------- | ------------------- | ----------------------------------- |
+| 컴포넌트 | Feature-Based       | `src/features/`                     |
+| 컴포넌트 | Compound Components | `src/shared/components/ui/`         |
+| 컴포넌트 | Server/Client 분리  | `app/`, `features/`                 |
+| 상태관리 | Context + Hooks     | `providers/`, `features/*/context/` |
+| 상태관리 | useOptimistic       | `features/*/hooks/`                 |
+| 데이터   | Repository 패턴     | `lib/supabase/repositories/`        |
+| 데이터   | Server Actions      | `app/actions/`                      |
+| 데이터   | ISR                 | `app/(main)/*/page.tsx`             |
+| 스타일   | CVA Variants        | `shared/components/ui/`             |
+| 스타일   | Design Tokens       | `app/globals.css`                   |
+| 코드구조 | Barrel Exports      | `*/index.ts`                        |
+| 성능     | 메모이제이션        | 전역                                |
+| 모바일   | Safe Area           | `providers/safe-area-provider.tsx`  |
 
 ---
 

@@ -10,15 +10,15 @@
  * - apple-splash-*.png: iOS 스플래시 이미지 (다양한 해상도)
  */
 
-import sharp from 'sharp';
-import { readFile } from 'fs/promises';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import sharp from "sharp";
+import { readFile } from "fs/promises";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const publicDir = join(__dirname, '..', 'public');
-const logoSvgPath = join(publicDir, 'logo.svg');
-const logoPngPath = join(publicDir, 'logo.png'); // fallback
+const publicDir = join(__dirname, "..", "public");
+const logoSvgPath = join(publicDir, "logo.svg");
+const logoPngPath = join(publicDir, "logo.png"); // fallback
 
 // SVG를 지정된 크기의 PNG 버퍼로 변환
 async function svgToPng(width, height) {
@@ -26,17 +26,17 @@ async function svgToPng(width, height) {
     const svgBuffer = await readFile(logoSvgPath);
     return await sharp(svgBuffer, { density: 300 }) // 고해상도 렌더링
       .resize(width, height, {
-        fit: 'contain',
-        background: { r: 0, g: 0, b: 0, alpha: 0 }
+        fit: "contain",
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
       })
       .png()
       .toBuffer();
   } catch (error) {
-    console.log('⚠️  SVG not found, falling back to PNG...');
+    console.log("⚠️  SVG not found, falling back to PNG...");
     return await sharp(logoPngPath)
       .resize(width, height, {
-        fit: 'contain',
-        background: { r: 0, g: 0, b: 0, alpha: 0 }
+        fit: "contain",
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
       })
       .png()
       .toBuffer();
@@ -52,16 +52,16 @@ const ICON_SIZES = [192, 512];
 
 // iOS 스플래시 이미지 사이즈 (디바이스별)
 const SPLASH_SIZES = [
-  { width: 1170, height: 2532, name: 'iphone-12-pro' },     // iPhone 12/13/14 Pro
-  { width: 1284, height: 2778, name: 'iphone-12-pro-max' }, // iPhone 12/13/14 Pro Max
-  { width: 1179, height: 2556, name: 'iphone-14-pro' },     // iPhone 14 Pro
-  { width: 1290, height: 2796, name: 'iphone-14-pro-max' }, // iPhone 14 Pro Max
-  { width: 750, height: 1334, name: 'iphone-8' },           // iPhone 8/SE
-  { width: 1125, height: 2436, name: 'iphone-x' },          // iPhone X/XS/11 Pro
-  { width: 1242, height: 2688, name: 'iphone-xs-max' },     // iPhone XS Max/11 Pro Max
-  { width: 828, height: 1792, name: 'iphone-xr' },          // iPhone XR/11
-  { width: 1536, height: 2048, name: 'ipad' },              // iPad
-  { width: 2048, height: 2732, name: 'ipad-pro' },          // iPad Pro 12.9
+  { width: 1170, height: 2532, name: "iphone-12-pro" }, // iPhone 12/13/14 Pro
+  { width: 1284, height: 2778, name: "iphone-12-pro-max" }, // iPhone 12/13/14 Pro Max
+  { width: 1179, height: 2556, name: "iphone-14-pro" }, // iPhone 14 Pro
+  { width: 1290, height: 2796, name: "iphone-14-pro-max" }, // iPhone 14 Pro Max
+  { width: 750, height: 1334, name: "iphone-8" }, // iPhone 8/SE
+  { width: 1125, height: 2436, name: "iphone-x" }, // iPhone X/XS/11 Pro
+  { width: 1242, height: 2688, name: "iphone-xs-max" }, // iPhone XS Max/11 Pro Max
+  { width: 828, height: 1792, name: "iphone-xr" }, // iPhone XR/11
+  { width: 1536, height: 2048, name: "ipad" }, // iPad
+  { width: 2048, height: 2732, name: "ipad-pro" }, // iPad Pro 12.9
 ];
 
 async function generateIcon(size) {
@@ -77,13 +77,15 @@ async function generateIcon(size) {
       width: size,
       height: size,
       channels: 4,
-      background: { ...BACKGROUND_COLOR, alpha: 1 }
-    }
+      background: { ...BACKGROUND_COLOR, alpha: 1 },
+    },
   })
-    .composite([{
-      input: resizedLogo,
-      gravity: 'center'
-    }])
+    .composite([
+      {
+        input: resizedLogo,
+        gravity: "center",
+      },
+    ])
     .png()
     .toFile(join(publicDir, `icon-${size}x${size}.png`));
 
@@ -102,17 +104,19 @@ async function generateAppleIcon() {
       width: size,
       height: size,
       channels: 4,
-      background: { ...BACKGROUND_COLOR, alpha: 1 }
-    }
+      background: { ...BACKGROUND_COLOR, alpha: 1 },
+    },
   })
-    .composite([{
-      input: resizedLogo,
-      gravity: 'center'
-    }])
+    .composite([
+      {
+        input: resizedLogo,
+        gravity: "center",
+      },
+    ])
     .png()
-    .toFile(join(publicDir, 'apple-icon-180x180.png'));
+    .toFile(join(publicDir, "apple-icon-180x180.png"));
 
-  console.log('✓ Generated apple-icon-180x180.png (from SVG)');
+  console.log("✓ Generated apple-icon-180x180.png (from SVG)");
 }
 
 async function generateSplashScreen({ width, height, name }) {
@@ -137,46 +141,49 @@ async function generateSplashScreen({ width, height, name }) {
       width,
       height,
       channels: 4,
-      background: { ...BACKGROUND_COLOR, alpha: 1 }
-    }
+      background: { ...BACKGROUND_COLOR, alpha: 1 },
+    },
   })
-    .composite([{
-      input: resizedLogo,
-      gravity: 'center'
-    }])
+    .composite([
+      {
+        input: resizedLogo,
+        gravity: "center",
+      },
+    ])
     .png()
     .toFile(join(publicDir, `apple-splash-${width}x${height}.png`));
 
-  console.log(`✓ Generated apple-splash-${width}x${height}.png (${name}) - logo: ${logoWidth}x${logoHeight}`);
+  console.log(
+    `✓ Generated apple-splash-${width}x${height}.png (${name}) - logo: ${logoWidth}x${logoHeight}`,
+  );
 }
 
 async function main() {
-  console.log('🎨 Generating PWA assets...\n');
+  console.log("🎨 Generating PWA assets...\n");
 
   try {
     // PWA 아이콘 생성
-    console.log('📱 Generating PWA icons...');
+    console.log("📱 Generating PWA icons...");
     for (const size of ICON_SIZES) {
       await generateIcon(size);
     }
 
     // Apple 아이콘 생성
-    console.log('\n🍎 Generating Apple icon...');
+    console.log("\n🍎 Generating Apple icon...");
     await generateAppleIcon();
 
     // iOS 스플래시 이미지 생성
-    console.log('\n🖼️  Generating iOS splash screens...');
+    console.log("\n🖼️  Generating iOS splash screens...");
     for (const splash of SPLASH_SIZES) {
       await generateSplashScreen(splash);
     }
 
-    console.log('\n✅ All PWA assets generated successfully!');
-    console.log('\n📋 Next steps:');
-    console.log('   1. Update manifest.json with new icons');
-    console.log('   2. Add apple-touch-startup-image links to layout.tsx');
-
+    console.log("\n✅ All PWA assets generated successfully!");
+    console.log("\n📋 Next steps:");
+    console.log("   1. Update manifest.json with new icons");
+    console.log("   2. Add apple-touch-startup-image links to layout.tsx");
   } catch (error) {
-    console.error('❌ Error generating assets:', error);
+    console.error("❌ Error generating assets:", error);
     process.exit(1);
   }
 }

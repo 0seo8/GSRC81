@@ -41,27 +41,27 @@
 
 ### 핵심 기능
 
-| 기능 | 설명 |
-|------|------|
-| **인터랙티브 지도** | Mapbox GL JS 기반 실시간 이동/줌/회전 |
-| **클러스터링** | GPU 가속 마커 클러스터링 |
-| **카테고리 필터링** | 진관동/트랙/트레일/로드 구분 |
-| **바텀시트 UI** | 3단계 스냅 포인트 (closed/medium/full) |
-| **Flight Mode** | GPX 경로 따라 자동 비행 애니메이션 |
-| **위치 추적** | GPS 기반 현재 위치 표시 |
+| 기능                | 설명                                   |
+| ------------------- | -------------------------------------- |
+| **인터랙티브 지도** | Mapbox GL JS 기반 실시간 이동/줌/회전  |
+| **클러스터링**      | GPU 가속 마커 클러스터링               |
+| **카테고리 필터링** | 진관동/트랙/트레일/로드 구분           |
+| **바텀시트 UI**     | 3단계 스냅 포인트 (minimized/medium/full) |
+| **Flight Mode**     | GPX 경로 따라 자동 비행 애니메이션     |
+| **위치 추적**       | GPS 기반 현재 위치 표시                |
 
 ---
 
 ## 2. 위치 및 기본 정보
 
-| 항목 | 값 |
-|------|-----|
-| **Path** | `/map` |
-| **Server Component** | `src/app/(main)/map/page.tsx` |
+| 항목                 | 값                                                     |
+| -------------------- | ------------------------------------------------------ |
+| **Path**             | `/map`                                                 |
+| **Server Component** | `src/app/(main)/map/page.tsx`                          |
 | **Client Component** | `src/features/map/components/optimized-map-client.tsx` |
-| **설정 파일** | `src/core/config/map.ts` |
-| **인증 필요** | ✅ Yes (middleware 자동 체크) |
-| **ISR 재검증** | 1시간 (`revalidate = 3600`) |
+| **설정 파일**        | `src/core/config/map.ts`                               |
+| **인증 필요**        | ✅ Yes (middleware 자동 체크)                          |
+| **ISR 재검증**       | 1시간 (`revalidate = 3600`)                            |
 
 ### 지도 기본 설정 (`src/core/config/map.ts`)
 
@@ -76,7 +76,7 @@ DEFAULT_ZOOM: 11.5
 CLUSTERING: { MAX_ZOOM: 12, RADIUS: 50 }
 
 // 바텀시트 스냅 포인트
-SNAP_POINTS: ["closed" (0vh), "medium" (60vh), "full" (95vh)]
+SNAP_POINTS: ["minimized" (0vh), "medium" (60vh), "full" (95vh)]
 
 // Mapbox 스타일
 STYLE: "mapbox://styles/mapbox/light-v11"
@@ -103,11 +103,13 @@ STYLE: "mapbox://styles/mapbox/light-v11"
 
 ### 3.3 바텀시트 UI
 
-| Snap Point | 높이 | 용도 |
-|------------|------|------|
-| **closed** | 0vh | 닫힌 상태 |
-| **medium** | 60vh | 카드 스택 미리보기 |
-| **full** | 95vh | 전체 카드 스크롤 |
+| Snap Point    | 높이 | 용도               |
+| ------------- | ---- | ------------------ |
+| **minimized** | 0vh  | 최소화 상태        |
+| **medium**    | 60vh | 카드 스택 미리보기 |
+| **full**      | 95vh | 전체 카드 스크롤   |
+
+> **Note**: "minimized"는 이전에 "closed"로 불렸으나, 시트가 완전히 제거되는 것이 아니라 0vh 높이에 있음을 명확히 하기 위해 변경됨
 
 - 좌우 스와이프로 카테고리 전환 (무한 루프)
 - 상하 드래그로 높이 조절
@@ -146,7 +148,10 @@ MapPage (Server Component)
 ```tsx
 // src/app/(main)/map/page.tsx
 import { Suspense } from "react";
-import { courseRepository, categoryRepository } from "@/lib/supabase/repositories";
+import {
+  courseRepository,
+  categoryRepository,
+} from "@/lib/supabase/repositories";
 import { MapSkeleton } from "@/features/map/components";
 
 export const revalidate = 3600; // ISR: 1시간
@@ -429,7 +434,7 @@ const {
 const displayCourses = useMemo(() => {
   if (currentCategory === "all") return courses;
   return courses.filter(
-    (course) => (course.category_key || "jingwan") === currentCategory
+    (course) => (course.category_key || "jingwan") === currentCategory,
   );
 }, [courses, currentCategory]);
 ```
@@ -534,11 +539,11 @@ root.render(
 
 #### 성능 특징
 
-| 항목 | Before | After | 개선율 |
-|------|--------|-------|--------|
-| 클러스터링 | CPU (Haversine) | GPU (Mapbox) | ~10배 빠름 |
-| 마커 1000개 | ~200ms | ~20ms | 90% 빠름 |
-| 메모리 사용 | ~15MB | ~8MB | 47% 감소 |
+| 항목        | Before          | After        | 개선율     |
+| ----------- | --------------- | ------------ | ---------- |
+| 클러스터링  | CPU (Haversine) | GPU (Mapbox) | ~10배 빠름 |
+| 마커 1000개 | ~200ms          | ~20ms        | 90% 빠름   |
+| 메모리 사용 | ~15MB           | ~8MB         | 47% 감소   |
 
 ---
 
@@ -552,20 +557,20 @@ root.render(
 
 #### Snap Points 시스템
 
-| Snap Point | 높이 | 용도 |
-|------------|------|------|
-| **closed** | 0vh | 닫힌 상태 |
-| **medium** | 60vh | 기본 높이 - 코스 카드 미리보기 |
-| **full** | 95vh | 전체 높이 - 모든 코스 스크롤 가능 |
+| Snap Point    | 높이 | 용도                              |
+| ------------- | ---- | --------------------------------- |
+| **minimized** | 0vh  | 최소화 상태                       |
+| **medium**    | 60vh | 기본 높이 - 코스 카드 미리보기    |
+| **full**      | 95vh | 전체 높이 - 모든 코스 스크롤 가능 |
 
 #### 카테고리별 디자인
 
-| 카테고리 | 배경색 | 카드색상 |
-|----------|--------|----------|
-| 진관동 | `#E7F3ED` | `["#DBE6D1", "#B9DAC5", "#9DD6B9"]` |
-| 트랙 | `#FFE8E4` | `["#FED5C8", "#FFC9B6", "#FFAA93"]` |
-| 트레일 | `#E7F3ED` | `["#DBE6D1", "#B9DAC5", "#9DD6B9"]` |
-| 로드 | `#F5F5F5` | `["#E0E0E0", "#D0D0D0", "#C0C0C0"]` |
+| 카테고리 | 배경색    | 카드색상                            |
+| -------- | --------- | ----------------------------------- |
+| 진관동   | `#E7F3ED` | `["#DBE6D1", "#B9DAC5", "#9DD6B9"]` |
+| 트랙     | `#FFE8E4` | `["#FED5C8", "#FFC9B6", "#FFAA93"]` |
+| 트레일   | `#E7F3ED` | `["#DBE6D1", "#B9DAC5", "#9DD6B9"]` |
+| 로드     | `#F5F5F5` | `["#E0E0E0", "#D0D0D0", "#C0C0C0"]` |
 
 #### 애니메이션 (Framer Motion)
 
@@ -646,7 +651,7 @@ FLIGHT_CONFIG: {
 ```typescript
 const [optimisticCourses, addOptimisticCourse] = useOptimistic(
   courses,
-  (state, newCourse) => [...state, newCourse]
+  (state, newCourse) => [...state, newCourse],
 );
 ```
 
@@ -662,10 +667,10 @@ const [optimisticCourses, addOptimisticCourse] = useOptimistic(
 
 #### 특수 케이스 처리
 
-| 코스 개수 | 동작 | 줌 레벨 |
-|-----------|------|---------|
-| **0개** | 은평구 중심으로 이동 | 11.5 |
-| **1개** | 해당 좌표로 flyTo | 11.5 |
+| 코스 개수    | 동작                       | 줌 레벨              |
+| ------------ | -------------------------- | -------------------- |
+| **0개**      | 은평구 중심으로 이동       | 11.5                 |
+| **1개**      | 해당 좌표로 flyTo          | 11.5                 |
 | **2개 이상** | fitBounds로 모든 코스 포함 | 자동 (maxZoom: 12.5) |
 
 ---
@@ -680,11 +685,11 @@ const [optimisticCourses, addOptimisticCourse] = useOptimistic(
 
 #### 에러 처리
 
-| 에러 코드 | 의미 | 해결 방법 |
-|-----------|------|-----------|
-| 1 (PERMISSION_DENIED) | 위치 권한 거부 | 브라우저 설정에서 권한 허용 |
-| 2 (POSITION_UNAVAILABLE) | 위치 정보 사용 불가 | GPS/네트워크 연결 확인 |
-| 3 (TIMEOUT) | 타임아웃 (10초) | 네트워크 상태 확인 후 재시도 |
+| 에러 코드                | 의미                | 해결 방법                    |
+| ------------------------ | ------------------- | ---------------------------- |
+| 1 (PERMISSION_DENIED)    | 위치 권한 거부      | 브라우저 설정에서 권한 허용  |
+| 2 (POSITION_UNAVAILABLE) | 위치 정보 사용 불가 | GPS/네트워크 연결 확인       |
+| 3 (TIMEOUT)              | 타임아웃 (10초)     | 네트워크 상태 확인 후 재시도 |
 
 ---
 
@@ -699,9 +704,12 @@ const [optimisticCourses, addOptimisticCourse] = useOptimistic(
 ```typescript
 const getSnapHeight = (point: SnapPoint): string => {
   switch (point) {
-    case "closed": return "0vh";
-    case "medium": return "60vh";
-    case "full": return "95vh";
+    case "minimized":
+      return "0vh";
+    case "medium":
+      return "60vh";
+    case "full":
+      return "95vh";
   }
 };
 ```
@@ -733,9 +741,8 @@ const getSnapHeight = (point: SnapPoint): string => {
 
 ```typescript
 const goToNextCategory = () => {
-  const newIndex = currentCategoryIndex < categories.length - 1
-    ? currentCategoryIndex + 1
-    : 0; // 마지막 → 첫 번째 (무한 루프)
+  const newIndex =
+    currentCategoryIndex < categories.length - 1 ? currentCategoryIndex + 1 : 0; // 마지막 → 첫 번째 (무한 루프)
   setCurrentCategoryIndex(newIndex);
 };
 ```
@@ -805,16 +812,16 @@ if (markersRef.current[markerId]) {
 
 ### 10.2 클라이언트 로컬 상태
 
-| 상태 | 위치 | 용도 |
-|------|------|------|
-| `map` | useMapState | 지도 인스턴스 |
-| `selectedCourse` | useMapState | 선택된 단일 코스 |
-| `selectedCourses` | useMapState | 선택된 복수 코스 |
-| `currentCategory` | OptimizedMapClient | 현재 선택 카테고리 |
-| `isFullscreenOpen` | OptimizedMapClient | 바텀시트 열림/닫힘 |
-| `snapPoint` | useBottomSheetSnap | 바텀시트 높이 상태 |
+| 상태                   | 위치                  | 용도                 |
+| ---------------------- | --------------------- | -------------------- |
+| `map`                  | useMapState           | 지도 인스턴스        |
+| `selectedCourse`       | useMapState           | 선택된 단일 코스     |
+| `selectedCourses`      | useMapState           | 선택된 복수 코스     |
+| `currentCategory`      | OptimizedMapClient    | 현재 선택 카테고리   |
+| `isFullscreenOpen`     | OptimizedMapClient    | 바텀시트 열림/닫힘   |
+| `snapPoint`            | useBottomSheetSnap    | 바텀시트 높이 상태   |
 | `currentCategoryIndex` | useCategoryNavigation | 현재 카테고리 인덱스 |
-| `isDragging` | useBottomSheetDrag | 드래그 중 여부 |
+| `isDragging`           | useBottomSheetDrag    | 드래그 중 여부       |
 
 ---
 
@@ -822,24 +829,24 @@ if (markersRef.current[markerId]) {
 
 ### 11.1 최적화 전략
 
-| 전략 | 설명 |
-|------|------|
-| React 19 useOptimistic | 서버 응답 전 즉각적 UI 업데이트 |
-| Streaming SSR + Suspense | 점진적 로딩 |
-| ISR | 1시간 캐싱으로 서버 부하 감소 |
-| 디바운스된 bounds 조정 | 150ms 지연으로 연속 호출 방지 |
-| 마커 풀 재사용 | DOM thrashing 방지 |
-| React.memo | 불필요한 리렌더링 방지 |
-| RAF 기반 애니메이션 | 60fps 부드러운 애니메이션 |
+| 전략                     | 설명                            |
+| ------------------------ | ------------------------------- |
+| React 19 useOptimistic   | 서버 응답 전 즉각적 UI 업데이트 |
+| Streaming SSR + Suspense | 점진적 로딩                     |
+| ISR                      | 1시간 캐싱으로 서버 부하 감소   |
+| 디바운스된 bounds 조정   | 150ms 지연으로 연속 호출 방지   |
+| 마커 풀 재사용           | DOM thrashing 방지              |
+| React.memo               | 불필요한 리렌더링 방지          |
+| RAF 기반 애니메이션      | 60fps 부드러운 애니메이션       |
 
 ### 11.2 성능 메트릭
 
-| 메트릭 | 목표 | 실제 | 상태 |
-|--------|------|------|------|
-| FCP | < 1.5s | ~1.2s | ✅ 우수 |
-| LCP | < 2.5s | ~2.1s | ✅ 양호 |
-| TTI | < 3.5s | ~3.2s | ✅ 양호 |
-| CLS | < 0.1 | ~0.05 | ✅ 우수 |
+| 메트릭             | 목표   | 실제  | 상태    |
+| ------------------ | ------ | ----- | ------- |
+| FCP                | < 1.5s | ~1.2s | ✅ 우수 |
+| LCP                | < 2.5s | ~2.1s | ✅ 양호 |
+| TTI                | < 3.5s | ~3.2s | ✅ 양호 |
+| CLS                | < 0.1  | ~0.05 | ✅ 우수 |
 | 마커 1000개 렌더링 | < 50ms | ~20ms | ✅ 우수 |
 
 ---
@@ -851,6 +858,7 @@ if (markersRef.current[markerId]) {
 **증상:** 지도는 보이는데 마커가 없음
 
 **원인 & 해결:**
+
 1. GeoJSON 데이터 확인: `console.log(geojsonData.current)`
 2. 좌표 확인: `lat`와 `lng` 순서 확인 (Mapbox는 `[lng, lat]`)
 3. 줌 레벨 확인: `clusterMaxZoom` 이상에서만 개별 마커 표시
@@ -860,6 +868,7 @@ if (markersRef.current[markerId]) {
 **증상:** 바텀시트 드래그 시 버벅거림
 
 **해결:**
+
 ```typescript
 // 드래그 중 카드 애니메이션 비활성화
 <CourseCardStack isDragging={isDragging} />
@@ -868,23 +877,28 @@ if (markersRef.current[markerId]) {
 ### 12.3 현재 위치 버튼이 작동하지 않아요
 
 **원인:**
+
 1. Geolocation 권한 거부
 2. HTTPS가 아닌 환경 (HTTP는 Geolocation 사용 불가)
 3. 브라우저 미지원
 
 **확인 방법:**
+
 ```typescript
-navigator.permissions.query({ name: "geolocation" })
-  .then(result => console.log(result.state));
+navigator.permissions
+  .query({ name: "geolocation" })
+  .then((result) => console.log(result.state));
 ```
 
 ### 12.4 Flight Mode가 멈춰요
 
 **원인:**
+
 1. GPX 데이터가 없거나 손상됨
 2. requestAnimationFrame이 정리되지 않음
 
 **해결:**
+
 ```typescript
 // 컴포넌트 언마운트 시 애니메이션 정리
 useEffect(() => {
@@ -907,11 +921,13 @@ useEffect(() => {
 ```typescript
 const { data, error } = await supabase
   .from("courses")
-  .select(`
+  .select(
+    `
     *,
     course_categories(name, key),
     course_comments(count)
-  `)
+  `,
+  )
   .eq("is_active", true)
   .order("created_at", { ascending: false });
 ```
@@ -932,11 +948,11 @@ const { data, error } = await supabase
 
 ## 14. 환경 변수
 
-| 변수명 | 필수 | 용도 |
-|--------|------|------|
-| `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` | ✅ | Mapbox 지도 렌더링 |
-| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Supabase 데이터베이스 연결 |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Supabase 클라이언트 키 |
+| 변수명                            | 필수 | 용도                       |
+| --------------------------------- | ---- | -------------------------- |
+| `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` | ✅   | Mapbox 지도 렌더링         |
+| `NEXT_PUBLIC_SUPABASE_URL`        | ✅   | Supabase 데이터베이스 연결 |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`   | ✅   | Supabase 클라이언트 키     |
 
 ---
 
@@ -1001,11 +1017,13 @@ src/
 ### 16.1 1차 간소화: Wrapper 제거 (2025-11-25)
 
 **Before:**
+
 ```
 MapPage → MapClientWrapper → MapProvider → OptimizedMapClient
 ```
 
 **After:**
+
 ```
 MapPage → OptimizedMapClient
 ```
@@ -1036,9 +1054,11 @@ MapPage → OptimizedMapClient
 ### HIGH 우선순위
 
 1. **Mapbox 리소스 preconnect**
+
    ```html
    <link rel="preconnect" href="https://api.mapbox.com" />
    ```
+
    - 예상 효과: 초기 로딩 ~200ms 단축
 
 2. **리스트 가상 스크롤**
@@ -1064,11 +1084,13 @@ MapPage → OptimizedMapClient
 `/map` 페이지는 **GSRC81 MAPS의 핵심 서비스 페이지**로:
 
 ### 아키텍처
+
 - ✅ Next.js 15 서버 컴포넌트 + React 19 Suspense
 - ✅ ISR을 통한 데이터 캐싱 (1시간 재검증)
 - ✅ Feature 기반 모듈 구조
 
 ### 핵심 기능
+
 - ✅ Mapbox 기반 인터랙티브 지도
 - ✅ GPU 가속 클러스터링
 - ✅ 3단계 바텀시트 UI
@@ -1076,6 +1098,7 @@ MapPage → OptimizedMapClient
 - ✅ GPS 위치 추적
 
 ### 성능
+
 - ✅ FCP: ~1.2s | LCP: ~2.1s | TTI: ~3.2s
 - ✅ 마커 1000개 렌더링: ~20ms
 - ✅ 메모리 최적화: 마커 풀링, React.memo

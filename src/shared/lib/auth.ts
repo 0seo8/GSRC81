@@ -152,11 +152,19 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      // update trigger가 호출되거나 처음 로그인할 때 최신 정보를 가져옴 (RLS 우회)
-      if (
+      // DB에서 사용자 정보 조회 조건:
+      // 1. 처음 로그인할 때 (account?.provider === "kakao")
+      // 2. 세션 갱신 요청할 때 (trigger === "update")
+      // 3. isVerified가 false일 때 (게스트가 코드 인증했을 수 있음)
+      // 4. isRegistered가 아직 설정되지 않았을 때 (최초 JWT 생성 후 페이지 요청)
+      const shouldFetchUserInfo =
         token.kakaoId &&
-        (trigger === "update" || account?.provider === "kakao")
-      ) {
+        (trigger === "update" ||
+          account?.provider === "kakao" ||
+          token.isVerified === false ||
+          token.isRegistered === undefined);
+
+      if (shouldFetchUserInfo) {
         const { data: userInfo } = await supabaseAdmin
           .from("access_links")
           .select("is_admin, is_active, verified")
@@ -165,7 +173,10 @@ export const authOptions: NextAuthOptions = {
 
         if (userInfo) {
           token.isAdmin = userInfo.is_admin || false;
-          token.isVerified = userInfo.verified || false; // verified 컬럼 사용
+          token.isVerified = userInfo.verified || false;
+          token.isRegistered = true;
+        } else {
+          token.isRegistered = false;
         }
       }
 

@@ -72,8 +72,8 @@ function VerifyContent() {
 
     // 검증 성공 → NextAuth 세션 갱신 후 /map으로
     await updateSession();
-    router.push("/map");
-    router.refresh();
+    // JWT 토큰 갱신을 위해 하드 리다이렉트
+    window.location.href = "/map";
   };
 
   const handleGuestMode = async () => {
@@ -85,23 +85,30 @@ function VerifyContent() {
     setGuestLoading(true);
     setError("");
 
-    // 게스트 사용자 생성
-    const result = await createGuestUser(
-      kakaoUserId,
-      session?.user?.name || undefined,
-      session?.user?.image || undefined,
-    );
+    try {
+      // 게스트 사용자 생성
+      const result = await createGuestUser(
+        kakaoUserId,
+        session?.user?.name || undefined,
+        session?.user?.image || undefined,
+      );
 
-    if (!result.success) {
-      setError(`❌ ${result.error}`);
+      if (!result.success) {
+        setError(`❌ ${result.error}`);
+        setGuestLoading(false);
+        return;
+      }
+
+      // 게스트 세션 쿠키 설정 (브라우저 세션 동안만 유지)
+      document.cookie = "guest_session=true; path=/; SameSite=Lax";
+
+      // 하드 리다이렉트
+      window.location.href = "/map";
+    } catch (err) {
+      console.error("Guest mode error:", err);
+      setError(`❌ 예상치 못한 오류가 발생했습니다.`);
       setGuestLoading(false);
-      return;
     }
-
-    // 게스트 모드 성공 → NextAuth 세션 갱신 후 /map으로
-    await updateSession();
-    router.push("/map");
-    router.refresh();
   };
 
   // 검증 상태 확인 중
